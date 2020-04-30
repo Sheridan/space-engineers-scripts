@@ -1,7 +1,9 @@
-string structureName;
-static Program self;
+// #include classes/block_options.cs
 
-public float blockSize;
+static string structureName;
+static Program self;
+static float blockSize;
+static CBlockOptions prbOptions;
 
 public void setupMe(string scriptName)
 {
@@ -30,6 +32,7 @@ public Program()
   self = this;
   structureName = Me.CubeGrid.CustomName;
   blockSize = Me.CubeGrid.GridSize;
+  prbOptions = new CBlockOptions(Me);
   setupMe(program());
 }
 

@@ -3,7 +3,7 @@ public enum EBoolToString
   btsOnOff
 }
 
-public string boolToString(bool val, EBoolToString bsType)
+public string boolToString(bool val, EBoolToString bsType = EBoolToString.btsOnOff)
 {
   switch (bsType)
   {

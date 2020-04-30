@@ -6,3 +6,6 @@ The simplest code reuse is implemented using the #include "directive" in the cod
 Currently linux-only preparing.
 
 Ready-to-use scripts are in the "prepared" directory, you only need to specify the names of groups / blocks
+
+# Управление ускорителями
+https://drive.google.com/file/d/1Sx9NtWrtQ_3uTjp-W-3Wotc1VxNLsiiC/view

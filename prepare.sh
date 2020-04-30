@@ -19,4 +19,7 @@ function collect_includes()
 }
 
 collect_includes "${project}.cs"
-cat ${filelist[@]} ${project}.cs | egrep -v "^ +?(//|$)" > ${outfolder}/${project}.cs
+cat ${filelist[@]} ${project}.cs | \
+  egrep -v "^ +?(//|$)" | \
+  astyle --mode=cs --style=lisp --indent=force-tab --max-code-length=200 --unpad-paren --pad-comma \
+         --keep-one-line-statements --keep-one-line-blocks > ${outfolder}/${project}.cs

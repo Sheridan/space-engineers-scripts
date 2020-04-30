@@ -19,4 +19,5 @@ public void main(string argument, UpdateType updateSource)
   lcd.showStatus<IMyShipDrill>(drills, 0);
   lcd.showStatus<IMyPistonBase>(pistons, 1);
   lcd.showStatus<IMyMotorStator>(rotors, 2);
+  lcd.showStatus<IMyGyro>(gyroscopes, 3);
 }

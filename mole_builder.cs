@@ -345,7 +345,7 @@ public bool loadComponentsFromBase()
       blocksRecipes.add(FRecipe.fromString(block.Key.ToString(), block.Value));
     }
   }
-  List<CRecipeSourceItem> neededItems = blocksRecipes.sourceItems();
+  List<CComponentItem> neededItems = blocksRecipes.sourceItems();
   lcd.echo($"Загрузка компонентов: {neededItems.Count} наименований");
   IMyInventory dstInventory = componentsContainer.GetInventory();
   foreach (var neededItem in neededItems)

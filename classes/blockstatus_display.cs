@@ -93,6 +93,23 @@ public class CBlockStatusDisplay : CDisplay
     return result;
   }
 
+  private string getGyroStatus<T>(CBlockGroup<T> group) where T : class, IMyTerminalBlock
+  {
+    if (!group.isAssignable<IMyGyro>()) { return ""; }
+    string result = "";
+    float yaw = 0;
+    float pitch = 0;
+    float roll = 0;
+    foreach (IMyGyro block in group.blocks())
+    {
+      yaw += block.Yaw;
+      pitch += block.Pitch;
+      roll += block.Roll;
+    }
+    result += $"YPR: {yaw/group.count():f3}:{pitch/group.count():f3}:{roll/group.count():f3} ";
+    return result;
+  }
+
   private string getMergersStatus<T>(CBlockGroup<T> group) where T : class, IMyTerminalBlock
   {
     if (!group.isAssignable<IMyShipMergeBlock>()) { return ""; }
@@ -174,6 +191,7 @@ public class CBlockStatusDisplay : CDisplay
              + getProjectorsStatus<T>(group)
              + getDrillsStatus<T>(group)
              + getRotorsStatus<T>(group)
+             + getGyroStatus<T>(group)
              + getFunctionaBlocksStatus<T>(group)
              ;
     }

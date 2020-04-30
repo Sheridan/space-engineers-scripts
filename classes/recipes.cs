@@ -1,122 +1,13 @@
-public enum EItemType
-{
-  BulletproofGlass,
-  Canvas,
-  Computer,
-  Construction,
-  Detector,
-  Display,
-  Explosives,
-  Girder,
-  GravityGenerator,
-  InteriorPlate,
-  LargeTube,
-  Medical,
-  MetalGrid,
-  Motor,
-  PowerCell,
-  RadioCommunication,
-  Reactor,
-  SmallTube,
-  SolarCell,
-  SteelPlate,
-  Superconductor,
-  Thrust,
-  ZoneChip
-}
-
-public class CRecipeSourceItem
-{
-  public CRecipeSourceItem(EItemType itemType, int amount) { m_itemType = itemType; m_amount = amount; }
-  public int amount() { return m_amount; }
-  public void appendAmount(int amountDelta) { m_amount += amountDelta; }
-  public EItemType itemType() { return m_itemType; }
-  public string asComponent()
-  {
-    string name = "";
-    switch (m_itemType)
-    {
-      case EItemType.BulletproofGlass:   name = "BulletproofGlass";   break;
-      case EItemType.Canvas:             name = "Canvas";             break;
-      case EItemType.Computer:           name = "Computer";           break;
-      case EItemType.Construction:       name = "Construction";       break;
-      case EItemType.Detector:           name = "Detector";           break;
-      case EItemType.Display:            name = "Display";            break;
-      case EItemType.Explosives:         name = "Explosives";         break;
-      case EItemType.Girder:             name = "Girder";             break;
-      case EItemType.GravityGenerator:   name = "GravityGenerator";   break;
-      case EItemType.InteriorPlate:      name = "InteriorPlate";      break;
-      case EItemType.LargeTube:          name = "LargeTube";          break;
-      case EItemType.Medical:            name = "Medical";            break;
-      case EItemType.MetalGrid:          name = "MetalGrid";          break;
-      case EItemType.Motor:              name = "Motor";              break;
-      case EItemType.PowerCell:          name = "PowerCell";          break;
-      case EItemType.RadioCommunication: name = "RadioCommunication"; break;
-      case EItemType.Reactor:            name = "Reactor";            break;
-      case EItemType.SmallTube:          name = "SmallTube";          break;
-      case EItemType.SolarCell:          name = "SolarCell";          break;
-      case EItemType.SteelPlate:         name = "SteelPlate";         break;
-      case EItemType.Superconductor:     name = "Superconductor";     break;
-      case EItemType.Thrust:             name = "Thrust";             break;
-      case EItemType.ZoneChip:           name = "ZoneChip";           break;
-    }
-    return $"MyObjectBuilder_Component/{name}";
-  }
-  public string asBlueprintDefinition()
-  {
-    string name = "";
-    switch (m_itemType)
-    {
-      case EItemType.BulletproofGlass:   name = "BulletproofGlass";            break;
-      case EItemType.Canvas:             name = "Canvas";                      break;
-      case EItemType.Computer:           name = "ComputerComponent";           break;
-      case EItemType.Construction:       name = "ConstructionComponent";       break;
-      case EItemType.Detector:           name = "DetectorComponent";           break;
-      case EItemType.Display:            name = "Display";                     break;
-      case EItemType.Explosives:         name = "ExplosivesComponent";         break;
-      case EItemType.Girder:             name = "GirderComponent";             break;
-      case EItemType.GravityGenerator:   name = "GravityGeneratorComponent";   break;
-      case EItemType.InteriorPlate:      name = "InteriorPlate";               break;
-      case EItemType.LargeTube:          name = "LargeTube";                   break;
-      case EItemType.Medical:            name = "MedicalComponent";            break;
-      case EItemType.MetalGrid:          name = "MetalGrid";                   break;
-      case EItemType.Motor:              name = "MotorComponent";              break;
-      case EItemType.PowerCell:          name = "PowerCell";                   break;
-      case EItemType.RadioCommunication: name = "RadioCommunicationComponent"; break;
-      case EItemType.Reactor:            name = "ReactorComponent";            break;
-      case EItemType.SmallTube:          name = "SmallTube";                   break;
-      case EItemType.SolarCell:          name = "SolarCell";                   break;
-      case EItemType.SteelPlate:         name = "SteelPlate";                  break;
-      case EItemType.Superconductor:     name = "Superconductor";              break;
-      case EItemType.Thrust:             name = "ThrustComponent";             break;
-      case EItemType.ZoneChip:           name = "ZoneChip";                    break;
-    }
-    return $"MyObjectBuilder_BlueprintDefinition/{name}";
-  }
-  public MyItemType asMyItemType() { return MyItemType.Parse(asComponent()); }
-  private EItemType m_itemType;
-  private int m_amount;
-}
-
-public class FRecipeSourceItem
-{
-  static public CRecipeSourceItem SteelPlate   (int amount) { return new CRecipeSourceItem(EItemType.SteelPlate   , amount); }
-  static public CRecipeSourceItem Motor        (int amount) { return new CRecipeSourceItem(EItemType.Motor        , amount); }
-  static public CRecipeSourceItem Computer     (int amount) { return new CRecipeSourceItem(EItemType.Computer     , amount); }
-  static public CRecipeSourceItem SmallTube    (int amount) { return new CRecipeSourceItem(EItemType.SmallTube    , amount); }
-  static public CRecipeSourceItem LargeTube    (int amount) { return new CRecipeSourceItem(EItemType.LargeTube    , amount); }
-  static public CRecipeSourceItem Construction (int amount) { return new CRecipeSourceItem(EItemType.Construction , amount); }
-  static public CRecipeSourceItem InteriorPlate(int amount) { return new CRecipeSourceItem(EItemType.InteriorPlate, amount); }
-}
+// #include classes/components.cs
 
 public class CRecipe
 {
-  public CRecipe(string blueprint) { m_blueprint = blueprint; m_sourceItems = new List<CRecipeSourceItem>(); }
-  public void addItem(CRecipeSourceItem item) { m_sourceItems.Add(item); }
+  public CRecipe(string blueprint) { m_blueprint = blueprint; m_sourceItems = new List<CComponentItem>(); }
+  public void addItem(CComponentItem item) { m_sourceItems.Add(item); }
   public string blueprint() { return m_blueprint; }
-  public List<CRecipeSourceItem> sourceItems() { return m_sourceItems; }
+  public List<CComponentItem> sourceItems() { return m_sourceItems; }
   private string m_blueprint;
-  private List<CRecipeSourceItem> m_sourceItems;
+  private List<CComponentItem> m_sourceItems;
 }
 
 public class FRecipe
@@ -125,63 +16,208 @@ public class FRecipe
   {
     switch (itemString)
     {
-      case "MyObjectBuilder_CubeBlock/LargeBlockArmorBlock": return LargeBlockArmorBlock (amount);
-      case "MyObjectBuilder_InteriorLight/SmallLight":       return SmallLight           (amount);
-      case "MyObjectBuilder_ConveyorConnector/ConveyorTube": return ConveyorTube         (amount);
-      case "MyObjectBuilder_MergeBlock/LargeShipMergeBlock": return LargeShipMergeBlock  (amount);
-      case "MyObjectBuilder_ShipConnector/Connector":        return Connector            (amount);
-      case "MyObjectBuilder_Conveyor/LargeBlockConveyor":    return LargeBlockConveyor   (amount);
+      case "MyObjectBuilder_CubeBlock/LargeBlockArmorBlock"         : return LargeBlockArmorBlock       (amount);
+      case "MyObjectBuilder_InteriorLight/SmallLight"               : return SmallLight                 (amount);
+      case "MyObjectBuilder_ConveyorConnector/ConveyorTube"         : return ConveyorTube               (amount);
+      case "MyObjectBuilder_MergeBlock/LargeShipMergeBlock"         : return LargeShipMergeBlock        (amount);
+      case "MyObjectBuilder_ShipConnector/Connector"                : return Connector                  (amount);
+      case "MyObjectBuilder_Conveyor/LargeBlockConveyor"            : return LargeBlockConveyor         (amount);
+      case "MyObjectBuilder_CubeBlock/ArmorCorner"                  : return ArmorCorner                (amount);
+      case "MyObjectBuilder_CubeBlock/ArmorInvCorner"               : return ArmorInvCorner             (amount);
+      case "MyObjectBuilder_CubeBlock/ArmorSide"                    : return ArmorSide                  (amount);
+      case "MyObjectBuilder_CubeBlock/ArmorCenter"                  : return ArmorCenter                (amount);
+      case "MyObjectBuilder_CargoContainer/LargeBlockLargeContainer": return LargeBlockLargeContainer   (amount);
+      case "MyObjectBuilder_CargoContainer/LargeBlockSmallContainer": return LargeBlockSmallContainer   (amount);
+      case "MyObjectBuilder_RadioAntenna/LargeBlockRadioAntenna"    : return LargeBlockRadioAntenna     (amount);
+      case "MyObjectBuilder_BatteryBlock/LargeBlockBatteryBlock"    : return LargeBlockBatteryBlock     (amount);
+      case "MyObjectBuilder_WindTurbine/LargeBlockWindTurbine"      : return LargeBlockWindTurbine      (amount);
+      case "MyObjectBuilder_Gyro/LargeBlockGyro"                    : return LargeBlockGyro             (amount);
+      case "MyObjectBuilder_CubeBlock/Window3x3Flat"                : return Window3x3Flat              (amount);
+      case "MyObjectBuilder_Wheel/Wheel5x5"                         : return Wheel5x5                   (amount);
+      case "MyObjectBuilder_MotorSuspension/Suspension5x5"          : return Suspension5x5              (amount);
+      case "MyObjectBuilder_ExtendedPistonBase/LargePistonBase"     : return LargePistonBase            (amount);
+      case "MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner"   : return LargeBlockArmorRoundCorner (amount);
     }
     throw new System.ArgumentException("Не знаю такой строки", itemString);
+  }
+  static public CRecipe LargePistonBase(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_ExtendedPistonBase/LargePistonBase");
+    recipe.addItem(FComponentItem.Computer(2 * amount));
+    recipe.addItem(FComponentItem.Motor(4 * amount));
+    recipe.addItem(FComponentItem.LargeTube(4 * amount));
+    recipe.addItem(FComponentItem.Construction(10 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(15 * amount));
+    return recipe;
+  }
+  static public CRecipe Wheel5x5(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Wheel/Wheel5x5");
+    recipe.addItem(FComponentItem.LargeTube(8 * amount));
+    recipe.addItem(FComponentItem.Construction(30 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(16 * amount));
+    return recipe;
+  }
+  static public CRecipe Suspension5x5(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_MotorSuspension/Suspension5x5");
+    recipe.addItem(FComponentItem.Motor(20 * amount));
+    recipe.addItem(FComponentItem.SmallTube(30 * amount));
+    recipe.addItem(FComponentItem.LargeTube(20 * amount));
+    recipe.addItem(FComponentItem.Construction(40 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(70 * amount));
+    return recipe;
+  }
+  static public CRecipe Window3x3Flat(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/Window3x3Flat");
+    recipe.addItem(FComponentItem.BulletproofGlass(196 * amount));
+    recipe.addItem(FComponentItem.Girder(40 * amount));
+    return recipe;
+  }
+  static public CRecipe LargeBlockGyro(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Gyro/LargeBlockGyro");
+    recipe.addItem(FComponentItem.Computer(5 * amount));
+    recipe.addItem(FComponentItem.Motor(4 * amount));
+    recipe.addItem(FComponentItem.MetalGrid(50 * amount));
+    recipe.addItem(FComponentItem.LargeTube(4 * amount));
+    recipe.addItem(FComponentItem.Construction(40 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(600 * amount));
+    return recipe;
+  }
+  static public CRecipe LargeBlockWindTurbine(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_WindTurbine/LargeBlockWindTurbine");
+    recipe.addItem(FComponentItem.Computer(2 * amount));
+    recipe.addItem(FComponentItem.Girder(24 * amount));
+    recipe.addItem(FComponentItem.Construction(20 * amount));
+    recipe.addItem(FComponentItem.Motor(8 * amount));
+    recipe.addItem(FComponentItem.InteriorPlate(40 * amount));
+    return recipe;
+  }
+  static public CRecipe LargeBlockBatteryBlock(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_BatteryBlock/LargeBlockBatteryBlock");
+    recipe.addItem(FComponentItem.Computer(25 * amount));
+    recipe.addItem(FComponentItem.PowerCell(80 * amount));
+    recipe.addItem(FComponentItem.Construction(30 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(80 * amount));
+    return recipe;
+  }
+  static public CRecipe LargeBlockRadioAntenna(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_RadioAntenna/LargeBlockRadioAntenna");
+    recipe.addItem(FComponentItem.RadioCommunication(40 * amount));
+    recipe.addItem(FComponentItem.Computer(8 * amount));
+    recipe.addItem(FComponentItem.Construction(30 * amount));
+    recipe.addItem(FComponentItem.SmallTube(60 * amount));
+    recipe.addItem(FComponentItem.LargeTube(40 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(80 * amount));
+    return recipe;
+  }
+  static public CRecipe LargeBlockLargeContainer(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_CargoContainer/LargeBlockLargeContainer");
+    recipe.addItem(FComponentItem.Computer(8 * amount));
+    recipe.addItem(FComponentItem.Display(1 * amount));
+    recipe.addItem(FComponentItem.Motor(20 * amount));
+    recipe.addItem(FComponentItem.SmallTube(60 * amount));
+    recipe.addItem(FComponentItem.MetalGrid(24 * amount));
+    recipe.addItem(FComponentItem.Construction(80 * amount));
+    recipe.addItem(FComponentItem.InteriorPlate(360 * amount));
+    return recipe;
+  }
+  static public CRecipe LargeBlockSmallContainer(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_CargoContainer/LargeBlockSmallContainer");
+    recipe.addItem(FComponentItem.Computer(2 * amount));
+    recipe.addItem(FComponentItem.Display(1 * amount));
+    recipe.addItem(FComponentItem.Motor(4 * amount));
+    recipe.addItem(FComponentItem.SmallTube(20 * amount));
+    recipe.addItem(FComponentItem.MetalGrid(4 * amount));
+    recipe.addItem(FComponentItem.Construction(40 * amount));
+    recipe.addItem(FComponentItem.InteriorPlate(40 * amount));
+    return recipe;
+  }
+  static public CRecipe ArmorCorner(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/ArmorCorner");
+    recipe.addItem(FComponentItem.SteelPlate(135 * amount));
+    return recipe;
+  }
+  static public CRecipe ArmorInvCorner(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/ArmorInvCorner");
+    recipe.addItem(FComponentItem.SteelPlate(135 * amount));
+    return recipe;
+  }
+  static public CRecipe ArmorSide(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/ArmorSide");
+    recipe.addItem(FComponentItem.SteelPlate(130 * amount));
+    return recipe;
+  }
+  static public CRecipe ArmorCenter(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/ArmorCenter");
+    recipe.addItem(FComponentItem.SteelPlate(140 * amount));
+    return recipe;
   }
   static public CRecipe LargeBlockArmorBlock(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/LargeBlockArmorBlock");
-    recipe.addItem(FRecipeSourceItem.SteelPlate(25 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(25 * amount));
+    return recipe;
+  }
+  static public CRecipe LargeBlockArmorRoundCorner(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner");
+    recipe.addItem(FComponentItem.SteelPlate(13 * amount));
     return recipe;
   }
   static public CRecipe SmallLight(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_InteriorLight/SmallLight");
-    recipe.addItem(FRecipeSourceItem.Construction(2 * amount));
+    recipe.addItem(FComponentItem.Construction(2 * amount));
     return recipe;
   }
   static public CRecipe ConveyorTube(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_ConveyorConnector/ConveyorTube");
-    recipe.addItem(FRecipeSourceItem.Motor(6 * amount));
-    recipe.addItem(FRecipeSourceItem.SmallTube(12 * amount));
-    recipe.addItem(FRecipeSourceItem.Construction(20 * amount));
-    recipe.addItem(FRecipeSourceItem.InteriorPlate(14 * amount));
+    recipe.addItem(FComponentItem.Motor(6 * amount));
+    recipe.addItem(FComponentItem.SmallTube(12 * amount));
+    recipe.addItem(FComponentItem.Construction(20 * amount));
+    recipe.addItem(FComponentItem.InteriorPlate(14 * amount));
     return recipe;
   }
   static public CRecipe LargeShipMergeBlock(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_MergeBlock/LargeShipMergeBlock");
-    recipe.addItem(FRecipeSourceItem.Computer(2 * amount));
-    recipe.addItem(FRecipeSourceItem.LargeTube(6 * amount));
-    recipe.addItem(FRecipeSourceItem.Motor(2 * amount));
-    recipe.addItem(FRecipeSourceItem.Construction(15 * amount));
-    recipe.addItem(FRecipeSourceItem.SteelPlate(12 * amount));
+    recipe.addItem(FComponentItem.Computer(2 * amount));
+    recipe.addItem(FComponentItem.LargeTube(6 * amount));
+    recipe.addItem(FComponentItem.Motor(2 * amount));
+    recipe.addItem(FComponentItem.Construction(15 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(12 * amount));
     return recipe;
   }
   static public CRecipe Connector(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_ShipConnector/Connector");
-    recipe.addItem(FRecipeSourceItem.Computer(20 * amount));
-    recipe.addItem(FRecipeSourceItem.Motor(8 * amount));
-    recipe.addItem(FRecipeSourceItem.SmallTube(12 * amount));
-    recipe.addItem(FRecipeSourceItem.Construction(40 * amount));
-    recipe.addItem(FRecipeSourceItem.SteelPlate(150 * amount));
+    recipe.addItem(FComponentItem.Computer(20 * amount));
+    recipe.addItem(FComponentItem.Motor(8 * amount));
+    recipe.addItem(FComponentItem.SmallTube(12 * amount));
+    recipe.addItem(FComponentItem.Construction(40 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(150 * amount));
     return recipe;
   }
   static public CRecipe LargeBlockConveyor(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_Conveyor/LargeBlockConveyor");
-    recipe.addItem(FRecipeSourceItem.Motor(6 * amount));
-    recipe.addItem(FRecipeSourceItem.SmallTube(20 * amount));
-    recipe.addItem(FRecipeSourceItem.Construction(30 * amount));
-    recipe.addItem(FRecipeSourceItem.InteriorPlate(20 * amount));
+    recipe.addItem(FComponentItem.Motor(6 * amount));
+    recipe.addItem(FComponentItem.SmallTube(20 * amount));
+    recipe.addItem(FComponentItem.Construction(30 * amount));
+    recipe.addItem(FComponentItem.InteriorPlate(20 * amount));
     return recipe;
   }
 }
@@ -191,21 +227,22 @@ public class CRecipes
   public CRecipes() { m_recipes = new List<CRecipe>(); }
   public void add(CRecipe recipe) { m_recipes.Add(recipe); }
   public List<CRecipe> recipes() { return m_recipes; }
-  public List<CRecipeSourceItem> sourceItems()
+  public List<CComponentItem> sourceItems()
   {
-    Dictionary<EItemType, CRecipeSourceItem> tmpDict = new Dictionary<EItemType, CRecipeSourceItem>();
+    Dictionary<EItemType, CComponentItem> tmpDict = new Dictionary<EItemType, CComponentItem>();
     foreach (CRecipe recipe in m_recipes)
     {
-      foreach(CRecipeSourceItem srcItem in recipe.sourceItems())
+      foreach(CComponentItem srcItem in recipe.sourceItems())
       {
         if(!tmpDict.ContainsKey(srcItem.itemType()))
         {
-          tmpDict.Add(srcItem.itemType(), new CRecipeSourceItem(srcItem.itemType(), 0));
+          tmpDict.Add(srcItem.itemType(), new CComponentItem(srcItem.itemType(), 0));
         }
         tmpDict[srcItem.itemType()].appendAmount(srcItem.amount());
       }
     }
     return tmpDict.Values.ToList();
   }
+
   private List<CRecipe> m_recipes;
 }

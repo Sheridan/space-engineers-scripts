@@ -98,8 +98,6 @@ public bool canStep(float angle, float currentAngle, float delta = 1f)
 CDisplay lcd;
 IMySoundBlock soundBlock;
 
-const float rotorDrillVelocity = 0.10f;
-
 const float pistonDrillVelocity = 0.1f;
 const float pistonUpVelocity = 0.5f;
 
@@ -110,11 +108,14 @@ const int pistonsInStack = 3;
 float maxDrillLength;
 float pistonStep;
 
+IMyProgrammableBlock autoHorizont;
+
 public string program()
 {
   Runtime.UpdateFrequency = UpdateFrequency.Update100;
+  autoHorizont = GridTerminalSystem.GetBlockWithName("[Крот] ПрБ Атоматический горизонт") as IMyProgrammableBlock;
   pistonStep = blockSize;
-  maxDrillLength = pistonStep*10;
+  maxDrillLength = pistonStep*11;
   lcd = new CDisplay();
   lcd.addDisplay("[Крот] Дисплей логов бурения 0", 0, 0);
   lcd.addDisplay("[Крот] Дисплей логов бурения 1", 1, 0);
@@ -165,6 +166,7 @@ public void pistonsStep(int steps = 1)
 {
   playSound("Operation Alarm");
   pistonPosition += pistonStep*steps;
+  lcd.echo($"Шаг {pistonPosition/pistonStep:f0} на позицию {pistonPosition:f2}");
   expandPistons(pistons, pistonPosition, pistonDrillVelocity, pistonDrillForce, pistonsInStack);
 }
 
@@ -178,7 +180,7 @@ public void turnRotors(bool enable)
 {
   lcd.echo($"Вращение ({rotors.count()} шт.): {boolToString(enable, EBoolToString.btsOnOff)}");
   foreach (IMyMotorStator rotor in rotors.blocks())
-  { rotor.TargetVelocityRPM = enable ? rotorDrillVelocity : 0f; }
+  { rotor.TargetVelocityRPM = enable ? drillRPM : 0f; }
 }
 
 public void turnDrills(bool enable)
@@ -192,11 +194,13 @@ public void stopWork()
   turnDrills(false);
   turnRotors(false);
   pistonsUp();
+  autoHorizont.TryRun("stop");
 }
 
 public void startWork()
 {
   turnDrills(true);
   turnRotors(true);
+  autoHorizont.TryRun("start");
   // pistonsStep();
 }

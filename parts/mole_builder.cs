@@ -1,4 +1,4 @@
-// #include classes/block_group.cs
+// #include classes/blocks_group.cs
 
 public CBlockGroup<IMyShipMergeBlock> weldersMergers;
 public CBlockGroup<IMyPistonBase> weldersMergersPistons;
