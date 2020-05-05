@@ -45,9 +45,9 @@ public class FRecipe
     CRecipe recipe = new CRecipe("MyObjectBuilder_ExtendedPistonBase/LargePistonBase");
     recipe.addItem(FComponentItem.Computer(2 * amount));
     recipe.addItem(FComponentItem.Motor(4 * amount));
-    recipe.addItem(FComponentItem.LargeTube(4 * amount));
+    recipe.addItem(FComponentItem.LargeTube((8+4) * amount)); // + top
     recipe.addItem(FComponentItem.Construction(10 * amount));
-    recipe.addItem(FComponentItem.SteelPlate(15 * amount));
+    recipe.addItem(FComponentItem.SteelPlate((10+15) * amount)); // + top
     return recipe;
   }
   static public CRecipe Wheel5x5(int amount = 1)

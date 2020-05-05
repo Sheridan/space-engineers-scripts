@@ -4,14 +4,18 @@
 // #include classes/storages_group.cs
 
 CRecipes recipes;
-CDisplay lcd;
+CDisplay lcdAssembling;
+CDisplay lcdPerBlock;
 CStoragesGroup storage;
 IMyAssembler targetAssembler;
 
 public string program()
 {
-  lcd = new CDisplay();
-  lcd.addDisplay("[Земля] Дисплей производства", 0, 0);
+  lcdAssembling = new CDisplay();
+  lcdAssembling.addDisplay("[Земля] Дисплей производства", 0, 0);
+  lcdPerBlock = new CDisplay();
+  lcdPerBlock.addDisplay("[Земля] Дисплей хранящихся блоков 0", 0, 0);
+  lcdPerBlock.addDisplay("[Земля] Дисплей хранящихся блоков 1", 0, 1);
   targetAssembler = GridTerminalSystem.GetBlockWithName("[Земля] Master Сборщик 0") as IMyAssembler;
   storage = new CStoragesGroup("[Земля] БК Компоненты", "Компоненты");
 
@@ -26,7 +30,7 @@ public string program()
   recipes.add(FRecipe.LargeBlockRadioAntenna(4));
   recipes.add(FRecipe.SmallLight(16 + 2*4));
   recipes.add(FRecipe.LargeShipMergeBlock(4 + 16*2 + 4*2));
-  recipes.add(FRecipe.LargePistonBase(8));
+  recipes.add(FRecipe.LargePistonBase(16));
   recipes.add(FRecipe.LargeBlockGyro(16));
 
   recipes.add(FRecipe.LargeBlockWindTurbine(32));
@@ -48,15 +52,15 @@ public void main(string argument, UpdateType updateSource)
 {
   bool assemblerProducing = targetAssembler.IsProducing;
   string state = assemblerProducing ? "Producing" : "Stopped";
-  lcd.echo_at($"Assemblesr state: {state}", 0);
-  lcd.echo_at("---", 1);
-  int lcdIndex = 2;
-  foreach(var component in recipes.sourceItems())
+  lcdAssembling.echo_at($"Assemblesr state: {state}", 0);
+  lcdAssembling.echo_at("---", 1);
+  int lcdAssemblingIndex = 2;
+  foreach(CComponentItem component in recipes.sourceItems())
   {
     int inStorageAmount = storage.countItems(component.itemType());
     int needAmount = component.amount();
     int amount = needAmount - inStorageAmount;
-    lcd.echo_at($"{component.itemType().ToString()}: {inStorageAmount} of {needAmount}", lcdIndex); lcdIndex++;
+    lcdAssembling.echo_at($"{component.itemType().ToString()}: {inStorageAmount} of {needAmount}", lcdAssemblingIndex); lcdAssemblingIndex++;
     if(amount > 0 && !assemblerProducing)
     {
       targetAssembler.AddQueueItem(
@@ -65,3 +69,21 @@ public void main(string argument, UpdateType updateSource)
     }
   }
 }
+
+// public void showPerItems(CComponentItem component)
+// {
+//   int lcdAssemblingIndex = 2;
+//   foreach (CComponentItem component in recipes.sourceItems())
+//   {
+//     int inStorageAmount = storage.countItems(component.itemType());
+//     int needAmount = component.amount();
+//     int amount = needAmount - inStorageAmount;
+//     lcdAssembling.echo_at($"{component.itemType().ToString()}: {inStorageAmount} of {needAmount}", lcdAssemblingIndex); lcdAssemblingIndex++;
+//     if (amount > 0 && !assemblerProducing)
+//     {
+//       targetAssembler.AddQueueItem(
+//         MyDefinitionId.Parse(component.asBlueprintDefinition()),
+//         (double)amount);
+//     }
+//   }
+// }

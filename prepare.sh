@@ -22,4 +22,5 @@ collect_includes "${project}.cs"
 cat ${filelist[@]} ${project}.cs | \
   egrep -v "^ +?(//|$)" | \
   astyle --mode=cs --style=lisp --indent=force-tab --max-code-length=200 --unpad-paren --pad-comma \
-         --keep-one-line-statements --keep-one-line-blocks > ${outfolder}/${project}.cs
+         --keep-one-line-statements --keep-one-line-blocks | \
+  sed -r 's@ +@ @g' > ${outfolder}/${project}.cs

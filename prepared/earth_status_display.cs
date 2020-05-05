@@ -389,7 +389,7 @@ public static string hrSuffix(EHRUnit unit) {
 	switch(unit) {
 	case EHRUnit.None : return "шт.";
 	case EHRUnit.Mass : return "г.";
-	case EHRUnit.Volume: return "м³";
+	case EHRUnit.Volume: return "л.";
 	case EHRUnit.Power : return "Вт."; }
 	return ""; }
 public static string toHumanReadable(float value, EHRUnit unit = EHRUnit.None) {
@@ -398,16 +398,27 @@ public static string toHumanReadable(float value, EHRUnit unit = EHRUnit.None) {
 	int exp = (int)(Math.Log(value) / Math.Log(1000));
 	return $"{value / Math.Pow(1000, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; // "kMGTPE" "кМГТПЭ"
 }
-public CBlockGroup<IMyShipDrill> drills;
-public CBlockGroup<IMyPistonBase> pistons;
-public CBlockGroup<IMyMotorStator> rotors;
-public CBlockGroup<IMyGyro> gyroscopes;
-const float drillRPM = 0.005f;
-public void initGroups() {
-	rotors = new CBlockGroup<IMyMotorStator>("[Крот] Роторы буров", "Роторы");
-	drills = new CBlockGroup<IMyShipDrill>("[Крот] Буры", "Буры");
-	pistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни буров", "Поршни");
-	gyroscopes = new CBlockGroup<IMyGyro>("[Крот] Гироскопы бура", "Гироскопы автогоризонта"); }
+public class CBlocksTyped<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
+	public CBlocksTyped(string subTypeName,
+						string purpose = "",
+						bool loadOnlySameGrid = true) : base(purpose) {
+		m_subTypeName = subTypeName;
+		refresh(loadOnlySameGrid); }
+	public void refresh(bool loadOnlySameGrid = true) {
+		clear();
+		if(loadOnlySameGrid) {
+			self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => (x.IsSameConstructAs(self.Me) &&
+					x.BlockDefinition.SubtypeId.Contains(m_subTypeName))); }
+		else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.BlockDefinition.SubtypeId.Contains(m_subTypeName)); } }
+	public string subTypeName() { return m_subTypeName; }
+	private string m_subTypeName; }
+public class CBlocks<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
+	public CBlocks(string purpose = "", bool loadOnlySameGrid = true) : base(purpose) {
+		refresh(loadOnlySameGrid); }
+	public void refresh(bool loadOnlySameGrid = true) {
+		clear();
+		if(loadOnlySameGrid) { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
+		else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks) ; } } }
 public class CBlockGroup<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
 	public CBlockGroup(string groupName,
 					 string purpose = "",
@@ -422,15 +433,39 @@ public class CBlockGroup<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
 	public string groupName() { return m_groupName; }
 	private string m_groupName; }
 CBlockStatusDisplay lcd;
+public CBlocksTyped<IMyPowerProducer> windTurbines;
+public CBlocksTyped<IMyPowerProducer> h2Engines;
+public CBlocks<IMyShipConnector> connectors;
+public CBlocks<IMyRefinery> refineryes;
+public CBlocks<IMyAssembler> assemblers;
+public CBlocks<IMyGasGenerator> gasGenerators;
+public CBlockGroup<IMyCargoContainer> storageOre;
+public CBlockGroup<IMyCargoContainer> storageIngots;
+public CBlockGroup<IMyCargoContainer> storageComponents;
+public void initGroups() {
+	h2Engines = new CBlocksTyped<IMyPowerProducer>("HydrogenEngine");
+	windTurbines = new CBlocksTyped<IMyPowerProducer>("WindTurbine");
+	connectors = new CBlocks<IMyShipConnector>();
+	refineryes = new CBlocks<IMyRefinery>();
+	assemblers = new CBlocks<IMyAssembler>();
+	gasGenerators = new CBlocks<IMyGasGenerator>();
+	storageOre = new CBlockGroup<IMyCargoContainer>("[Земля] БК Руда", "Руда");
+	storageIngots = new CBlockGroup<IMyCargoContainer>("[Земля] БК Слитки", "Слитки");
+	storageComponents = new CBlockGroup<IMyCargoContainer>("[Земля] БК Компоненты", "Компоненты"); }
 public string program() {
 	Runtime.UpdateFrequency = UpdateFrequency.Update100;
 	lcd = new CBlockStatusDisplay();
-	lcd.addDisplay("[Крот] Дисплей статуса бурения 0", 0, 0);
-	lcd.addDisplay("[Крот] Дисплей статуса бурения 1", 1, 0);
+	lcd.addDisplay("[Земля] Дисплей статуса 0", 0, 0);
+	lcd.addDisplay("[Земля] Дисплей статуса 1", 1, 0);
 	initGroups();
-	return "Отображение статуса бурения"; }
+	return "Отображение статуса базы"; }
 public void main(string argument, UpdateType updateSource) {
-	lcd.showStatus<IMyShipDrill>(drills, 0);
-	lcd.showStatus<IMyPistonBase>(pistons, 1);
-	lcd.showStatus<IMyMotorStator>(rotors, 2);
-	lcd.showStatus<IMyGyro>(gyroscopes, 3); }
+	lcd.showStatus<IMyPowerProducer>(windTurbines, 0);
+	lcd.showStatus<IMyPowerProducer>(h2Engines, 1);
+	lcd.showStatus<IMyShipConnector>(connectors, 2);
+	lcd.showStatus<IMyRefinery>(refineryes, 3);
+	lcd.showStatus<IMyAssembler>(assemblers, 4);
+	lcd.showStatus<IMyGasGenerator>(gasGenerators, 5);
+	lcd.showStatus<IMyCargoContainer>(storageOre, 6);
+	lcd.showStatus<IMyCargoContainer>(storageIngots, 7);
+	lcd.showStatus<IMyCargoContainer>(storageComponents, 8); }

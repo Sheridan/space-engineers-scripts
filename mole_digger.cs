@@ -2,6 +2,7 @@
 // #include classes/display.cs
 // #include helpers/bool.cs
 // #include parts/mole_digger.cs
+// #include classes/angle.cs
 
 public void expandPistons(CBlockGroup<IMyPistonBase> pistons,
                           float length,
@@ -81,15 +82,20 @@ public void playSound(string name)
   soundBlock.Play();
 }
 
-float lastAngle;
-public bool canStep(float angle, float currentAngle, float delta = 1f)
+CAngle nextStepAngle;
+const float stepAtEveryDegree = 100f;
+public void incrementNextStepAngle(CAngle currentAngle)
 {
-  float minAngle = angle - delta;
-  float maxAngle = angle + delta;
-  bool result = currentAngle > minAngle && currentAngle < maxAngle;
-  if (result && lastAngle != angle)
+  nextStepAngle = currentAngle + stepAtEveryDegree;
+  lcd.echo($"Следующий угол шага: {currentAngle.ToString()} -> {nextStepAngle.ToString()}");
+}
+
+public bool canStep(CAngle currentAngle, float delta = 1f)
+{
+  lcd.echo_at($"Осталось до следующего шага: {(nextStepAngle - currentAngle).ToString()}", 0);
+  if ((nextStepAngle - currentAngle) <= delta)
   {
-    lastAngle = angle;
+    incrementNextStepAngle(currentAngle + delta);
     return true;
   }
   return false;
@@ -105,6 +111,8 @@ const float pistonDrillForce = 1000000f;
 const float pistonUpForce = 500000f;
 const int pistonsInStack = 3;
 
+const float gyroscopeMaxPR = 0.01f;
+
 float maxDrillLength;
 float pistonStep;
 
@@ -115,12 +123,13 @@ public string program()
   Runtime.UpdateFrequency = UpdateFrequency.Update100;
   autoHorizont = GridTerminalSystem.GetBlockWithName("[Крот] ПрБ Атоматический горизонт") as IMyProgrammableBlock;
   pistonStep = blockSize;
-  maxDrillLength = pistonStep*11;
+  maxDrillLength = pistonStep*10;
   lcd = new CDisplay();
   lcd.addDisplay("[Крот] Дисплей логов бурения 0", 0, 0);
   lcd.addDisplay("[Крот] Дисплей логов бурения 1", 1, 0);
   initGroups();
   soundBlock = GridTerminalSystem.GetBlockWithName("[Крот] Динамик") as IMySoundBlock;
+  nextStepAngle = new CAngle(0);
   return "Управление бурением";
 }
 
@@ -131,8 +140,16 @@ public void main(string argument, UpdateType updateSource)
     IMyMotorStator rotor = rotors.blocks()[0];
     if(rotor.TargetVelocityRPM > 0f)
     {
-      float currentAngle = rotor.Angle * 180 / (float)Math.PI;
-      if (canStep(10f, currentAngle) || canStep(130f, currentAngle) || canStep(250f, currentAngle))
+      float pitch = 0;
+      float roll = 0;
+      foreach (IMyGyro gyroscope in gyroscopes.blocks())
+      {
+        pitch += Math.Abs(gyroscope.Pitch);
+        roll  += Math.Abs(gyroscope.Roll);
+      }
+      if(!pauseWork(pitch/gyroscopes.count() > gyroscopeMaxPR ||
+                    roll /gyroscopes.count() > gyroscopeMaxPR)    &&
+          canStep(CAngle.fromRad(rotor.Angle)))
       {
         bool pistonsAtMaxLength = true;
         foreach (IMyPistonBase piston in pistons.blocks())
@@ -199,8 +216,22 @@ public void stopWork()
 
 public void startWork()
 {
+  workPaused = false;
+  incrementNextStepAngle(CAngle.fromRad(rotors.blocks()[0].Angle));
   turnDrills(true);
   turnRotors(true);
   autoHorizont.TryRun("start");
   // pistonsStep();
+}
+
+bool workPaused;
+public bool pauseWork(bool wait)
+{
+  if(workPaused != wait)
+  {
+    turnDrills(!wait);
+    turnRotors(!wait);
+    workPaused = wait;
+  }
+  return wait;
 }

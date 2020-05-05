@@ -45,17 +45,27 @@ class CShipController
     m_autoHorizontGyroscopes = null;
   }
 
+  private void applyGyroOverride(double yaw, double roll, double pitch)
+  {
+    Vector3D relRotVector = Vector3D.TransformNormal(new Vector3D(-pitch, yaw, roll),
+                                                            m_controller.WorldMatrix);
+    foreach (IMyGyro gyroscope in m_autoHorizontGyroscopes.blocks())
+    {
+      Vector3D transRotVector = Vector3D.TransformNormal(relRotVector, Matrix.Transpose(gyroscope.WorldMatrix));
+      gyroscope.Yaw = (float)transRotVector.Y;
+      gyroscope.Roll = (float)transRotVector.Z;
+      gyroscope.Pitch = (float)transRotVector.X;
+    }
+  }
+
   public void autoHorizont(float yaw)
   {
     if(!autoHorizontIsEnabled()) { return; }
     Vector3D normGravity = Vector3D.Normalize(m_controller.GetNaturalGravity());
-    foreach(IMyGyro gyroscope in m_autoHorizontGyroscopes.blocks())
-    {
-      gyroscope.Yaw   = yaw;
-      gyroscope.Roll  = (float)-normGravity.Dot(m_controller.WorldMatrix.Left);
-      gyroscope.Pitch = (float) normGravity.Dot(m_controller.WorldMatrix.Forward);
-    }
-  }
+    applyGyroOverride(yaw,
+                     (float)normGravity.Dot(m_controller.WorldMatrix.Left),
+                     (float)normGravity.Dot(m_controller.WorldMatrix.Forward));
+   }
 
   public bool autoHorizontIsEnabled() { return m_autoHorizontGyroscopes != null; }
 

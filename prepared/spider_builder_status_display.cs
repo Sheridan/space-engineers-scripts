@@ -74,7 +74,7 @@ public class CBlockStatusDisplay : CDisplay {
 			if(block.IsWorking) { wOn++; } }
 		result += $"PFW: {pOn}:{fOn}:{wOn} ";
 		if(powerMaxConsumed > 0) {
-			result += $"Consuming (now,max): {toHumanReadable(powerConsumed, EHRUnit.Power)}:{toHumanReadable(powerMaxConsumed, EHRUnit.Power)} "; }
+			result += $"Consuming (now,max): {toHumanReadable(powerConsumed, "Вт")}:{toHumanReadable(powerMaxConsumed, "Вт")} "; }
 		return result; }
 	private string getRotorsStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
 		if(!group.isAssignable<IMyMotorStator>()) { return ""; }
@@ -89,8 +89,7 @@ public class CBlockStatusDisplay : CDisplay {
 				 + $"RPM: {string.Join(":", rpm)} ";
 		return result; }
 	private string getInvertoryesStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
-		long volume = 0;
-		long volumeMax = 0;
+		int volume = 0;
 		int mass = 0;
 		int items = 0;
 		int inventoryes = 0;
@@ -101,12 +100,10 @@ public class CBlockStatusDisplay : CDisplay {
 				for(int i = 0; i < inventoryes; i++) {
 					inventory = block.GetInventory(i);
 					volume += inventory.CurrentVolume.ToIntSafe();
-					volumeMax += inventory.MaxVolume.ToIntSafe();
 					mass += inventory.CurrentMass.ToIntSafe();
 					items += inventory.ItemCount; } } }
 		if(inventoryes > 0) {
-			mass *= 1000;
-			return $"VMI: ({toHumanReadable(volume, EHRUnit.Volume)}:{toHumanReadable(volumeMax, EHRUnit.Volume)}):{toHumanReadable(mass, EHRUnit.Mass)}:{toHumanReadable(items)} from {inventoryes} "; }
+			return $"VMI: {toHumanReadable(volume, "Л")}:{toHumanReadable(mass, "Кг")}:{toHumanReadable(items)} from {inventoryes} "; }
 		return ""; }
 	private string getPistonsStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
 		if(!group.isAssignable<IMyPistonBase>()) { return ""; }
@@ -188,7 +185,7 @@ public class CBlockStatusDisplay : CDisplay {
 			CBlockPowerInfo pInfo = new CBlockPowerInfo(block);
 			currentOutput += pInfo.currentProduce();
 			maxOutput += pInfo.maxProduce(); }
-		result += $"Ген. энергии (now:max): {toHumanReadable(currentOutput, EHRUnit.Power)}:{toHumanReadable(maxOutput, EHRUnit.Power)} ";
+		result += $"Ген. энергии (now:max): {toHumanReadable(currentOutput, "Вт")}:{toHumanReadable(maxOutput, "Вт")} ";
 		return result; }
 	public void showStatus<T>(CBlocksBase<T> group, int position) where T : class, IMyTerminalBlock {
 		string result = $"[{group.subtypeName()}] {group.purpose()} ";
@@ -380,34 +377,28 @@ public class CBlockPowerInfo {
 	MyResourceSinkComponent m_blockSinkComponent;
 	IMyTerminalBlock m_block;
 	private static readonly MyDefinitionId Electricity = MyDefinitionId.Parse("MyObjectBuilder_GasProperties/Electricity"); }
-public enum EHRUnit {
-	None,
-	Mass,
-	Volume,
-	Power }
-public static string hrSuffix(EHRUnit unit) {
-	switch(unit) {
-	case EHRUnit.None : return "шт.";
-	case EHRUnit.Mass : return "г.";
-	case EHRUnit.Volume: return "м³";
-	case EHRUnit.Power : return "Вт."; }
-	return ""; }
-public static string toHumanReadable(float value, EHRUnit unit = EHRUnit.None) {
-	string suffix = hrSuffix(unit);
-	if(value < 1000) { return $"{value}{suffix}"; }
-	int exp = (int)(Math.Log(value) / Math.Log(1000));
+public static string toHumanReadable(float value, string suffix = "") {
+	if(value < 1000) {
+		return $"{value}{suffix}"; }
+	var exp = (int)(Math.Log(value) / Math.Log(1000));
 	return $"{value / Math.Pow(1000, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; // "kMGTPE" "кМГТПЭ"
 }
-public CBlockGroup<IMyShipDrill> drills;
-public CBlockGroup<IMyPistonBase> pistons;
-public CBlockGroup<IMyMotorStator> rotors;
-public CBlockGroup<IMyGyro> gyroscopes;
-const float drillRPM = 0.005f;
+public CBlockGroup<IMyShipMergeBlock> weldersMergers;
+public CBlockGroup<IMyPistonBase> weldersMergersPistons;
+public CBlockGroup<IMyShipMergeBlock> supportMergers;
+public CBlockGroup<IMyPistonBase> supportMergersPistons;
+public CBlockGroup<IMyShipConnector> mainConnectors;
+public CBlockGroup<IMyPistonBase> mainPistons;
+public CBlockGroup<IMyShipWelder> welders;
+public CBlockGroup<IMyProjector> projectors;
 public void initGroups() {
-	rotors = new CBlockGroup<IMyMotorStator>("[Крот] Роторы буров", "Роторы");
-	drills = new CBlockGroup<IMyShipDrill>("[Крот] Буры", "Буры");
-	pistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни буров", "Поршни");
-	gyroscopes = new CBlockGroup<IMyGyro>("[Крот] Гироскопы бура", "Гироскопы автогоризонта"); }
+	weldersMergers = new CBlockGroup<IMyShipMergeBlock>("[Паук] Соединители верхней опоры", "СВО");
+	weldersMergersPistons = new CBlockGroup<IMyPistonBase>("[Паук] Поршни соединителей верхней опоры", "Поршни СВО");
+	supportMergers = new CBlockGroup<IMyShipMergeBlock>("[Паук] Соединители нижней опоры", "СНО");
+	supportMergersPistons = new CBlockGroup<IMyPistonBase>("[Паук] Поршни соединителей нижней опоры", "Поршни СНО");
+	mainPistons = new CBlockGroup<IMyPistonBase>("[Паук] Поршни хода", "Поршни хода");
+	welders = new CBlockGroup<IMyShipWelder>("[Паук] Сварщики", "Сварщики");
+	projectors = new CBlockGroup<IMyProjector>("[Паук] Проекторы", "Проекторы"); }
 public class CBlockGroup<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
 	public CBlockGroup(string groupName,
 					 string purpose = "",
@@ -425,12 +416,15 @@ CBlockStatusDisplay lcd;
 public string program() {
 	Runtime.UpdateFrequency = UpdateFrequency.Update100;
 	lcd = new CBlockStatusDisplay();
-	lcd.addDisplay("[Крот] Дисплей статуса бурения 0", 0, 0);
-	lcd.addDisplay("[Крот] Дисплей статуса бурения 1", 1, 0);
+	lcd.addDisplay("[Паук] Дисплей статуса строительства 0", 0, 0);
+	lcd.addDisplay("[Паук] Дисплей статуса строительства 1", 1, 0);
 	initGroups();
-	return "Отображение статуса бурения"; }
+	return "Отображение статуса строительства"; }
 public void main(string argument, UpdateType updateSource) {
-	lcd.showStatus<IMyShipDrill>(drills, 0);
-	lcd.showStatus<IMyPistonBase>(pistons, 1);
-	lcd.showStatus<IMyMotorStator>(rotors, 2);
-	lcd.showStatus<IMyGyro>(gyroscopes, 3); }
+	lcd.showStatus<IMyShipMergeBlock>(weldersMergers, 0);
+	lcd.showStatus<IMyPistonBase>(weldersMergersPistons, 1);
+	lcd.showStatus<IMyShipMergeBlock>(supportMergers, 2);
+	lcd.showStatus<IMyPistonBase>(supportMergersPistons, 3);
+	lcd.showStatus<IMyPistonBase>(mainPistons, 4);
+	lcd.showStatus<IMyShipWelder>(welders, 5);
+	lcd.showStatus<IMyProjector>(projectors, 6); }

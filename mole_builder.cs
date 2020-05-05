@@ -409,7 +409,7 @@ const float mainPistonsMaxLength = structureHeight + blockHeight;
 const float connPistonsExpandVelocity = 1f;
 const float connPistonsRetractVelocity = 2f;
 
-const string componentsContainerName = "[Крот] БК";
+const string componentsContainerName = "[Крот] БК 0";
 const string componentsSourceContainersGroupName = "[Земля] БК Компоненты";
 const string soundBlockName = "[Крот] Динамик";
 
@@ -428,41 +428,12 @@ public string program()
   return "Управление строительством тоннеля";
 }
 
-// public void dis()
-// {
-//   Wakeup();
-//   turnMergers(supportMergers, false);
-//   retractPistons(supportMergersPistons, 0f, connPistonsRetractVelocity);
-//   // turnMergers(weldersMergers, false);
-//   // retractPistons(weldersMergersPistons, 0f, connPistonsRetractVelocity);
-
-//   // turnMergers(logisticMergers, false);
-//   // disconnectConnectors(logisticConnectors);
-//   // retractPistons(logisticPistons, 0f, connPistonsRetractVelocity);
-// }
-
-// public void conn()
-// {
-//   Wakeup();
-//   bool a =
-//     expandPistons(supportMergersPistons, blockHeight - mergeBlockOffset - pistonHeadLength, connPistonsExpandVelocity) &&
-//     turnMergers(supportMergers, true);
-//   // bool a =
-//   //   expandPistons(weldersMergersPistons, blockHeight - mergeBlockOffset - pistonHeadLength, connPistonsExpandVelocity) &&
-//   //   turnMergers(weldersMergers, true);
-
-//   // bool a = expandPistons(logisticPistons, blockHeight - mergeBlockOffset - pistonHeadLength, connPistonsExpandVelocity) &&
-//   // turnMergers(logisticMergers, true) &&
-//   // connectConnectors(logisticConnectors);
-// }
 
 public void main(string argument, UpdateType updateSource)
 {
   if (waiter != null && waiter.waiting()) { return; }
   // wait(60);
   if (argument == "go") { workState = EWorkState.Wakeup; return; }
-  // if (argument == "dis") { dis(); return; }
-  // if (argument == "conn") { conn(); return; }
   bool result = false;
   switch (workState)
   {

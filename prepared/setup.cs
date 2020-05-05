@@ -60,15 +60,15 @@ public class CBlocks<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
 	public void refresh(bool loadOnlySameGrid = true) {
 		clear();
 		if(loadOnlySameGrid) { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
-		else                  { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks)                                   ; } } }
+		else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks) ; } } }
 public class CBlocksBase<T> where T : class, IMyTerminalBlock {
 	public CBlocksBase(string purpose = "") {
 		m_blocks = new List<T>();
 		m_purpose = purpose; }
 	public void setup(string name,
-					  bool visibleInTerminal  = false,
-					  bool visibleInInventory = false,
-					  bool visibleInToolBar   = false) {
+					 bool visibleInTerminal = false,
+					 bool visibleInInventory = false,
+					 bool visibleInToolBar = false) {
 		Dictionary<string, int> counetrs = new Dictionary<string, int>();
 		string zeros = new string('0', count().ToString().Length);
 		foreach(T block in m_blocks) {
@@ -80,13 +80,13 @@ public class CBlocksBase<T> where T : class, IMyTerminalBlock {
 			block.CustomName = $"[{structureName}] {name}{realPurpose}{counetrs[realPurpose].ToString(zeros)}";
 			counetrs[realPurpose]++;
 			setupBlocksVisibility(block,
-								  options.getValue("generic", "visibleInTerminal", visibleInTerminal),
-								  options.getValue("generic", "visibleInInventory", visibleInInventory),
-								  options.getValue("generic", "visibleInToolBar", visibleInToolBar)); } }
+								 options.getValue("generic", "visibleInTerminal", visibleInTerminal),
+								 options.getValue("generic", "visibleInInventory", visibleInInventory),
+								 options.getValue("generic", "visibleInToolBar", visibleInToolBar)); } }
 	private void setupBlocksVisibility(T block,
-									   bool vTerminal,
-									   bool vInventory,
-									   bool vToolBar) {
+									 bool vTerminal,
+									 bool vInventory,
+									 bool vToolBar) {
 		block.ShowInTerminal = vTerminal;
 		block.ShowInToolbarConfig = vToolBar;
 		if(block.HasInventory) { block.ShowInInventory = vInventory; } }
@@ -103,16 +103,16 @@ public class CBlocksBase<T> where T : class, IMyTerminalBlock {
 	private string m_purpose; }
 public class CBlockGroup<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
 	public CBlockGroup(string groupName,
-					   string purpose = "",
-					   bool loadOnlySameGrid = true) : base(purpose) {
+					 string purpose = "",
+					 bool loadOnlySameGrid = true) : base(purpose) {
 		m_groupName = groupName;
 		refresh(loadOnlySameGrid); }
 	public void refresh(bool loadOnlySameGrid = true) {
 		clear();
 		IMyBlockGroup group = self.GridTerminalSystem.GetBlockGroupWithName(m_groupName);
 		if(loadOnlySameGrid) { group.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
-		else                  { group.GetBlocksOfType<T>(m_blocks)                                   ; } }
-	public string  groupName() { return m_groupName; }
+		else { group.GetBlocksOfType<T>(m_blocks) ; } }
+	public string groupName() { return m_groupName; }
 	private string m_groupName; }
 public class CBlocksTyped<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
 	public CBlocksTyped(string subTypeName,
@@ -125,13 +125,13 @@ public class CBlocksTyped<T> : CBlocksBase<T> where T : class, IMyTerminalBlock 
 		if(loadOnlySameGrid) {
 			self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => (x.IsSameConstructAs(self.Me) &&
 					x.BlockDefinition.SubtypeId.Contains(m_subTypeName))); }
-		else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x =>  x.BlockDefinition.SubtypeId.Contains(m_subTypeName)); } }
+		else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.BlockDefinition.SubtypeId.Contains(m_subTypeName)); } }
 	public string subTypeName() { return m_subTypeName; }
 	private string m_subTypeName; }
-public string program() {
-	return "Настройка"; }
+public string program() { return "Настройка структуры"; }
 public void main(string argument, UpdateType updateSource) {
 	(new CBlocks<IMyBatteryBlock> ()).setup("Батарея");
+	(new CBlocks<IMySolarPanel> ()).setup("С.Батарея");
 	(new CBlocks<IMyRemoteControl> ()).setup("Д.У.");
 	(new CBlocks<IMyOreDetector> ()).setup("Детектор руды");
 	(new CBlocks<IMyLandingGear> ()).setup("Шасси");
@@ -143,19 +143,30 @@ public void main(string argument, UpdateType updateSource) {
 	(new CBlocks<IMyGasGenerator> ()).setup("H2:O2 Генератор");
 	(new CBlocks<IMyShipMergeBlock>()).setup("Соединитель");
 	(new CBlocks<IMyRefinery> ()).setup("Очистительный завод");
-	(new CBlocksTyped<IMyPowerProducer> ("HydrogenEngine"))        .setup("H2 Электрогенератор");
-	(new CBlocksTyped<IMyPowerProducer> ("WindTurbine"))           .setup("Ветрогенератор");
-	(new CBlocksTyped<IMyReflectorLight>("FrontLight"))            .setup("Прожектор");
+	(new CBlocks<IMyMedicalRoom> ()).setup("Медпост");
+	(new CBlocksTyped<IMyPowerProducer> ("HydrogenEngine")) .setup("H2 Электрогенератор");
+	(new CBlocksTyped<IMyPowerProducer> ("WindTurbine")) .setup("Ветрогенератор");
 	(new CBlocksTyped<IMyThrust> ("LargeAtmosphericThrust")).setup("Б.А.У.");
 	(new CBlocksTyped<IMyThrust> ("SmallAtmosphericThrust")).setup("А.У.");
-	(new CBlocksTyped<IMyThrust> ("LargeHydrogenThrust"))   .setup("Б.В.У.");
-	(new CBlocksTyped<IMyThrust> ("SmallHydrogenThrust"))   .setup("В.У.");
-	(new CBlocksTyped<IMyGasTank> ("OxygenTankSmall"))       .setup("Бак O2", false, true);
-	(new CBlocksTyped<IMyGasTank> ("HydrogenTank"))          .setup("Б.Бак H2", false, true);
-	(new CBlocksTyped<IMyGasTank> ("HydrogenTankSmall"))     .setup("Бак H2", false, true);
-	(new CBlocksTyped<IMyCargoContainer>("SmallContainer"))        .setup("МК", false, true);
-	(new CBlocksTyped<IMyCargoContainer>("MediumContainer"))       .setup("СК", false, true);
-	(new CBlocksTyped<IMyCargoContainer>("LargeContainer"))        .setup("БК", false, true);
-	(new CBlocksTyped<IMyUpgradeModule> ("ProductivityModule"))    .setup("Модуль Продуктивности");
-	(new CBlocksTyped<IMyUpgradeModule> ("EffectivenessModule"))   .setup("Модуль Эффективности");
-	(new CBlocksTyped<IMyUpgradeModule> ("EnergyModule"))          .setup("Модуль Энергоэффективности"); }
+	(new CBlocksTyped<IMyThrust> ("LargeHydrogenThrust")) .setup("Б.В.У.");
+	(new CBlocksTyped<IMyThrust> ("SmallHydrogenThrust")) .setup("В.У.");
+	(new CBlocksTyped<IMyGasTank> ("OxygenTankSmall")) .setup("Бак O2", false, true);
+	(new CBlocksTyped<IMyGasTank> ("HydrogenTank")) .setup("Б.Бак H2", false, true);
+	(new CBlocksTyped<IMyGasTank> ("HydrogenTankSmall")) .setup("Бак H2", false, true);
+	(new CBlocksTyped<IMyCargoContainer>("SmallContainer")) .setup("МК", false, true);
+	(new CBlocksTyped<IMyCargoContainer>("MediumContainer")) .setup("СК", false, true);
+	(new CBlocksTyped<IMyCargoContainer>("LargeContainer")) .setup("БК", false, true);
+	(new CBlocksTyped<IMyUpgradeModule> ("ProductivityModule")) .setup("Модуль Продуктивности");
+	(new CBlocksTyped<IMyUpgradeModule> ("EffectivenessModule")) .setup("Модуль Эффективности");
+	(new CBlocksTyped<IMyUpgradeModule> ("EnergyModule")) .setup("Модуль Энергоэффективности");
+	(new CBlocksTyped<IMyInteriorLight> ("SmallLight")) .setup("Лампа");
+	(new CBlocksTyped<IMyInteriorLight> ("Light_1corner")) .setup("Угл. Лампа");
+	(new CBlocksTyped<IMyInteriorLight> ("Light_2corner")) .setup("2хУгл. Лампа");
+	(new CBlocksTyped<IMyReflectorLight>("FrontLight")) .setup("Прожектор");
+	(new CBlocksTyped<IMyReflectorLight>("RotatingLight")) .setup("Вр. прожектор");
+	(new CBlocksTyped<IMyMotorSuspension>("Suspension1x1")) .setup("Колесо 1x1 правое");
+	(new CBlocksTyped<IMyMotorSuspension>("Suspension3x3")) .setup("Колесо 3x3 правое");
+	(new CBlocksTyped<IMyMotorSuspension>("Suspension5x5")) .setup("Колесо 5x5 правое");
+	(new CBlocksTyped<IMyMotorSuspension>("Suspension1x1mirrored")).setup("Колесо 1x1 левое");
+	(new CBlocksTyped<IMyMotorSuspension>("Suspension3x3mirrored")).setup("Колесо 3x3 левое");
+	(new CBlocksTyped<IMyMotorSuspension>("Suspension5x5mirrored")).setup("Колесо 5x5 левое"); }

@@ -9,7 +9,7 @@ CShipController controller;
 public string program()
 {
   Runtime.UpdateFrequency = UpdateFrequency.Update100;
-  controller = new CShipController("[Крот] Д.У. Буров");
+  controller = new CShipController("[Крот] Д.У. Буры 0");
   initGroups();
   return "Атоматический горизонт";
 }

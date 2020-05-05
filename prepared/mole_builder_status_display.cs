@@ -56,27 +56,15 @@ public class CBlockOptions {
 	private MyIni m_ini; }
 public class CBlockStatusDisplay : CDisplay {
 	public CBlockStatusDisplay() : base() {}
-	private string getFunctionaBlocksStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
+	private string getFunctionaBlocksStatus<T>(CBlockGroup<T> group) where T : class, IMyTerminalBlock {
 		if(!group.isAssignable<IMyFunctionalBlock>()) { return ""; }
 		string result = "";
 		int pOn = 0;
-		int fOn = 0;
-		int wOn = 0;
-		float powerConsumed = 0f;
-		float powerMaxConsumed = 0f;
 		foreach(IMyFunctionalBlock block in group.blocks()) {
-			if(block.Enabled) {
-				pOn++;
-				CBlockPowerInfo pInfo = new CBlockPowerInfo(block);
-				powerConsumed += pInfo.currentConsume();
-				powerMaxConsumed += pInfo.maxConsume(); }
-			if(block.IsFunctional) { fOn++; }
-			if(block.IsWorking) { wOn++; } }
-		result += $"PFW: {pOn}:{fOn}:{wOn} ";
-		if(powerMaxConsumed > 0) {
-			result += $"Consuming (now,max): {toHumanReadable(powerConsumed, EHRUnit.Power)}:{toHumanReadable(powerMaxConsumed, EHRUnit.Power)} "; }
+			if(block.Enabled) { pOn++; } }
+		result += $"Power: {pOn} ";
 		return result; }
-	private string getRotorsStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
+	private string getRotorsStatus<T>(CBlockGroup<T> group) where T : class, IMyTerminalBlock {
 		if(!group.isAssignable<IMyMotorStator>()) { return ""; }
 		string result = "";
 		List<string> rpm = new List<string>();
@@ -88,27 +76,21 @@ public class CBlockStatusDisplay : CDisplay {
 		result += $"Angle: {string.Join(":", angle)} "
 				 + $"RPM: {string.Join(":", rpm)} ";
 		return result; }
-	private string getInvertoryesStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
-		long volume = 0;
-		long volumeMax = 0;
+	private string getDrillsStatus<T>(CBlockGroup<T> group) where T : class, IMyTerminalBlock {
+		if(!group.isAssignable<IMyShipDrill>()) { return ""; }
+		string result = "";
+		IMyInventory inventory;
+		int volume = 0;
 		int mass = 0;
 		int items = 0;
-		int inventoryes = 0;
-		foreach(IMyTerminalBlock block in group.blocks()) {
-			if(block.HasInventory) {
-				IMyInventory inventory;
-				inventoryes = block.InventoryCount;
-				for(int i = 0; i < inventoryes; i++) {
-					inventory = block.GetInventory(i);
-					volume += inventory.CurrentVolume.ToIntSafe();
-					volumeMax += inventory.MaxVolume.ToIntSafe();
-					mass += inventory.CurrentMass.ToIntSafe();
-					items += inventory.ItemCount; } } }
-		if(inventoryes > 0) {
-			mass *= 1000;
-			return $"VMI: ({toHumanReadable(volume, EHRUnit.Volume)}:{toHumanReadable(volumeMax, EHRUnit.Volume)}):{toHumanReadable(mass, EHRUnit.Mass)}:{toHumanReadable(items)} from {inventoryes} "; }
-		return ""; }
-	private string getPistonsStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
+		foreach(IMyShipDrill block in group.blocks()) {
+			inventory = block.GetInventory();
+			volume += inventory.CurrentVolume.ToIntSafe();
+			mass += inventory.CurrentMass.ToIntSafe();
+			items += inventory.ItemCount; }
+		result += $"VMI: {toHumanReadable(volume, "Л")}:{toHumanReadable(mass, "Кг")}:{toHumanReadable(items)} ";
+		return result; }
+	private string getPistonsStatus<T>(CBlockGroup<T> group) where T : class, IMyTerminalBlock {
 		if(!group.isAssignable<IMyPistonBase>()) { return ""; }
 		string result = "";
 		List<string> positions = new List<string>();
@@ -128,19 +110,19 @@ public class CBlockStatusDisplay : CDisplay {
 		result += $"SeErR: {statusStopped}:{statusExtending}:{statusExtended}:{statusRetracting}:{statusRetracted} "
 				 + $"Pos: {string.Join(":", positions)} ";
 		return result; }
-	private string getGyroStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
+	private string getGyroStatus<T>(CBlockGroup<T> group) where T : class, IMyTerminalBlock {
 		if(!group.isAssignable<IMyGyro>()) { return ""; }
 		string result = "";
 		float yaw = 0;
 		float pitch = 0;
 		float roll = 0;
 		foreach(IMyGyro block in group.blocks()) {
-			yaw += Math.Abs(block.Yaw);
-			pitch += Math.Abs(block.Pitch);
-			roll += Math.Abs(block.Roll); }
-		result += $"YPR: {yaw/group.count():f4}:{pitch/group.count():f4}:{roll/group.count():f4} ";
+			yaw += block.Yaw;
+			pitch += block.Pitch;
+			roll += block.Roll; }
+		result += $"YPR: {yaw/group.count():f3}:{pitch/group.count():f3}:{roll/group.count():f3} ";
 		return result; }
-	private string getMergersStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
+	private string getMergersStatus<T>(CBlockGroup<T> group) where T : class, IMyTerminalBlock {
 		if(!group.isAssignable<IMyShipMergeBlock>()) { return ""; }
 		string result = "";
 		int connected = 0;
@@ -148,7 +130,7 @@ public class CBlockStatusDisplay : CDisplay {
 			if(block.IsConnected) { connected++; } }
 		result += $"Connected: {connected} ";
 		return result; }
-	private string getConnectorsStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
+	private string getConnectorsStatus<T>(CBlockGroup<T> group) where T : class, IMyTerminalBlock {
 		if(!group.isAssignable<IMyShipConnector>()) { return ""; }
 		string result = "";
 		int statusUnconnected = 0;
@@ -161,7 +143,7 @@ public class CBlockStatusDisplay : CDisplay {
 			case MyShipConnectorStatus.Connected: statusConnected++; break; } }
 		result += $"UcC: {statusUnconnected}:{statusConnectable}:{statusConnected} ";
 		return result; }
-	private string getProjectorsStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
+	private string getProjectorsStatus<T>(CBlockGroup<T> group) where T : class, IMyTerminalBlock {
 		if(!group.isAssignable<IMyProjector>()) { return ""; }
 		string result = "";
 		int projecting = 0;
@@ -179,18 +161,7 @@ public class CBlockStatusDisplay : CDisplay {
 				 + $"T: {string.Join(":", blocksTotal)} "
 				 ;
 		return result; }
-	private string getPowerProducersStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
-		if(!group.isAssignable<IMyPowerProducer>()) { return ""; }
-		string result = "";
-		float currentOutput = 0f;
-		float maxOutput = 0f;
-		foreach(IMyPowerProducer block in group.blocks()) {
-			CBlockPowerInfo pInfo = new CBlockPowerInfo(block);
-			currentOutput += pInfo.currentProduce();
-			maxOutput += pInfo.maxProduce(); }
-		result += $"Ген. энергии (now:max): {toHumanReadable(currentOutput, EHRUnit.Power)}:{toHumanReadable(maxOutput, EHRUnit.Power)} ";
-		return result; }
-	public void showStatus<T>(CBlocksBase<T> group, int position) where T : class, IMyTerminalBlock {
+	public void showStatus<T>(CBlockGroup<T> group, int position) where T : class, IMyTerminalBlock {
 		string result = $"[{group.subtypeName()}] {group.purpose()} ";
 		if(!group.empty()) {
 			result += $"({group.count()}) "
@@ -198,14 +169,13 @@ public class CBlockStatusDisplay : CDisplay {
 					 + getConnectorsStatus<T>(group)
 					 + getMergersStatus<T>(group)
 					 + getProjectorsStatus<T>(group)
+					 + getDrillsStatus<T>(group)
 					 + getRotorsStatus<T>(group)
 					 + getGyroStatus<T>(group)
-					 + getPowerProducersStatus<T>(group)
-					 + getInvertoryesStatus<T>(group)
 					 + getFunctionaBlocksStatus<T>(group)
 					 ; }
 		else {
-			result += "Таких блоков нет"; }
+			result += $" Группа {group.groupName()} пуста"; }
 		echo_at(result, position); } }
 public class CDisplay : CTextSurface {
 	public CDisplay() : base() {
@@ -299,6 +269,48 @@ public class CTextSurface {
 	private float m_padding;
 	private List<string> m_text;
 	private List<List<IMyTextSurface>> m_surfaces; }
+public static string toHumanReadable(float value, string suffix = "") {
+	if(value < 1000) {
+		return $"{value}{suffix}"; }
+	var exp = (int)(Math.Log(value) / Math.Log(1000));
+	return $"{value / Math.Pow(1000, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; // "kMGTPE" "кМГТПЭ"
+}
+public CBlockGroup<IMyShipMergeBlock> weldersMergers;
+public CBlockGroup<IMyPistonBase> weldersMergersPistons;
+public CBlockGroup<IMyShipMergeBlock> supportMergers;
+public CBlockGroup<IMyPistonBase> supportMergersPistons;
+public CBlockGroup<IMyShipMergeBlock> logisticMergers;
+public CBlockGroup<IMyPistonBase> logisticPistons;
+public CBlockGroup<IMyShipConnector> logisticConnectors;
+public CBlockGroup<IMyShipConnector> mainConnectors;
+public CBlockGroup<IMyPistonBase> mainPistons;
+public CBlockGroup<IMyShipWelder> welders;
+public CBlockGroup<IMyProjector> projectors;
+public void initGroups() {
+	weldersMergers = new CBlockGroup<IMyShipMergeBlock>("[Крот] Соединители нижних коннекторов", "НС");
+	weldersMergersPistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни нижних коннекторов", "Поршни НС");
+	supportMergers = new CBlockGroup<IMyShipMergeBlock>("[Крот] Соединители верхних коннекторов", "ВС");
+	supportMergersPistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни верхних коннекторов", "Поршни ВС");
+	logisticMergers = new CBlockGroup<IMyShipMergeBlock>("[Крот] Соединители логистики", "ЛС");
+	logisticPistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни коннекторов", "Поршни ЛС");
+	mainPistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни хода сварки", "Поршни хода");
+	logisticConnectors = new CBlockGroup<IMyShipConnector>("[Крот] Коннекторы логистики", "Коннекторы");
+	mainConnectors = new CBlockGroup<IMyShipConnector>("[Крот] Основные коннекторы ресурсов", "Баз. коннекторы");
+	welders = new CBlockGroup<IMyShipWelder>("[Крот] Сварщики", "Сварщики");
+	projectors = new CBlockGroup<IMyProjector>("[Крот] Проекторы", "Проекторы"); }
+public class CBlockGroup<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
+	public CBlockGroup(string groupName,
+					 string purpose = "",
+					 bool loadOnlySameGrid = true) : base(purpose) {
+		m_groupName = groupName;
+		refresh(loadOnlySameGrid); }
+	public void refresh(bool loadOnlySameGrid = true) {
+		clear();
+		IMyBlockGroup group = self.GridTerminalSystem.GetBlockGroupWithName(m_groupName);
+		if(loadOnlySameGrid) { group.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
+		else { group.GetBlocksOfType<T>(m_blocks) ; } }
+	public string groupName() { return m_groupName; }
+	private string m_groupName; }
 public class CBlocksBase<T> where T : class, IMyTerminalBlock {
 	public CBlocksBase(string purpose = "") {
 		m_blocks = new List<T>();
@@ -339,98 +351,23 @@ public class CBlocksBase<T> where T : class, IMyTerminalBlock {
 	protected void clear() { m_blocks.Clear(); }
 	protected List<T> m_blocks;
 	private string m_purpose; }
-class CBlockUpgrades {
-	public CBlockUpgrades(IMyUpgradableBlock upBlock) {
-		Dictionary<string, float> upgrades = new Dictionary<string, float>();
-		upBlock.GetUpgrades(out upgrades);
-		Effectiveness = upgrades.ContainsKey("Effectiveness") ? upgrades["Effectiveness" ] : 0;
-		Productivity = upgrades.ContainsKey("Productivity") ? upgrades["Productivity" ] : 0;
-		PowerEfficiency = upgrades.ContainsKey("PowerEfficiency") ? upgrades["PowerEfficiency"] : 0; }
-	public float calcPowerUse(float power) {
-		return (power+((power/2)*(Productivity*2)))/(PowerEfficiency > 1 ? (float)Math.Pow(1.2228445f, PowerEfficiency) : 1); }
-	private float Effectiveness;
-	private float Productivity;
-	private float PowerEfficiency; }
-public class CBlockPowerInfo {
-	public CBlockPowerInfo(IMyTerminalBlock block) {
-		m_block = block;
-		m_blockSinkComponent = m_block.Components.Get<MyResourceSinkComponent>(); }
-	public bool canProduce() { return m_block is IMyPowerProducer; }
-	public bool canConsume() {
-		return m_blockSinkComponent != null && m_blockSinkComponent.IsPoweredByType(Electricity); }
-	public float currentProduce() {
-		if(canProduce()) { return (m_block as IMyPowerProducer).CurrentOutput*1000000; }
-		return 0f; }
-	public float maxProduce() {
-		if(canProduce()) { return (m_block as IMyPowerProducer).MaxOutput*1000000; }
-		return 0f; }
-	public float currentConsume() {
-		if(canConsume()) {
-			float result = m_blockSinkComponent.CurrentInputByType(Electricity);
-			return result * 1000000; }
-		return 0f; }
-	public float maxConsume() {
-		if(canConsume()) {
-			float result = m_blockSinkComponent.MaxRequiredInputByType(Electricity);
-			if(m_block is IMyAssembler || m_block is IMyRefinery) {
-				CBlockUpgrades upgrades = new CBlockUpgrades(m_block as IMyUpgradableBlock);
-				upgrades.calcPowerUse(result); }
-			return result * 1000000; }
-		return 0f; }
-	MyResourceSinkComponent m_blockSinkComponent;
-	IMyTerminalBlock m_block;
-	private static readonly MyDefinitionId Electricity = MyDefinitionId.Parse("MyObjectBuilder_GasProperties/Electricity"); }
-public enum EHRUnit {
-	None,
-	Mass,
-	Volume,
-	Power }
-public static string hrSuffix(EHRUnit unit) {
-	switch(unit) {
-	case EHRUnit.None : return "шт.";
-	case EHRUnit.Mass : return "г.";
-	case EHRUnit.Volume: return "м³";
-	case EHRUnit.Power : return "Вт."; }
-	return ""; }
-public static string toHumanReadable(float value, EHRUnit unit = EHRUnit.None) {
-	string suffix = hrSuffix(unit);
-	if(value < 1000) { return $"{value}{suffix}"; }
-	int exp = (int)(Math.Log(value) / Math.Log(1000));
-	return $"{value / Math.Pow(1000, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; // "kMGTPE" "кМГТПЭ"
-}
-public CBlockGroup<IMyShipDrill> drills;
-public CBlockGroup<IMyPistonBase> pistons;
-public CBlockGroup<IMyMotorStator> rotors;
-public CBlockGroup<IMyGyro> gyroscopes;
-const float drillRPM = 0.005f;
-public void initGroups() {
-	rotors = new CBlockGroup<IMyMotorStator>("[Крот] Роторы буров", "Роторы");
-	drills = new CBlockGroup<IMyShipDrill>("[Крот] Буры", "Буры");
-	pistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни буров", "Поршни");
-	gyroscopes = new CBlockGroup<IMyGyro>("[Крот] Гироскопы бура", "Гироскопы автогоризонта"); }
-public class CBlockGroup<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
-	public CBlockGroup(string groupName,
-					 string purpose = "",
-					 bool loadOnlySameGrid = true) : base(purpose) {
-		m_groupName = groupName;
-		refresh(loadOnlySameGrid); }
-	public void refresh(bool loadOnlySameGrid = true) {
-		clear();
-		IMyBlockGroup group = self.GridTerminalSystem.GetBlockGroupWithName(m_groupName);
-		if(loadOnlySameGrid) { group.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
-		else { group.GetBlocksOfType<T>(m_blocks) ; } }
-	public string groupName() { return m_groupName; }
-	private string m_groupName; }
 CBlockStatusDisplay lcd;
 public string program() {
 	Runtime.UpdateFrequency = UpdateFrequency.Update100;
 	lcd = new CBlockStatusDisplay();
-	lcd.addDisplay("[Крот] Дисплей статуса бурения 0", 0, 0);
-	lcd.addDisplay("[Крот] Дисплей статуса бурения 1", 1, 0);
+	lcd.addDisplay("[Крот] Дисплей статуса строительства 0", 0, 0);
+	lcd.addDisplay("[Крот] Дисплей статуса строительства 1", 1, 0);
 	initGroups();
-	return "Отображение статуса бурения"; }
+	return "Отображение статуса строительства"; }
 public void main(string argument, UpdateType updateSource) {
-	lcd.showStatus<IMyShipDrill>(drills, 0);
-	lcd.showStatus<IMyPistonBase>(pistons, 1);
-	lcd.showStatus<IMyMotorStator>(rotors, 2);
-	lcd.showStatus<IMyGyro>(gyroscopes, 3); }
+	lcd.showStatus<IMyShipMergeBlock>(weldersMergers, 0);
+	lcd.showStatus<IMyPistonBase>(weldersMergersPistons, 1);
+	lcd.showStatus<IMyShipMergeBlock>(supportMergers, 2);
+	lcd.showStatus<IMyPistonBase>(supportMergersPistons, 3);
+	lcd.showStatus<IMyShipMergeBlock>(logisticMergers, 4);
+	lcd.showStatus<IMyPistonBase>(logisticPistons, 5);
+	lcd.showStatus<IMyPistonBase>(mainPistons, 6);
+	lcd.showStatus<IMyShipConnector>(logisticConnectors, 7);
+	lcd.showStatus<IMyShipConnector>(mainConnectors, 8);
+	lcd.showStatus<IMyShipWelder>(welders, 9);
+	lcd.showStatus<IMyProjector>(projectors, 10); }

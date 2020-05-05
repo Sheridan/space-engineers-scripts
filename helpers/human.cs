@@ -1,10 +1,26 @@
-public static string toHumanReadable(float value, string suffix = "")
+public enum EHRUnit
 {
-  if (value < 1000)
+  None,
+  Mass,
+  Volume,
+  Power
+}
+public static string hrSuffix(EHRUnit unit)
+{
+  switch (unit)
   {
-    return $"{value}{suffix}";
+    case EHRUnit.None  : return "шт.";
+    case EHRUnit.Mass  : return "г.";
+    case EHRUnit.Volume: return "м³";
+    case EHRUnit.Power : return "Вт.";
   }
-  var exp = (int)(Math.Log(value) / Math.Log(1000));
+  return "";
+}
+public static string toHumanReadable(float value, EHRUnit unit = EHRUnit.None)
+{
+  string suffix = hrSuffix(unit);
+  if(value < 1000) { return $"{value}{suffix}"; }
+  int exp = (int)(Math.Log(value) / Math.Log(1000));
   return $"{value / Math.Pow(1000, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; // "kMGTPE" "кМГТПЭ"
 }
 

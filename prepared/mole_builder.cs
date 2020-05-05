@@ -54,6 +54,119 @@ public class CBlockOptions {
 	IMyTerminalBlock m_block;
 	private bool m_available;
 	private MyIni m_ini; }
+public class CWaiter {
+	public CWaiter(CDisplay display) {
+		m_waitTo = 0;
+		m_display = display; }
+	private double getCurrentSecunds() {
+		TimeSpan timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0);
+		return timeSpan.TotalSeconds; }
+	public void wait(double seconds) {
+		m_display.echo($"Ждём {seconds:f2} сек.");
+		m_waitTo = seconds + getCurrentSecunds(); }
+	public double leftWaitSecunds() {
+		return m_waitTo - getCurrentSecunds(); }
+	public bool waiting() {
+		if(m_waitTo > 0 && leftWaitSecunds() > 0) {
+			m_display.echo_last($"Ожидание. Осталось {leftWaitSecunds():f2} сек.");
+			return true; }
+		m_display.echo_last("Ожидание окончено");
+		m_waitTo = 0;
+		return false; }
+	private double m_waitTo;
+	private CDisplay m_display; }
+public class CDisplay : CTextSurface {
+	public CDisplay() : base() {
+		m_initialized = false; }
+	private void initSize(IMyTextPanel display) {
+		if(!m_initialized) {
+			switch(display.BlockDefinition.SubtypeName) {
+			case "LargeLCDPanelWide": setup(0.602f, 28, 87, 0.35f); break;
+			default: setup(1f, 0, 0, 0f); break; } } }
+	public void addDisplay(string name, int x, int y) {
+		IMyTextPanel display = self.GridTerminalSystem.GetBlockWithName(name) as IMyTextPanel;
+		initSize(display);
+		addSurface(display as IMyTextSurface, x, y); }
+	private bool m_initialized; }
+public class CTextSurface {
+	public CTextSurface() {
+		m_text = new List<string>();
+		m_surfaces = new List<List<IMyTextSurface>>(); }
+	public void setSurface(IMyTextSurface surface, float fontSize, int maxLines, int maxColumns, float padding = 0) {
+		setup(fontSize, maxLines, maxColumns, padding);
+		addSurface(surface, 0, 0); }
+	public void addSurface(IMyTextSurface surface, int x, int y) {
+		if(countSurfacesX() <= x) { m_surfaces.Add(new List<IMyTextSurface>()); }
+		if(countSurfacesY(x) <= y) { m_surfaces[x].Add(surface); }
+		else { m_surfaces[x][y] = surface; }
+		setup(); }
+	public void setup(float fontSize, int maxLines, int maxColumns, float padding) {
+		m_fontSize = fontSize;
+		m_maxLines = maxLines;
+		m_maxColumns = maxColumns;
+		m_padding = padding;
+		setup(); }
+	private void setup() {
+		foreach(List<IMyTextSurface> sfList in m_surfaces) {
+			foreach(IMyTextSurface surface in sfList) {
+				surface.ContentType = ContentType.TEXT_AND_IMAGE;
+				surface.Font = "Monospace";
+				surface.FontColor = new Color(255, 255, 255);
+				surface.BackgroundColor = new Color(0, 0, 0);
+				surface.FontSize = m_fontSize;
+				surface.Alignment = TextAlignment.LEFT;
+				surface.TextPadding = m_padding; } }
+		clear(); }
+	public void clear() {
+		foreach(List<IMyTextSurface> sfList in m_surfaces) {
+			foreach(IMyTextSurface surface in sfList) {
+				surface.WriteText("", false); } } }
+	private bool surfaceExists(int x, int y) {
+		return y < countSurfacesY(x); }
+	private bool unknownTypeEcho(string text) {
+		if(m_maxLines == 0 && surfaceExists(0, 0)) { m_surfaces[0][0].WriteText(text + '\n', true); return true; }
+		return false; }
+	private int countSurfacesX() { return m_surfaces.Count; }
+	private int countSurfacesY(int x) { return x < countSurfacesX() ? m_surfaces[x].Count : 0; }
+	public void echo(string text) {
+		if(!unknownTypeEcho(text)) {
+			if(m_text.Count > m_maxLines * countSurfacesY(0)) { m_text.RemoveAt(0); }
+			m_text.Add(text); }
+		echoText(); }
+	public void echo_last(string text) {
+		if(!unknownTypeEcho(text)) {
+			m_text[m_text.Count - 1] = text;
+			echoText(); } }
+	public void echo_at(string text, int lineNum) {
+		if(!unknownTypeEcho(text)) {
+			if(lineNum >= m_text.Count) {
+				for(int i = m_text.Count; i <= lineNum; i++) { m_text.Add("\n"); } }
+			m_text[lineNum] = text;
+			echoText(); } }
+	private void updateSurface(int x, int y) {
+		int minColumn = x * m_maxColumns;
+		int maxColumn = minColumn + m_maxColumns;
+		int minLine = y * m_maxLines + y;
+		int maxLine = minLine + m_maxLines;
+		for(int lineNum = minLine; lineNum <= maxLine; lineNum++) {
+			if(m_text.Count <= lineNum) { break; }
+			string line = m_text[lineNum];
+			int substringLength = line.Length > maxColumn ? m_maxColumns : line.Length - minColumn;
+			if(substringLength > 0) {
+				m_surfaces[x][y].WriteText(line.Substring(minColumn, substringLength) + '\n', true); }
+			else {
+				m_surfaces[x][y].WriteText("\n", true); } } }
+	private void echoText() {
+		clear();
+		for(int x = 0; x < countSurfacesX(); x++) {
+			for(int y = 0; y < countSurfacesY(x); y++) {
+				updateSurface(x, y); } } }
+	private int m_maxLines;
+	private int m_maxColumns;
+	private float m_fontSize;
+	private float m_padding;
+	private List<string> m_text;
+	private List<List<IMyTextSurface>> m_surfaces; }
 public class CRecipe {
 	public CRecipe(string blueprint) { m_blueprint = blueprint; m_sourceItems = new List<CComponentItem>(); }
 	public void addItem(CComponentItem item) { m_sourceItems.Add(item); }
@@ -90,9 +203,9 @@ public class FRecipe {
 		CRecipe recipe = new CRecipe("MyObjectBuilder_ExtendedPistonBase/LargePistonBase");
 		recipe.addItem(FComponentItem.Computer(2 * amount));
 		recipe.addItem(FComponentItem.Motor(4 * amount));
-		recipe.addItem(FComponentItem.LargeTube((8+4) * amount)); // + top
+		recipe.addItem(FComponentItem.LargeTube(4 * amount));
 		recipe.addItem(FComponentItem.Construction(10 * amount));
-		recipe.addItem(FComponentItem.SteelPlate((10+15) * amount)); // + top
+		recipe.addItem(FComponentItem.SteelPlate(15 * amount));
 		return recipe; }
 	static public CRecipe Wheel5x5(int amount = 1) {
 		CRecipe recipe = new CRecipe("MyObjectBuilder_Wheel/Wheel5x5");
@@ -373,108 +486,46 @@ public class FComponentItem {
 	static public CComponentItem Superconductor(int amount = 0) { return new CComponentItem(EItemType.Superconductor, amount); }
 	static public CComponentItem Thrust(int amount = 0) { return new CComponentItem(EItemType.Thrust, amount); }
 	static public CComponentItem ZoneChip(int amount = 0) { return new CComponentItem(EItemType.ZoneChip, amount); } }
-public class CDisplay : CTextSurface {
-	public CDisplay() : base() {
-		m_initialized = false; }
-	private void initSize(IMyTextPanel display) {
-		if(!m_initialized) {
-			switch(display.BlockDefinition.SubtypeName) {
-			case "LargeLCDPanelWide": setup(0.602f, 28, 87, 0.35f); break;
-			default: setup(1f, 0, 0, 0f); break; } } }
-	public void addDisplay(string name, int x, int y) {
-		IMyTextPanel display = self.GridTerminalSystem.GetBlockWithName(name) as IMyTextPanel;
-		initSize(display);
-		addSurface(display as IMyTextSurface, x, y); }
-	private bool m_initialized; }
-public class CTextSurface {
-	public CTextSurface() {
-		m_text = new List<string>();
-		m_surfaces = new List<List<IMyTextSurface>>(); }
-	public void setSurface(IMyTextSurface surface, float fontSize, int maxLines, int maxColumns, float padding = 0) {
-		setup(fontSize, maxLines, maxColumns, padding);
-		addSurface(surface, 0, 0); }
-	public void addSurface(IMyTextSurface surface, int x, int y) {
-		if(countSurfacesX() <= x) { m_surfaces.Add(new List<IMyTextSurface>()); }
-		if(countSurfacesY(x) <= y) { m_surfaces[x].Add(surface); }
-		else { m_surfaces[x][y] = surface; }
-		setup(); }
-	public void setup(float fontSize, int maxLines, int maxColumns, float padding) {
-		m_fontSize = fontSize;
-		m_maxLines = maxLines;
-		m_maxColumns = maxColumns;
-		m_padding = padding;
-		setup(); }
-	private void setup() {
-		foreach(List<IMyTextSurface> sfList in m_surfaces) {
-			foreach(IMyTextSurface surface in sfList) {
-				surface.ContentType = ContentType.TEXT_AND_IMAGE;
-				surface.Font = "Monospace";
-				surface.FontColor = new Color(255, 255, 255);
-				surface.BackgroundColor = new Color(0, 0, 0);
-				surface.FontSize = m_fontSize;
-				surface.Alignment = TextAlignment.LEFT;
-				surface.TextPadding = m_padding; } }
-		clear(); }
-	public void clear() {
-		foreach(List<IMyTextSurface> sfList in m_surfaces) {
-			foreach(IMyTextSurface surface in sfList) {
-				surface.WriteText("", false); } } }
-	private bool surfaceExists(int x, int y) {
-		return y < countSurfacesY(x); }
-	private bool unknownTypeEcho(string text) {
-		if(m_maxLines == 0 && surfaceExists(0, 0)) { m_surfaces[0][0].WriteText(text + '\n', true); return true; }
-		return false; }
-	private int countSurfacesX() { return m_surfaces.Count; }
-	private int countSurfacesY(int x) { return x < countSurfacesX() ? m_surfaces[x].Count : 0; }
-	public void echo(string text) {
-		if(!unknownTypeEcho(text)) {
-			if(m_text.Count > m_maxLines * countSurfacesY(0)) { m_text.RemoveAt(0); }
-			m_text.Add(text); }
-		echoText(); }
-	public void echo_last(string text) {
-		if(!unknownTypeEcho(text)) {
-			m_text[m_text.Count - 1] = text;
-			echoText(); } }
-	public void echo_at(string text, int lineNum) {
-		if(!unknownTypeEcho(text)) {
-			if(lineNum >= m_text.Count) {
-				for(int i = m_text.Count; i <= lineNum; i++) { m_text.Add("\n"); } }
-			m_text[lineNum] = text;
-			echoText(); } }
-	private void updateSurface(int x, int y) {
-		int minColumn = x * m_maxColumns;
-		int maxColumn = minColumn + m_maxColumns;
-		int minLine = y * m_maxLines + y;
-		int maxLine = minLine + m_maxLines;
-		for(int lineNum = minLine; lineNum <= maxLine; lineNum++) {
-			if(m_text.Count <= lineNum) { break; }
-			string line = m_text[lineNum];
-			int substringLength = line.Length > maxColumn ? m_maxColumns : line.Length - minColumn;
-			if(substringLength > 0) {
-				m_surfaces[x][y].WriteText(line.Substring(minColumn, substringLength) + '\n', true); }
-			else {
-				m_surfaces[x][y].WriteText("\n", true); } } }
-	private void echoText() {
-		clear();
-		for(int x = 0; x < countSurfacesX(); x++) {
-			for(int y = 0; y < countSurfacesY(x); y++) {
-				updateSurface(x, y); } } }
-	private int m_maxLines;
-	private int m_maxColumns;
-	private float m_fontSize;
-	private float m_padding;
-	private List<string> m_text;
-	private List<List<IMyTextSurface>> m_surfaces; }
-public class CStoragesGroup : CBlockGroup<IMyCargoContainer> {
-	public CStoragesGroup(string groupName,
-						 string purpose = "") : base(groupName, purpose)
-	{}
-	public int countItems(EItemType itemType) {
-		CComponentItem result = new CComponentItem(itemType);
-		MyItemType miType = result.asMyItemType();
-		foreach(IMyCargoContainer container in blocks()) {
-			result.appendAmount(container.GetInventory().GetItemAmount(miType).ToIntSafe()); }
-		return result.amount(); } }
+public List<T> oddEvenleList<T>(List<T> list) {
+	List<T> result = new List<T>();
+	int n = list.Count;
+	for(int i = 0; i < n; i++) {
+		if(i % 2 == 0) { result.Add(list[i]); }
+		else { result.Insert(0, list[i]); } }
+	return result; }
+public List<T> shuffleList<T>(List<T> list) {
+	Random rng = new Random();
+	int n = list.Count;
+	while(n > 1) {
+		n--;
+		int k = rng.Next(n + 1);
+		T value = list[k];
+		list[k] = list[n];
+		list[n] = value; }
+	return list; }
+public CBlockGroup<IMyShipMergeBlock> weldersMergers;
+public CBlockGroup<IMyPistonBase> weldersMergersPistons;
+public CBlockGroup<IMyShipMergeBlock> supportMergers;
+public CBlockGroup<IMyPistonBase> supportMergersPistons;
+public CBlockGroup<IMyShipMergeBlock> logisticMergers;
+public CBlockGroup<IMyPistonBase> logisticPistons;
+public CBlockGroup<IMyShipConnector> logisticConnectors;
+public CBlockGroup<IMyShipConnector> mainConnectors;
+public CBlockGroup<IMyPistonBase> mainPistons;
+public CBlockGroup<IMyShipWelder> welders;
+public CBlockGroup<IMyProjector> projectors;
+public void initGroups() {
+	weldersMergers = new CBlockGroup<IMyShipMergeBlock>("[Крот] Соединители нижних коннекторов", "НС");
+	weldersMergersPistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни нижних коннекторов", "Поршни НС");
+	supportMergers = new CBlockGroup<IMyShipMergeBlock>("[Крот] Соединители верхних коннекторов", "ВС");
+	supportMergersPistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни верхних коннекторов", "Поршни ВС");
+	logisticMergers = new CBlockGroup<IMyShipMergeBlock>("[Крот] Соединители логистики", "ЛС");
+	logisticPistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни коннекторов", "Поршни ЛС");
+	mainPistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни хода сварки", "Поршни хода");
+	logisticConnectors = new CBlockGroup<IMyShipConnector>("[Крот] Коннекторы логистики", "Коннекторы");
+	mainConnectors = new CBlockGroup<IMyShipConnector>("[Крот] Основные коннекторы ресурсов", "Баз. коннекторы");
+	welders = new CBlockGroup<IMyShipWelder>("[Крот] Сварщики", "Сварщики");
+	projectors = new CBlockGroup<IMyProjector>("[Крот] Проекторы", "Проекторы"); }
 public class CBlockGroup<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
 	public CBlockGroup(string groupName,
 					 string purpose = "",
@@ -528,48 +579,335 @@ public class CBlocksBase<T> where T : class, IMyTerminalBlock {
 	protected void clear() { m_blocks.Clear(); }
 	protected List<T> m_blocks;
 	private string m_purpose; }
-CRecipes recipes;
+public enum EWorkState {
+	Wakeup,
+	DisconnectWelderFoundation,
+	StartWelding,
+	Welding,
+	StopWelding,
+	ConnectWelderFoundation,
+	DisconnectSupportFoundation,
+	StartMoveBase,
+	MoveBase,
+	StopMoveBase,
+	ConnectSupportFoundation,
+	Sleep }
+EWorkState workState;
+public EWorkState getNextState() {
+	switch(workState) {
+	case EWorkState.Wakeup: return EWorkState.DisconnectWelderFoundation;
+	case EWorkState.DisconnectWelderFoundation: return EWorkState.StartWelding;
+	case EWorkState.StartWelding: return EWorkState.Welding;
+	case EWorkState.Welding: return EWorkState.StopWelding;
+	case EWorkState.StopWelding: return EWorkState.ConnectWelderFoundation;
+	case EWorkState.ConnectWelderFoundation: return EWorkState.DisconnectSupportFoundation;
+	case EWorkState.DisconnectSupportFoundation: return EWorkState.StartMoveBase;
+	case EWorkState.StartMoveBase: return EWorkState.MoveBase;
+	case EWorkState.MoveBase: return EWorkState.StopMoveBase;
+	case EWorkState.StopMoveBase: return EWorkState.ConnectSupportFoundation;
+	case EWorkState.ConnectSupportFoundation: return EWorkState.Sleep; }
+	return EWorkState.Sleep; }
+public void switchToNextState() {
+	workState = getNextState();
+	playSound("Security Klaxon");
+	lcd.echo($"Switching to {workState.ToString()}"); }
+public string boolStatusToString(bool val) { return val ? "Готово" : "В процессе"; }
+public float pistonsSensetivity = 0.2f;
+public bool checkPistonPos(float currentPos, float targetPos) {
+	return currentPos <= targetPos + pistonsSensetivity &&
+			currentPos >= targetPos - pistonsSensetivity; }
+public bool expandPistons(CBlockGroup<IMyPistonBase> pistons,
+						 float length,
+						 float velocity,
+						 float stackSize = 1f) {
+	bool result = true;
+	float realLength = (length - pistonHeadLength * stackSize) / stackSize;
+	float realVelocity = velocity / stackSize;
+	float currentPosition = 0;
+	foreach(IMyPistonBase piston in pistons.blocks()) {
+		switch(piston.Status) {
+		case PistonStatus.Stopped:
+		case PistonStatus.Retracted:
+		case PistonStatus.Retracting:
+		case PistonStatus.Extended: {
+			if(piston.CurrentPosition < realLength) {
+				piston.Velocity = realVelocity;
+				piston.MinLimit = 0f;
+				piston.MaxLimit = realLength;
+				piston.Extend(); } }
+		break; }
+		currentPosition += piston.CurrentPosition;
+		result = result && (piston.Status == PistonStatus.Extended ||
+							(piston.Status == PistonStatus.Extending && checkPistonPos(piston.CurrentPosition, realLength))); }
+	currentPosition = currentPosition / pistons.count();
+	lcd.echo($"[{pistons.purpose()}] Выдвигаются до {currentPosition:f2}->{realLength:f2}: {boolStatusToString(result)}");
+	return result; }
+public bool retractPistons(CBlockGroup<IMyPistonBase> pistons,
+						 float minLength,
+						 float velocity,
+						 float stackSize = 1f) {
+	bool result = true;
+	float realLength = (minLength - pistonHeadLength * stackSize) / stackSize;
+	float realVelocity = velocity / stackSize;
+	float currentPosition = 0;
+	foreach(IMyPistonBase piston in pistons.blocks()) {
+		switch(piston.Status) {
+		case PistonStatus.Stopped:
+		case PistonStatus.Extended:
+		case PistonStatus.Extending:
+		case PistonStatus.Retracted: {
+			if(piston.CurrentPosition > realLength) {
+				piston.Velocity = realVelocity;
+				piston.MinLimit = realLength;
+				piston.MaxLimit = 10f;
+				piston.Retract(); } }
+		break; }
+		currentPosition += piston.CurrentPosition;
+		result = result && (piston.Status == PistonStatus.Retracted ||
+							(piston.Status == PistonStatus.Retracting && checkPistonPos(piston.CurrentPosition, realLength))); }
+	currentPosition = currentPosition / pistons.count();
+	lcd.echo($"[{pistons.purpose()}] Задвигаются до {currentPosition:f2}->{realLength:f2}: {boolStatusToString(result)}");
+	return result; }
+public bool turnMergers(CBlockGroup<IMyShipMergeBlock> mergers, bool enabled) {
+	bool result = true;
+	foreach(IMyShipMergeBlock merger in mergers.blocks()) {
+		if(merger.Enabled != enabled) {
+			merger.Enabled = enabled; }
+		result = result && merger.IsConnected == enabled; }
+	lcd.echo($"[{mergers.purpose()}] Переключаются: {boolStatusToString(result)}");
+	return result; }
+public bool connectConnectors(CBlockGroup<IMyShipConnector> connectors) {
+	bool result = true;
+	foreach(IMyShipConnector connector in connectors.blocks()) {
+		if(connector.Status != MyShipConnectorStatus.Connected) {
+			connector.Enabled = true;
+			connector.Connect(); }
+		result = result && connector.Status == MyShipConnectorStatus.Connected; }
+	lcd.echo($"[{connectors.purpose()}] Замыкаются: {boolStatusToString(result)}");
+	return result; }
+public bool disconnectConnectors(CBlockGroup<IMyShipConnector> connectors) {
+	bool result = true;
+	foreach(IMyShipConnector connector in connectors.blocks()) {
+		if(connector.Status != MyShipConnectorStatus.Unconnected ||
+				connector.Status != MyShipConnectorStatus.Connectable ||
+				!connector.Enabled) {
+			connector.Disconnect();
+			connector.Enabled = false; }
+		result = result && (connector.Status == MyShipConnectorStatus.Unconnected ||
+							connector.Status == MyShipConnectorStatus.Connectable); }
+	lcd.echo($"[{connectors.purpose()}] Отмыкаются: {boolStatusToString(result)}");
+	return result; }
+public bool turnProectors(bool enabled) {
+	bool result = true;
+	foreach(IMyProjector projector in projectors.blocks()) {
+		if(projector.Enabled != enabled) {
+			projector.Enabled = enabled; }
+		result = result && projector.IsProjecting == enabled; }
+	lcd.echo($"[{projectors.purpose()}] Переключаются: {boolStatusToString(result)}");
+	return result; }
+public bool turnWelders(bool enabled) {
+	bool result = true;
+	foreach(IMyShipWelder welder in welders.blocks()) {
+		if(welder.Enabled != enabled) {
+			welder.Enabled = enabled; }
+		result = result && welder.IsWorking == enabled; }
+	lcd.echo($"[{welders.purpose()}] Переключаются: {boolStatusToString(result)}");
+	return result; }
+public enum EProjectionBlocks {
+	Total,
+	Remaining,
+	Buildable }
+int remainAfterThisStep;
+public void goNextBuildStep() {
+	remainAfterThisStep = getTotalProjectedBlocksCount(EProjectionBlocks.Remaining) -
+						 getTotalProjectedBlocksCount(EProjectionBlocks.Buildable); }
+public int getTotalProjectedBlocksCount(EProjectionBlocks state) {
+	int result = 0;
+	foreach(IMyProjector projector in projectors.blocks()) {
+		switch(state) {
+		case EProjectionBlocks.Total: result += projector.TotalBlocks; break;
+		case EProjectionBlocks.Remaining: result += projector.RemainingBlocks; break;
+		case EProjectionBlocks.Buildable: result += projector.BuildableBlocksCount; break; } }
+	return result; }
+public bool checkBuildStepComplete() {
+	int remain = getTotalProjectedBlocksCount(EProjectionBlocks.Remaining) - remainAfterThisStep;
+	if(remain < 0) { remainAfterThisStep += remain; }
+	lcd.echo($"Left blocks for build. Step: {remain}. Remaining:{getTotalProjectedBlocksCount(EProjectionBlocks.Remaining)}. Total: {getTotalProjectedBlocksCount(EProjectionBlocks.Total)}");
+	return rotateWelders() && remainAfterThisStep == getTotalProjectedBlocksCount(EProjectionBlocks.Remaining); }
+int currentWelderIndex = 0;
+int turnWeldersPerStep = 32;
+double waitForNextWelderSecunds = 16;
+public bool rotateWelders() {
+	IMyShipWelder welder;
+	if(currentWelderIndex > 0) {
+		lcd.echo($"Выключаются сварщики {currentWelderIndex - turnWeldersPerStep}:{currentWelderIndex}");
+		for(int i = currentWelderIndex - turnWeldersPerStep; i < currentWelderIndex; i++) {
+			welder = welders.blocks()[i];
+			while(welder.Enabled) {
+				welder.Enabled = false; } } }
+	if(currentWelderIndex < welders.count()) {
+		playSound("Security Alarm");
+		int maxWelderIndex = currentWelderIndex + turnWeldersPerStep;
+		maxWelderIndex = maxWelderIndex > welders.count() ? welders.count() : maxWelderIndex;
+		lcd.echo($"Включаются сварщики {currentWelderIndex}:{maxWelderIndex}");
+		for(; currentWelderIndex < maxWelderIndex; currentWelderIndex++) {
+			welder = welders.blocks()[currentWelderIndex];
+			while(!welder.Enabled) {
+				welder.Enabled = true; } }
+		waiter.wait(waitForNextWelderSecunds);
+		return false; }
+	currentWelderIndex = 0;
+	return true; }
+public void playSound(string name) {
+	soundBlock.SelectedSound = name;
+	soundBlock.Play(); }
+public bool loadComponentsFromBase() {
+	bool result = true;
+	CRecipes blocksRecipes = new CRecipes();
+	foreach(IMyProjector projector in projectors.blocks()) {
+		foreach(var block in projector.RemainingBlocksPerType) {
+			blocksRecipes.add(FRecipe.fromString(block.Key.ToString(), block.Value)); } }
+	List<CComponentItem> neededItems = blocksRecipes.sourceItems();
+	lcd.echo($"Загрузка компонентов: {neededItems.Count} наименований");
+	IMyInventory dstInventory = componentsContainer.GetInventory();
+	foreach(var neededItem in neededItems) {
+		int neededItemCount = neededItem.amount();
+		MyItemType neededItemType = neededItem.asMyItemType();
+		List<MyInventoryItem> dstItems = new List<MyInventoryItem>();
+		dstInventory.GetItems(dstItems, x => x.Type.Equals(neededItemType));
+		foreach(MyInventoryItem dstItem in dstItems) {
+			neededItemCount -= dstItem.Amount.ToIntSafe();
+			if(neededItemCount <= 0) { break; } }
+		if(neededItemCount > 0) {
+			foreach(IMyCargoContainer srcContainer in componentsSourceContainers) {
+				IMyInventory srcInventory = srcContainer.GetInventory();
+				List<MyInventoryItem> srcItems = new List<MyInventoryItem>();
+				srcInventory.GetItems(srcItems, x => x.Type.Equals(neededItemType));
+				foreach(MyInventoryItem srcItem in srcItems) {
+					int srcItemCount = srcItem.Amount.ToIntSafe();
+					lcd.echo($"{neededItemType.SubtypeId}: {srcContainer.CustomName}->{componentsContainer.CustomName} - {srcItemCount}");
+					if(srcItemCount >= neededItemCount) {
+						if(!dstInventory.TransferItemFrom(srcInventory, srcItem, neededItemCount)) { lcd.echo("Не перенеслось..."); }
+						else { neededItemCount = 0; }
+						break; }
+					else {
+						if(!dstInventory.TransferItemFrom(srcInventory, srcItem, srcItemCount)) { lcd.echo("Не перенеслось..."); }
+						else { neededItemCount -= srcItemCount; } } }
+				if(neededItemCount == 0) { break; } }
+			result = result && neededItemCount == 0; }
+		lcd.echo($"{neededItemType.SubtypeId}: need {neededItemCount} items."); }
+	if(!result) { lcd.echo("Недостаточно материалов!"); }
+	return result; }
 CDisplay lcd;
-CStoragesGroup storage;
-IMyAssembler targetAssembler;
+const float blockHeight = 2.5f; // Me.CubeGrid.GridSize
+const int structureHeightInBlocks = 10;
+const float structureHeight = blockHeight * structureHeightInBlocks;
+const float pistonHeadLength = 0.11f;
+const float mergeBlockOffset = -0.05f;
+const float mainPistonsInStack = 3f;
+const float mainPistonsExpandVelocity = 1f;
+const float mainPistonsRetractVelocity = 1f;
+const float mainPistonsMinLength = blockHeight;
+const float mainPistonsMaxLength = structureHeight + blockHeight;
+const float connPistonsExpandVelocity = 1f;
+const float connPistonsRetractVelocity = 2f;
+const string componentsContainerName = "[Крот] БК 0";
+const string componentsSourceContainersGroupName = "[Земля] БК Компоненты";
+const string soundBlockName = "[Крот] Динамик";
+IMyCargoContainer componentsContainer;
+List<IMyCargoContainer> componentsSourceContainers;
+IMySoundBlock soundBlock;
+CWaiter waiter;
 public string program() {
+	workState = EWorkState.Sleep;
+	Runtime.UpdateFrequency = UpdateFrequency.Update100;
 	lcd = new CDisplay();
-	lcd.addDisplay("[Земля] Дисплей производства", 0, 0);
-	targetAssembler = GridTerminalSystem.GetBlockWithName("[Земля] Master Сборщик 0") as IMyAssembler;
-	storage = new CStoragesGroup("[Земля] БК Компоненты", "Компоненты");
-	recipes = new CRecipes();
-	recipes.add(FRecipe.LargeBlockArmorBlock(1000 * 4));
-	recipes.add(FRecipe.Window3x3Flat(8));
-	recipes.add(FRecipe.ArmorSide(64 * 16));
-	recipes.add(FRecipe.ArmorCenter(512 * 16));
-	recipes.add(FRecipe.LargeBlockArmorRoundCorner(32 * 16));
-	recipes.add(FRecipe.LargeBlockRadioAntenna(4));
-	recipes.add(FRecipe.SmallLight(16 + 2*4));
-	recipes.add(FRecipe.LargeShipMergeBlock(4 + 16*2 + 4*2));
-	recipes.add(FRecipe.LargePistonBase(16));
-	recipes.add(FRecipe.LargeBlockGyro(16));
-	recipes.add(FRecipe.LargeBlockWindTurbine(32));
-	recipes.add(FRecipe.LargeBlockBatteryBlock(32));
-	recipes.add(FRecipe.LargeBlockSmallContainer(16));
-	recipes.add(FRecipe.LargeBlockLargeContainer(16));
-	recipes.add(FRecipe.Connector(8));
-	recipes.add(FRecipe.ConveyorTube(32));
-	recipes.add(FRecipe.LargeBlockConveyor(32));
-	recipes.add(FRecipe.Wheel5x5(4));
-	recipes.add(FRecipe.Suspension5x5(4));
-	return "Планирование производства"; }
+	lcd.addDisplay("[Крот] Дисплей логов строительства 0", 0, 0);
+	lcd.addDisplay("[Крот] Дисплей логов строительства 1", 1, 0);
+	return "Управление строительством тоннеля"; }
 public void main(string argument, UpdateType updateSource) {
-	bool assemblerProducing = targetAssembler.IsProducing;
-	string state = assemblerProducing ? "Producing" : "Stopped";
-	lcd.echo_at($"Assemblesr state: {state}", 0);
-	lcd.echo_at("---", 1);
-	int lcdIndex = 2;
-	foreach(var component in recipes.sourceItems()) {
-		int inStorageAmount = storage.countItems(component.itemType());
-		int needAmount = component.amount();
-		int amount = needAmount - inStorageAmount;
-		lcd.echo_at($"{component.itemType().ToString()}: {inStorageAmount} of {needAmount}", lcdIndex); lcdIndex++;
-		if(amount > 0 && !assemblerProducing) {
-			targetAssembler.AddQueueItem(
-				MyDefinitionId.Parse(component.asBlueprintDefinition()),
-				(double)amount); } } }
+	if(waiter != null && waiter.waiting()) { return; }
+	if(argument == "go") { workState = EWorkState.Wakeup; return; }
+	bool result = false;
+	switch(workState) {
+	case EWorkState.Wakeup: result = Wakeup(); break;
+	case EWorkState.DisconnectWelderFoundation: result = DisconnectWelderFoundation(); break;
+	case EWorkState.StartWelding: result = StartWelding(); break;
+	case EWorkState.Welding: result = Welding(); break;
+	case EWorkState.StopWelding: result = StopWelding(); break;
+	case EWorkState.ConnectWelderFoundation: result = ConnectWelderFoundation(); break;
+	case EWorkState.DisconnectSupportFoundation: result = DisconnectSupportFoundation(); break;
+	case EWorkState.StartMoveBase: result = StartMoveBase(); break;
+	case EWorkState.MoveBase: result = MoveBase(); break;
+	case EWorkState.StopMoveBase: result = StopMoveBase(); break;
+	case EWorkState.ConnectSupportFoundation: result = ConnectSupportFoundation(); break;
+	case EWorkState.Sleep: result = Sleep(); break; }
+	if(result) { switchToNextState(); } }
+public bool Wakeup() {
+	waiter = new CWaiter(lcd);
+	currentWelderIndex = 0;
+	initGroups();
+	componentsContainer = self.GridTerminalSystem.GetBlockWithName(componentsContainerName) as IMyCargoContainer;
+	componentsSourceContainers = getGroupBlocks<IMyCargoContainer>(componentsSourceContainersGroupName, false);
+	soundBlock = self.GridTerminalSystem.GetBlockWithName(soundBlockName) as IMySoundBlock;
+	return true; }
+public bool DisconnectWelderFoundation() {
+	return
+		turnMergers(weldersMergers, false) &&
+		retractPistons(weldersMergersPistons, 0f, connPistonsRetractVelocity); }
+int buildedLinesInBlocks;
+public bool StartWelding() {
+	if(turnProectors(true) &&
+			loadComponentsFromBase() &&
+			disconnectConnectors(mainConnectors)) {
+		buildedLinesInBlocks = 1;
+		goNextBuildStep();
+		return true; }
+	return false; }
+public bool Welding() {
+	if(expandPistons(mainPistons, mainPistonsMinLength + buildedLinesInBlocks * blockHeight, mainPistonsExpandVelocity, mainPistonsInStack) &&
+			checkBuildStepComplete()) {
+		if(buildedLinesInBlocks == structureHeightInBlocks) {
+			return true; }
+		buildedLinesInBlocks++;
+		goNextBuildStep(); }
+	return false; }
+public bool StopWelding() {
+	return
+		turnProectors(false) &&
+		turnWelders(false); }
+public bool ConnectWelderFoundation() {
+	return
+		expandPistons(weldersMergersPistons, blockHeight - mergeBlockOffset - pistonHeadLength, connPistonsExpandVelocity) &&
+		turnMergers(weldersMergers, true); }
+public bool DisconnectSupportFoundation() {
+	return
+		turnMergers(supportMergers, false) &&
+		retractPistons(supportMergersPistons, 0f, connPistonsRetractVelocity) &&
+		turnMergers(logisticMergers, false) &&
+		disconnectConnectors(logisticConnectors) &&
+		retractPistons(logisticPistons, 0f, connPistonsRetractVelocity); }
+public bool StartMoveBase() {
+	return true; }
+public bool MoveBase() {
+	return
+		retractPistons(mainPistons, mainPistonsMinLength, mainPistonsRetractVelocity, mainPistonsInStack); }
+public bool StopMoveBase() {
+	return true; }
+public bool ConnectSupportFoundation() {
+	return
+		expandPistons(supportMergersPistons, blockHeight - mergeBlockOffset - pistonHeadLength, connPistonsExpandVelocity) &&
+		turnMergers(supportMergers, true) &&
+		expandPistons(logisticPistons, blockHeight - mergeBlockOffset - pistonHeadLength, connPistonsExpandVelocity) &&
+		turnMergers(logisticMergers, true) &&
+		connectConnectors(logisticConnectors) &&
+		connectConnectors(mainConnectors); }
+public bool Sleep() {
+	lcd.echo("Sleep");
+	return false; }
+public List<T> getGroupBlocks<T>(string groupName, bool sameConstructAsMe = true) where T : class, IMyTerminalBlock {
+	IMyBlockGroup group = GridTerminalSystem.GetBlockGroupWithName(groupName);
+	List<T> blocks = new List<T>();
+	if(sameConstructAsMe) { group.GetBlocksOfType<T>(blocks, x => x.IsSameConstructAs(Me)); }
+	else { group.GetBlocksOfType<T>(blocks); }
+	return blocks; }
