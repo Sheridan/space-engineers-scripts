@@ -58,6 +58,40 @@ public class CBlockStatusDisplay : CDisplay
     return result;
   }
 
+  private string getGasTanksStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock
+  {
+    if (!group.isAssignable<IMyGasTank>()) { return ""; }
+    string result = "";
+    float capacity = 0;
+    double filledRatio = 0;
+    foreach (IMyGasTank block in group.blocks())
+    {
+      capacity += block.Capacity;
+      filledRatio += block.FilledRatio;
+    }
+    result += $"Capacity: {toHumanReadable(capacity, EHRUnit.Volume)} "
+            + $"Filled: {filledRatio/group.count()*100:f2}% ";
+    return result;
+  }
+
+  private string getBatteryesStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock
+  {
+    if (!group.isAssignable<IMyBatteryBlock>()) { return ""; }
+    string result = "";
+    float currentStored = 0;
+    float maxStored = 0;
+    foreach (IMyBatteryBlock block in group.blocks())
+    {
+      currentStored += block.CurrentStoredPower;
+      maxStored += block.MaxStoredPower;
+    }
+    currentStored *= 1000000;
+    maxStored *= 1000000;
+    result += $"Capacity: {toHumanReadable(currentStored, EHRUnit.PowerCapacity)}:{toHumanReadable(maxStored, EHRUnit.PowerCapacity)} ";
+    return result;
+  }
+
+
   private string getInvertoryesStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock
   {
     long volume = 0;
@@ -256,6 +290,8 @@ public class CBlockStatusDisplay : CDisplay
             //  + getDrillsStatus<T>(group)
              + getRotorsStatus<T>(group)
              + getGyroStatus<T>(group)
+             + getBatteryesStatus<T>(group)
+             + getGasTanksStatus<T>(group)
              + getPowerProducersStatus<T>(group)
              + getInvertoryesStatus<T>(group)
              + getFunctionaBlocksStatus<T>(group)

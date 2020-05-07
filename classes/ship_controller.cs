@@ -8,12 +8,19 @@
 // translation - перемещение
 // scale - масштабирование
 
-class CShipController
+public enum EAHForwardDirection
 {
-  public CShipController(IMyShipController controller)
+  Forward,
+  Up
+}
+
+public class CShipController
+{
+  public CShipController(IMyShipController controller, EAHForwardDirection forwardDirection = EAHForwardDirection.Forward)
   {
     m_controller = controller;
     m_autoHorizontGyroscopes = null;
+    m_forwardDirection = forwardDirection;
   }
 
   public CShipController(string name)
@@ -52,10 +59,32 @@ class CShipController
     foreach (IMyGyro gyroscope in m_autoHorizontGyroscopes.blocks())
     {
       Vector3D transRotVector = Vector3D.TransformNormal(relRotVector, Matrix.Transpose(gyroscope.WorldMatrix));
-      gyroscope.Yaw = (float)transRotVector.Y;
-      gyroscope.Roll = (float)transRotVector.Z;
-      gyroscope.Pitch = (float)transRotVector.X;
+      switch (m_forwardDirection)
+      {
+        case EAHForwardDirection.Forward:
+        {
+            gyroscope.Yaw = (float)transRotVector.Y;
+            gyroscope.Roll = (float)transRotVector.Z;
+            gyroscope.Pitch = (float)transRotVector.X;
+        } break;
+        case EAHForwardDirection.Up:
+        {
+            gyroscope.Yaw = (float)transRotVector.Y;
+            gyroscope.Roll = (float)transRotVector.X;
+            gyroscope.Pitch = (float)transRotVector.Z;
+        } break;
+      }
     }
+  }
+
+  private Vector3D getForwardDirection()
+  {
+    switch (m_forwardDirection)
+    {
+      case EAHForwardDirection.Forward: return m_controller.WorldMatrix.Forward;
+      case EAHForwardDirection.Up: return m_controller.WorldMatrix.Down;
+    }
+    return m_controller.WorldMatrix.Forward;
   }
 
   public void autoHorizont(float yaw)
@@ -64,10 +93,18 @@ class CShipController
     Vector3D normGravity = Vector3D.Normalize(m_controller.GetNaturalGravity());
     applyGyroOverride(yaw,
                      (float)normGravity.Dot(m_controller.WorldMatrix.Left),
-                     (float)normGravity.Dot(m_controller.WorldMatrix.Forward));
+                     (float)normGravity.Dot(getForwardDirection()));
    }
 
   public bool autoHorizontIsEnabled() { return m_autoHorizontGyroscopes != null; }
+
+  public void checkAutoHorizont()
+  {
+    Vector3D normGravity = Vector3D.Normalize(m_controller.GetNaturalGravity());
+    debug($"Ctrl: {m_controller.DisplayNameText}");
+    debug($"Left: {normGravity.Dot(m_controller.WorldMatrix.Left)}");
+    debug($"Forward: {normGravity.Dot(getForwardDirection())}");
+  }
 
   // private double calcAngle(Vector3D shipVector)
   // {
@@ -144,6 +181,8 @@ class CShipController
   // public double yawAngle() { return calcAngle(m_controller.WorldMatrix.Left); }
 
   private IMyShipController m_controller;
-  CBlockGroup<IMyGyro> m_autoHorizontGyroscopes;
+  private CBlockGroup<IMyGyro> m_autoHorizontGyroscopes;
+  private EAHForwardDirection m_forwardDirection;
+
   // bool m_autoHorizontEnabled;
 }

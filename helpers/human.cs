@@ -3,16 +3,18 @@ public enum EHRUnit
   None,
   Mass,
   Volume,
-  Power
+  Power,
+  PowerCapacity
 }
 public static string hrSuffix(EHRUnit unit)
 {
   switch (unit)
   {
-    case EHRUnit.None  : return "шт.";
-    case EHRUnit.Mass  : return "г.";
-    case EHRUnit.Volume: return "м³";
-    case EHRUnit.Power : return "Вт.";
+    case EHRUnit.None          : return "шт.";
+    case EHRUnit.Mass          : return "г.";
+    case EHRUnit.Volume        : return "м³";
+    case EHRUnit.Power         : return "Вт.";
+    case EHRUnit.PowerCapacity : return "ВтЧ.";
   }
   return "";
 }

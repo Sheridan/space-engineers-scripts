@@ -47,3 +47,6 @@ spider_builder: prepare to_clipboard
 
 ship_onoff: project=ship_onoff
 ship_onoff: prepare to_clipboard
+
+horse_status_display: project=horse_status_display
+horse_status_display: prepare to_clipboard

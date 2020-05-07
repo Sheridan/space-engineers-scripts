@@ -13,29 +13,43 @@ IMyCockpit cockpit;
 float autoRotateYawRPM;
 bool autorotate;
 
+public EAHForwardDirection loadForwardDirection()
+{
+  switch (prbOptions.getValue("script", "forwardDirection", "forward"))
+  {
+    case "forward": return EAHForwardDirection.Forward;
+    case "up": return EAHForwardDirection.Up;
+  }
+  return EAHForwardDirection.Forward;
+}
+
 public string program()
 {
   // Runtime.UpdateFrequency = UpdateFrequency.Update100; "[Жук] Кокпит" "[Жук] Гироскопы"
   autorotate = false;
-  cockpit = self.GridTerminalSystem.GetBlockWithName(prbOptions.getValue("script", "cockpitName", "")) as IMyCockpit;
+  string cockpitName = prbOptions.getValue("script", "cockpitName", "");
+  cockpit = self.GridTerminalSystem.GetBlockWithName(cockpitName) as IMyCockpit;
   lcd = new CTextSurface();
   int cockpitSurface = prbOptions.getValue("script", "cockpitSurface", 0);
   if(cockpitSurface >= 0) { lcd.setSurface(cockpit.GetSurface(cockpitSurface), 2f, 7, 30); }
   else { lcd.setSurface(Me.GetSurface(0), 2f, 7, 14);  }
-  controller = new CShipController(cockpit as IMyShipController);
+  controller = new CShipController(
+    self.GridTerminalSystem.GetBlockWithName(prbOptions.getValue("script", "controllerName", cockpitName)) as IMyShipController,
+    loadForwardDirection());
   gyroscopes = new CBlockGroup<IMyGyro>(prbOptions.getValue("script", "gyrosGroupName", ""), "Гироскопы");
   return "Атоматический горизонт";
 }
 
 public void main(string argument, UpdateType updateSource)
 {
-  if(argument == "")
+  if(argument.Length == 0)
   {
     controller.autoHorizont(autorotate ? autoRotateYawRPM : cockpit.RotationIndicator.Y);
   }
   else
   {
-         if (argument == "start"     ) { if(controller.autoHorizontIsEnabled()) { disableAH(); } else { enableAH(); } }
+         if (argument == "check"     ) { controller.checkAutoHorizont(); }
+    else if (argument == "start"     ) { if(controller.autoHorizontIsEnabled()) { disableAH(); } else { enableAH(); } }
     else if (argument == "stop"      ) { disableAH(); }
     else if (argument == "restart"   ) { disableAH(); enableAH(); }
     else if (argument == "autorotate") { autorotate = !autorotate; }

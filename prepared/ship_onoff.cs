@@ -232,11 +232,21 @@ public class CConnector : CFunctional<IMyShipConnector> {
 					 ); }
 		return result; }
 	public bool disconnect() { return connect(false); } }
+public class CTank : CFunctional<IMyGasTank> {
+	public CTank(CBlocksBase<IMyGasTank> blocks) : base(blocks) { }
+	public bool enableStockpile(bool enabled = true) {
+		bool result = true;
+		foreach(IMyGasTank tank in m_blocks.blocks()) {
+			if(tank.Stockpile != enabled) { tank.Stockpile = enabled; }
+			result = result && tank.Stockpile == enabled; }
+		return result; }
+	public bool disableStockpile() { return enableStockpile(false); } }
 public CFunctional<IMyGyro> gyroscopes;
 public CFunctional<IMyThrust> thrusters;
 public CFunctional<IMyLightingBlock> lamps;
 public CBattery battaryes;
 public CConnector connectors;
+public CTank tanks;
 IMyProgrammableBlock pbAutoHorizont;
 bool connected;
 public string program() {
@@ -246,6 +256,7 @@ public string program() {
 	battaryes = new CBattery(new CBlocks<IMyBatteryBlock>());
 	connectors = new CConnector(new CBlocks<IMyShipConnector>());
 	lamps = new CFunctional<IMyLightingBlock>(new CBlocks<IMyLightingBlock>());
+	tanks = new CTank(new CBlocks<IMyGasTank>());
 	connected = true;
 	return "Управление стыковкой корабля"; }
 public void main(string argument, UpdateType updateSource) {
@@ -254,6 +265,7 @@ public void main(string argument, UpdateType updateSource) {
 		else { turnOn(); } } }
 public void turnOn() {
 	battaryes.autocharge();
+	tanks.disableStockpile();
 	thrusters.enable();
 	gyroscopes.enable();
 	if(pbAutoHorizont != null) { pbAutoHorizont.TryRun("start"); }
@@ -266,5 +278,6 @@ public void turnOff() {
 	if(pbAutoHorizont != null) { pbAutoHorizont.TryRun("stop"); }
 	gyroscopes.disable();
 	thrusters.disable();
+	tanks.enableStockpile();
 	battaryes.recharge();
 	connected = false; }

@@ -141,9 +141,13 @@ public void main(string argument, UpdateType updateSource) {
 	(new CBlocks<IMyGyro> ()).setup("Гироскоп");
 	(new CBlocks<IMyCollector> ()).setup("Коллектор");
 	(new CBlocks<IMyGasGenerator> ()).setup("H2:O2 Генератор");
-	(new CBlocks<IMyShipMergeBlock>()).setup("Соединитель");
+	(new CBlocks<IMyShipMergeBlock> ()).setup("Соединитель");
 	(new CBlocks<IMyRefinery> ()).setup("Очистительный завод");
 	(new CBlocks<IMyMedicalRoom> ()).setup("Медпост");
+	(new CBlocks<IMySmallGatlingGun> ()).setup("М.Пушка");
+	(new CBlocks<IMyLargeGatlingTurret>()).setup("Б.Пушка");
+	(new CBlocks<IMyDoor> ()).setup("Дверь");
+	(new CBlocks<IMyAirVent> ()).setup("Вентиляция");
 	(new CBlocksTyped<IMyPowerProducer> ("HydrogenEngine")) .setup("H2 Электрогенератор");
 	(new CBlocksTyped<IMyPowerProducer> ("WindTurbine")) .setup("Ветрогенератор");
 	(new CBlocksTyped<IMyThrust> ("LargeAtmosphericThrust")).setup("Б.А.У.");
@@ -151,8 +155,9 @@ public void main(string argument, UpdateType updateSource) {
 	(new CBlocksTyped<IMyThrust> ("LargeHydrogenThrust")) .setup("Б.В.У.");
 	(new CBlocksTyped<IMyThrust> ("SmallHydrogenThrust")) .setup("В.У.");
 	(new CBlocksTyped<IMyGasTank> ("OxygenTankSmall")) .setup("Бак O2", false, true);
-	(new CBlocksTyped<IMyGasTank> ("HydrogenTank")) .setup("Б.Бак H2", false, true);
+	(new CBlocks<IMyOxygenTank> ()).setup("Б.Бак O2", false, true);
 	(new CBlocksTyped<IMyGasTank> ("HydrogenTankSmall")) .setup("Бак H2", false, true);
+	(new CBlocksTyped<IMyGasTank> ("HydrogenTank")) .setup("Б.Бак H2", false, true);
 	(new CBlocksTyped<IMyCargoContainer>("SmallContainer")) .setup("МК", false, true);
 	(new CBlocksTyped<IMyCargoContainer>("MediumContainer")) .setup("СК", false, true);
 	(new CBlocksTyped<IMyCargoContainer>("LargeContainer")) .setup("БК", false, true);

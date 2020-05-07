@@ -54,59 +54,6 @@ public class CBlockOptions {
 	IMyTerminalBlock m_block;
 	private bool m_available;
 	private MyIni m_ini; }
-public class CBlockGroup<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
-	public CBlockGroup(string groupName,
-					 string purpose = "",
-					 bool loadOnlySameGrid = true) : base(purpose) {
-		m_groupName = groupName;
-		refresh(loadOnlySameGrid); }
-	public void refresh(bool loadOnlySameGrid = true) {
-		clear();
-		IMyBlockGroup group = self.GridTerminalSystem.GetBlockGroupWithName(m_groupName);
-		if(loadOnlySameGrid) { group.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
-		else { group.GetBlocksOfType<T>(m_blocks) ; } }
-	public string groupName() { return m_groupName; }
-	private string m_groupName; }
-public class CBlocksBase<T> where T : class, IMyTerminalBlock {
-	public CBlocksBase(string purpose = "") {
-		m_blocks = new List<T>();
-		m_purpose = purpose; }
-	public void setup(string name,
-					 bool visibleInTerminal = false,
-					 bool visibleInInventory = false,
-					 bool visibleInToolBar = false) {
-		Dictionary<string, int> counetrs = new Dictionary<string, int>();
-		string zeros = new string('0', count().ToString().Length);
-		foreach(T block in m_blocks) {
-			CBlockOptions options = new CBlockOptions(block);
-			string realPurpose = options.getValue("generic", "purpose", m_purpose);
-			if(realPurpose != "") { realPurpose = $" {realPurpose} "; }
-			else { realPurpose = " "; }
-			if(!counetrs.ContainsKey(realPurpose)) { counetrs.Add(realPurpose, 0); }
-			block.CustomName = $"[{structureName}] {name}{realPurpose}{counetrs[realPurpose].ToString(zeros)}";
-			counetrs[realPurpose]++;
-			setupBlocksVisibility(block,
-								 options.getValue("generic", "visibleInTerminal", visibleInTerminal),
-								 options.getValue("generic", "visibleInInventory", visibleInInventory),
-								 options.getValue("generic", "visibleInToolBar", visibleInToolBar)); } }
-	private void setupBlocksVisibility(T block,
-									 bool vTerminal,
-									 bool vInventory,
-									 bool vToolBar) {
-		block.ShowInTerminal = vTerminal;
-		block.ShowInToolbarConfig = vToolBar;
-		if(block.HasInventory) { block.ShowInInventory = vInventory; } }
-	public bool empty() { return m_blocks.Count == 0; }
-	public int count() { return m_blocks.Count; }
-	public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
-	public bool isAssignable<U>() where U : class, IMyTerminalBlock {
-		if(empty()) { return false; }
-		return m_blocks[0] is U; }
-	public List<T> blocks() { return m_blocks; }
-	public string purpose() { return m_purpose; }
-	protected void clear() { m_blocks.Clear(); }
-	protected List<T> m_blocks;
-	private string m_purpose; }
 public class CBlockStatusDisplay : CDisplay {
 	public CBlockStatusDisplay() : base() {}
 	private string getFunctionaBlocksStatus<T>(CBlocksBase<T> group) where T : class, IMyTerminalBlock {
@@ -377,6 +324,46 @@ public class CTextSurface {
 	private float m_padding;
 	private List<string> m_text;
 	private List<List<IMyTextSurface>> m_surfaces; }
+public class CBlocksBase<T> where T : class, IMyTerminalBlock {
+	public CBlocksBase(string purpose = "") {
+		m_blocks = new List<T>();
+		m_purpose = purpose; }
+	public void setup(string name,
+					 bool visibleInTerminal = false,
+					 bool visibleInInventory = false,
+					 bool visibleInToolBar = false) {
+		Dictionary<string, int> counetrs = new Dictionary<string, int>();
+		string zeros = new string('0', count().ToString().Length);
+		foreach(T block in m_blocks) {
+			CBlockOptions options = new CBlockOptions(block);
+			string realPurpose = options.getValue("generic", "purpose", m_purpose);
+			if(realPurpose != "") { realPurpose = $" {realPurpose} "; }
+			else { realPurpose = " "; }
+			if(!counetrs.ContainsKey(realPurpose)) { counetrs.Add(realPurpose, 0); }
+			block.CustomName = $"[{structureName}] {name}{realPurpose}{counetrs[realPurpose].ToString(zeros)}";
+			counetrs[realPurpose]++;
+			setupBlocksVisibility(block,
+								 options.getValue("generic", "visibleInTerminal", visibleInTerminal),
+								 options.getValue("generic", "visibleInInventory", visibleInInventory),
+								 options.getValue("generic", "visibleInToolBar", visibleInToolBar)); } }
+	private void setupBlocksVisibility(T block,
+									 bool vTerminal,
+									 bool vInventory,
+									 bool vToolBar) {
+		block.ShowInTerminal = vTerminal;
+		block.ShowInToolbarConfig = vToolBar;
+		if(block.HasInventory) { block.ShowInInventory = vInventory; } }
+	public bool empty() { return m_blocks.Count == 0; }
+	public int count() { return m_blocks.Count; }
+	public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
+	public bool isAssignable<U>() where U : class, IMyTerminalBlock {
+		if(empty()) { return false; }
+		return m_blocks[0] is U; }
+	public List<T> blocks() { return m_blocks; }
+	public string purpose() { return m_purpose; }
+	protected void clear() { m_blocks.Clear(); }
+	protected List<T> m_blocks;
+	private string m_purpose; }
 class CBlockUpgrades {
 	public CBlockUpgrades(IMyUpgradableBlock upBlock) {
 		Dictionary<string, float> upgrades = new Dictionary<string, float>();
@@ -438,112 +425,61 @@ public static string toHumanReadable(float value, EHRUnit unit = EHRUnit.None) {
 	int exp = (int)(Math.Log(value) / Math.Log(1000));
 	return $"{value / Math.Pow(1000, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; // "kMGTPE" "кМГТПЭ"
 }
-public enum EAHForwardDirection {
-	Forward,
-	Up }
-public class CShipController {
-	public CShipController(IMyShipController controller, EAHForwardDirection forwardDirection = EAHForwardDirection.Forward) {
-		m_controller = controller;
-		m_autoHorizontGyroscopes = null;
-		m_forwardDirection = forwardDirection; }
-	public CShipController(string name) {
-		m_controller = self.GridTerminalSystem.GetBlockWithName(name) as IMyShipController;
-		m_autoHorizontGyroscopes = null; }
-	public void enableAutoHorizont(CBlockGroup<IMyGyro> gyroscopes) {
-		if(autoHorizontIsEnabled()) { return; }
-		m_autoHorizontGyroscopes = gyroscopes;
-		foreach(IMyGyro gyroscope in m_autoHorizontGyroscopes.blocks()) {
-			gyroscope.GyroOverride = true; } }
-	public void disableAutoHorizont() {
-		if(!autoHorizontIsEnabled()) { return; }
-		foreach(IMyGyro gyroscope in m_autoHorizontGyroscopes.blocks()) {
-			gyroscope.Yaw = 0;
-			gyroscope.Roll = 0;
-			gyroscope.Pitch = 0;
-			gyroscope.GyroOverride = false; }
-		m_autoHorizontGyroscopes = null; }
-	private void applyGyroOverride(double yaw, double roll, double pitch) {
-		Vector3D relRotVector = Vector3D.TransformNormal(new Vector3D(-pitch, yaw, roll),
-								m_controller.WorldMatrix);
-		foreach(IMyGyro gyroscope in m_autoHorizontGyroscopes.blocks()) {
-			Vector3D transRotVector = Vector3D.TransformNormal(relRotVector, Matrix.Transpose(gyroscope.WorldMatrix));
-			switch(m_forwardDirection) {
-			case EAHForwardDirection.Forward: {
-				gyroscope.Yaw = (float)transRotVector.Y;
-				gyroscope.Roll = (float)transRotVector.Z;
-				gyroscope.Pitch = (float)transRotVector.X; } break;
-			case EAHForwardDirection.Up: {
-				gyroscope.Yaw = (float)transRotVector.Y;
-				gyroscope.Roll = (float)transRotVector.X;
-				gyroscope.Pitch = (float)transRotVector.Z; } break; } } }
-	private Vector3D getForwardDirection() {
-		switch(m_forwardDirection) {
-		case EAHForwardDirection.Forward: return m_controller.WorldMatrix.Forward;
-		case EAHForwardDirection.Up: return m_controller.WorldMatrix.Down; }
-		return m_controller.WorldMatrix.Forward; }
-	public void autoHorizont(float yaw) {
-		if(!autoHorizontIsEnabled()) { return; }
-		Vector3D normGravity = Vector3D.Normalize(m_controller.GetNaturalGravity());
-		applyGyroOverride(yaw,
-						 (float)normGravity.Dot(m_controller.WorldMatrix.Left),
-						 (float)normGravity.Dot(getForwardDirection())); }
-	public bool autoHorizontIsEnabled() { return m_autoHorizontGyroscopes != null; }
-	public void checkAutoHorizont() {
-		Vector3D normGravity = Vector3D.Normalize(m_controller.GetNaturalGravity());
-		debug($"Ctrl: {m_controller.DisplayNameText}");
-		debug($"Left: {normGravity.Dot(m_controller.WorldMatrix.Left)}");
-		debug($"Forward: {normGravity.Dot(getForwardDirection())}"); }
-	private IMyShipController m_controller;
-	private CBlockGroup<IMyGyro> m_autoHorizontGyroscopes;
-	private EAHForwardDirection m_forwardDirection; }
-public static double angleBetweenVectors(Vector3D a, Vector3D b) {
-	return MathHelper.ToDegrees(Math.Acos(a.Dot(b) / (a.Length() * b.Length()))); }
-public enum EBoolToString {
-	btsOnOff }
-public string boolToString(bool val, EBoolToString bsType = EBoolToString.btsOnOff) {
-	switch(bsType) {
-	case EBoolToString.btsOnOff: return val ? "Вкл." : "Выкл."; }
-	return val.ToString(); }
-CShipController controller;
-CBlockGroup<IMyGyro> gyroscopes;
-CTextSurface lcd;
-IMyCockpit cockpit;
-float autoRotateYawRPM;
-bool autorotate;
-public EAHForwardDirection loadForwardDirection() {
-	switch(prbOptions.getValue("script", "forwardDirection", "forward")) {
-	case "forward": return EAHForwardDirection.Forward;
-	case "up": return EAHForwardDirection.Up; }
-	return EAHForwardDirection.Forward; }
+public class CBlocksTyped<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
+	public CBlocksTyped(string subTypeName,
+						string purpose = "",
+						bool loadOnlySameGrid = true) : base(purpose) {
+		m_subTypeName = subTypeName;
+		refresh(loadOnlySameGrid); }
+	public void refresh(bool loadOnlySameGrid = true) {
+		clear();
+		if(loadOnlySameGrid) {
+			self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => (x.IsSameConstructAs(self.Me) &&
+					x.BlockDefinition.SubtypeId.Contains(m_subTypeName))); }
+		else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.BlockDefinition.SubtypeId.Contains(m_subTypeName)); } }
+	public string subTypeName() { return m_subTypeName; }
+	private string m_subTypeName; }
+public class CBlocks<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
+	public CBlocks(string purpose = "", bool loadOnlySameGrid = true) : base(purpose) {
+		refresh(loadOnlySameGrid); }
+	public void refresh(bool loadOnlySameGrid = true) {
+		clear();
+		if(loadOnlySameGrid) { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
+		else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks) ; } } }
+CBlockStatusDisplay lcd;
+public CBlocks<IMyShipConnector> connectors;
+public CBlocks<IMyGasGenerator> gasGenerators;
+public CBlocks<IMyThrust> thrusters;
+public CBlocks<IMyCargoContainer> storage;
+public CBlocks<IMyGyro> gyroscopes;
+public CBlocks<IMyLargeGatlingTurret> turrets;
+public CBlocks<IMyOxygenTank> o2tanks;
+public CBlocksTyped<IMyGasTank> h2tanks;
+public CBlocks<IMyBatteryBlock> battaryes;
+public void initGroups() {
+	connectors = new CBlocks<IMyShipConnector>();
+	gasGenerators = new CBlocks<IMyGasGenerator>();
+	storage = new CBlocks<IMyCargoContainer>();
+	thrusters = new CBlocks<IMyThrust>();
+	gyroscopes = new CBlocks<IMyGyro>();
+	turrets = new CBlocks<IMyLargeGatlingTurret>();
+	o2tanks = new CBlocks<IMyOxygenTank>();
+	h2tanks = new CBlocksTyped<IMyGasTank>("HydrogenTank");
+	battaryes = new CBlocks<IMyBatteryBlock>(); }
 public string program() {
-	autorotate = false;
-	string cockpitName = prbOptions.getValue("script", "cockpitName", "");
-	cockpit = self.GridTerminalSystem.GetBlockWithName(cockpitName) as IMyCockpit;
-	lcd = new CTextSurface();
-	int cockpitSurface = prbOptions.getValue("script", "cockpitSurface", 0);
-	if(cockpitSurface >= 0) { lcd.setSurface(cockpit.GetSurface(cockpitSurface), 2f, 7, 30); }
-	else { lcd.setSurface(Me.GetSurface(0), 2f, 7, 14); }
-	controller = new CShipController(
-		self.GridTerminalSystem.GetBlockWithName(prbOptions.getValue("script", "controllerName", cockpitName)) as IMyShipController,
-		loadForwardDirection());
-	gyroscopes = new CBlockGroup<IMyGyro>(prbOptions.getValue("script", "gyrosGroupName", ""), "Гироскопы");
-	return "Атоматический горизонт"; }
+	Runtime.UpdateFrequency = UpdateFrequency.Update100;
+	lcd = new CBlockStatusDisplay();
+	lcd.addDisplay("[Конь] Дисплей статуса 0", 0, 0);
+	lcd.addDisplay("[Конь] Дисплей статуса 1", 1, 0);
+	initGroups();
+	return "Отображение статуса"; }
 public void main(string argument, UpdateType updateSource) {
-	if(argument.Length == 0) {
-		controller.autoHorizont(autorotate ? autoRotateYawRPM : cockpit.RotationIndicator.Y); }
-	else {
-		if(argument == "check") { controller.checkAutoHorizont(); }
-		else if(argument == "start") { if(controller.autoHorizontIsEnabled()) { disableAH(); } else { enableAH(); } }
-		else if(argument == "stop") { disableAH(); }
-		else if(argument == "restart") { disableAH(); enableAH(); }
-		else if(argument == "autorotate") { autorotate = !autorotate; }
-		lcd.echo_at($"АГ: {boolToString(controller.autoHorizontIsEnabled())}", 0);
-		lcd.echo_at($"Авто: {boolToString(autorotate)}", 1);
-		lcd.echo_at($"Гир: {gyroscopes.count()}", 2); } }
-public void enableAH() {
-	autoRotateYawRPM = prbOptions.getValue("script", "autorotateRPM", 0f);
-	controller.enableAutoHorizont(gyroscopes);
-	Runtime.UpdateFrequency = UpdateFrequency.Update1; }
-public void disableAH() {
-	controller.disableAutoHorizont();
-	Runtime.UpdateFrequency = UpdateFrequency.None; }
+	lcd.showStatus<IMyShipConnector>(connectors, 0);
+	lcd.showStatus<IMyGasGenerator>(gasGenerators, 1);
+	lcd.showStatus<IMyCargoContainer>(storage, 2);
+	lcd.showStatus<IMyThrust>(thrusters, 3);
+	lcd.showStatus<IMyGyro>(gyroscopes, 4);
+	lcd.showStatus<IMyLargeGatlingTurret>(turrets, 5);
+	lcd.showStatus<IMyOxygenTank>(o2tanks, 6);
+	lcd.showStatus<IMyGasTank>(h2tanks, 7);
+	lcd.showStatus<IMyBatteryBlock>(battaryes, 8); }
