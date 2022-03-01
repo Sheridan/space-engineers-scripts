@@ -12,10 +12,12 @@ public class CDisplay : CTextSurface
   {
     if (!m_initialized)
     {
+      debug($"{display.BlockDefinition.SubtypeName}");
       switch (display.BlockDefinition.SubtypeName)
       {
         case "LargeLCDPanelWide": setup(0.602f, 28, 87, 0.35f); break;
-        default: setup(1f, 0, 0, 0f); break;
+        case "LargeLCDPanel"    : setup(0.602f, 28, 44, 0.35f); break;
+        default: setup(1f, 1, 1, 1f); break;
       }
     }
   }

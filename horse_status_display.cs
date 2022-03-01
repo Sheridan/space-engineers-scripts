@@ -23,8 +23,8 @@ public void initGroups()
   thrusters = new CBlocks<IMyThrust>();
   gyroscopes = new CBlocks<IMyGyro>();
   turrets = new CBlocks<IMyLargeGatlingTurret>();
-  o2tanks = new CBlocks<IMyOxygenTank>();
-  h2tanks = new CBlocksTyped<IMyGasTank>("HydrogenTank");
+  o2tanks = new CBlocks<IMyOxygenTank>("O2");
+  h2tanks = new CBlocksTyped<IMyGasTank>("HydrogenTank", "H2");
   battaryes = new CBlocks<IMyBatteryBlock>();
 }
 
@@ -33,8 +33,8 @@ public string program()
 {
   Runtime.UpdateFrequency = UpdateFrequency.Update100;
   lcd = new CBlockStatusDisplay();
-  lcd.addDisplay("[Конь] Дисплей статуса 0", 0, 0);
-  lcd.addDisplay("[Конь] Дисплей статуса 1", 1, 0);
+  lcd.addDisplay("[Конь] Дисплей Статус 0", 0, 0);
+  lcd.addDisplay("[Конь] Дисплей Статус 1", 1, 0);
   initGroups();
   return "Отображение статуса";
 }

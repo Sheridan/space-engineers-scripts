@@ -7,10 +7,13 @@ public string program()
 {
   // Runtime.UpdateFrequency = UpdateFrequency.Update100;
   lcd = new CDisplay();
-  lcd.addDisplay("[Крот] Дисплей логов бурения 0", 0, 0);
-  lcd.addDisplay("[Крот] Дисплей логов бурения 1", 1, 0);
-  lcd.addDisplay("[Крот] Дисплей статуса бурения 0", 0, 1);
-  lcd.addDisplay("[Крот] Дисплей статуса бурения 1", 1, 1);
+  // lcd.addDisplay("[Крот] Дисплей логов бурения 0", 0, 0);
+  // lcd.addDisplay("[Крот] Дисплей логов бурения 1", 1, 0);
+  // lcd.addDisplay("[Крот] Дисплей статуса бурения 0", 0, 1);
+  // lcd.addDisplay("[Крот] Дисплей статуса бурения 1", 1, 1);
+  lcd.addDisplay("[Бур] Дисплей Статус 0", 0, 0);
+  lcd.addDisplay("[Бур] Дисплей Статус 1", 1, 0);
+  lcd.addDisplay("[Бур] Дисплей Статус 2", 2, 0);
   return "Тестирование дисплеев";
 }
 

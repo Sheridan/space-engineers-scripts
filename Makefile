@@ -50,3 +50,12 @@ ship_onoff: prepare to_clipboard
 
 horse_status_display: project=horse_status_display
 horse_status_display: prepare to_clipboard
+
+drill_status_display: project=drill_status_display
+drill_status_display: prepare to_clipboard
+
+space_builder: project=space_builder
+space_builder: prepare to_clipboard
+
+h2_generators_control: project=h2_generators_control
+h2_generators_control: prepare to_clipboard

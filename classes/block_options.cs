@@ -18,15 +18,9 @@ public class CBlockOptions
     }
   }
 
-  private void write()
-  {
-    m_block.CustomData = m_ini.ToString();
-  }
+  private void write() { m_block.CustomData = m_ini.ToString(); }
 
-  private bool exists(string section, string name)
-  {
-    return m_available && m_ini.ContainsKey(section, name);
-  }
+  private bool exists(string section, string name) { return m_available && m_ini.ContainsKey(section, name); }
 
   public string getValue(string section, string name, string defaultValue = "")
   {
@@ -49,6 +43,17 @@ public class CBlockOptions
   public int getValue(string section, string name, int defaultValue = 0)
   {
     if (exists(section, name)) { return m_ini.Get(section, name).ToInt32(); }
+    return defaultValue;
+  }
+
+  // R;G;B;A
+  public Color getValue(string section, string name, Color defaultValue)
+  {
+    if (exists(section, name))
+    {
+      string[] color = m_ini.Get(section, name).ToString().Split(';');
+      return new Color(float.Parse(color[0]), float.Parse(color[1]), float.Parse(color[2]), float.Parse(color[3]));
+    }
     return defaultValue;
   }
 

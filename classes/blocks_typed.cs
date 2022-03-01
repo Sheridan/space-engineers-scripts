@@ -15,8 +15,8 @@ public class CBlocksTyped<T> : CBlocksBase<T> where T : class, IMyTerminalBlock
     clear();
     if (loadOnlySameGrid) {
            self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => (x.IsSameConstructAs(self.Me) &&
-                                                                      x.BlockDefinition.SubtypeId.Contains(m_subTypeName))); }
-    else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x =>  x.BlockDefinition.SubtypeId.Contains(m_subTypeName)); }
+                                                                      x.BlockDefinition.ToString().Contains(m_subTypeName))); }
+    else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x =>  x.BlockDefinition.ToString().Contains(m_subTypeName)); }
   }
 
   public string subTypeName() { return m_subTypeName; }

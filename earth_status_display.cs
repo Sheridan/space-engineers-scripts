@@ -7,14 +7,19 @@
 CBlockStatusDisplay lcd;
 
 public CBlocksTyped<IMyPowerProducer> windTurbines;
+public CBlocks<IMySolarPanel> solarPanels;
+public CBlocks<IMyBatteryBlock> battaryes;
 public CBlocksTyped<IMyPowerProducer> h2Engines;
 public CBlocks<IMyShipConnector> connectors;
 public CBlocks<IMyRefinery> refineryes;
 public CBlocks<IMyAssembler> assemblers;
 public CBlocks<IMyGasGenerator> gasGenerators;
 public CBlockGroup<IMyCargoContainer> storageOre;
+public CBlockGroup<IMyCargoContainer> storageIce;
 public CBlockGroup<IMyCargoContainer> storageIngots;
 public CBlockGroup<IMyCargoContainer> storageComponents;
+public CBlocks<IMyOxygenTank> o2tanks;
+public CBlocksTyped<IMyGasTank> h2tanks;
 // public CBlockGroup<IMyPistonBase> weldersMergersPistons;
 // public CBlockGroup<IMyShipMergeBlock> supportMergers;
 // public CBlockGroup<IMyPistonBase> supportMergersPistons;
@@ -30,14 +35,21 @@ public void initGroups()
 {
   h2Engines = new CBlocksTyped<IMyPowerProducer>("HydrogenEngine");
   windTurbines = new CBlocksTyped<IMyPowerProducer>("WindTurbine");
+  solarPanels = new CBlocks<IMySolarPanel>();
+  battaryes = new CBlocks<IMyBatteryBlock>();
+
   connectors = new CBlocks<IMyShipConnector>();
   refineryes = new CBlocks<IMyRefinery>();
   assemblers = new CBlocks<IMyAssembler>();
   gasGenerators = new CBlocks<IMyGasGenerator>();
 
-  storageOre = new CBlockGroup<IMyCargoContainer>("[Земля] БК Руда", "Руда");
-  storageIngots = new CBlockGroup<IMyCargoContainer>("[Земля] БК Слитки", "Слитки");
-  storageComponents = new CBlockGroup<IMyCargoContainer>("[Земля] БК Компоненты", "Компоненты");
+  storageOre = new CBlockGroup<IMyCargoContainer>("[Земля] Руда", "Руда");
+  storageIngots = new CBlockGroup<IMyCargoContainer>("[Земля] Слитки", "Слитки");
+  storageIce = new CBlockGroup<IMyCargoContainer>("[Земля] Лёд", "Лёд");
+  storageComponents = new CBlockGroup<IMyCargoContainer>("[Земля] Компоненты", "Компоненты");
+
+  o2tanks = new CBlocks<IMyOxygenTank>("O2");
+  h2tanks = new CBlocksTyped<IMyGasTank>("HydrogenTank", "H2");
   // weldersMergers = new CBlockGroup<IMyShipMergeBlock>("[Крот] Соединители нижних коннекторов", "НС");
   // weldersMergersPistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни нижних коннекторов", "Поршни НС");
   // supportMergers = new CBlockGroup<IMyShipMergeBlock>("[Крот] Соединители верхних коннекторов", "ВС");
@@ -49,6 +61,7 @@ public void initGroups()
   // mainConnectors = new CBlockGroup<IMyShipConnector>("[Крот] Основные коннекторы ресурсов", "Баз. коннекторы");
   // welders = new CBlockGroup<IMyShipWelder>("[Крот] Сварщики", "Сварщики");
   // projectors = new CBlockGroup<IMyProjector>("[Крот] Проекторы", "Проекторы");
+  debug("Done groups");
 }
 
 
@@ -56,23 +69,36 @@ public string program()
 {
   Runtime.UpdateFrequency = UpdateFrequency.Update100;
   lcd = new CBlockStatusDisplay();
-  lcd.addDisplay("[Земля] Дисплей статуса 0", 0, 0);
-  lcd.addDisplay("[Земля] Дисплей статуса 1", 1, 0);
+  lcd.addDisplay("[Земля] Дисплей Статус 4", 0, 0);
+  lcd.addDisplay("[Земля] Дисплей Статус 1", 1, 0);
+  lcd.addDisplay("[Земля] Дисплей Статус 0", 2, 0);
+  lcd.addDisplay("[Земля] Дисплей Статус 5", 0, 1);
+  lcd.addDisplay("[Земля] Дисплей Статус 2", 1, 1);
+  lcd.addDisplay("[Земля] Дисплей Статус 3", 2, 1);
+  debug("Done displays");
   initGroups();
   return "Отображение статуса базы";
 }
 
 public void main(string argument, UpdateType updateSource)
 {
-  lcd.showStatus<IMyPowerProducer>(windTurbines, 0);
-  lcd.showStatus<IMyPowerProducer>(h2Engines, 1);
-  lcd.showStatus<IMyShipConnector>(connectors, 2);
-  lcd.showStatus<IMyRefinery>(refineryes, 3);
-  lcd.showStatus<IMyAssembler>(assemblers, 4);
-  lcd.showStatus<IMyGasGenerator>(gasGenerators, 5);
-  lcd.showStatus<IMyCargoContainer>(storageOre, 6);
-  lcd.showStatus<IMyCargoContainer>(storageIngots, 7);
-  lcd.showStatus<IMyCargoContainer>(storageComponents, 8);
+  int i = 0;
+  // debug("!");
+  if (argument == "restart") { initGroups(); }
+  lcd.showStatus<IMyPowerProducer>(windTurbines, i++);
+  lcd.showStatus<IMySolarPanel>(solarPanels, i++);
+  lcd.showStatus<IMyBatteryBlock>(battaryes, i++);
+  lcd.showStatus<IMyPowerProducer>(h2Engines, i++);
+  lcd.showStatus<IMyShipConnector>(connectors, i++);
+  lcd.showStatus<IMyRefinery>(refineryes, i++);
+  lcd.showStatus<IMyAssembler>(assemblers, i++);
+  lcd.showStatus<IMyGasGenerator>(gasGenerators, i++);
+  lcd.showStatus<IMyCargoContainer>(storageOre, i++);
+  lcd.showStatus<IMyCargoContainer>(storageIce, i++);
+  lcd.showStatus<IMyCargoContainer>(storageIngots, i++);
+  lcd.showStatus<IMyCargoContainer>(storageComponents, i++);
+  lcd.showStatus<IMyOxygenTank>(o2tanks, i++);
+  lcd.showStatus<IMyGasTank>(h2tanks, i++);
   // lcd.showStatus<IMyShipMergeBlock>(supportMergers, 2);
   // lcd.showStatus<IMyPistonBase>(supportMergersPistons, 3);
   // lcd.showStatus<IMyShipMergeBlock>(logisticMergers, 4);

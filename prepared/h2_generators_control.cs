@@ -151,6 +151,20 @@ public static string TrimAllSpaces(string value) {
 			previousIsWhitespace = false; }
 		newString.Append(value[i]); }
 	return newString.ToString(); }
+public class CBT<T> : CBB<T> where T : class, IMyTerminalBlock {
+	public CBT(string subTypeName,
+			 string purpose = "",
+			 bool loadOnlySameGrid = true) : base(purpose) {
+		m_subTypeName = subTypeName;
+		refresh(loadOnlySameGrid); }
+	public void refresh(bool loadOnlySameGrid = true) {
+		clear();
+		if(loadOnlySameGrid) {
+			self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => (x.IsSameConstructAs(self.Me) &&
+																	 x.BlockDefinition.ToString().Contains(m_subTypeName))); }
+		else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.BlockDefinition.ToString().Contains(m_subTypeName)); } }
+	public string subTypeName() { return m_subTypeName; }
+	private string m_subTypeName; }
 public class CF<T> : CTerminal<T> where T : class, IMyTerminalBlock {
 	public CF(CBB<T> blocks) : base(blocks) {}
 	public void enable(bool enabled = true) { foreach(IMyFunctionalBlock block in m_blocks.blocks()) { if(block.Enabled != enabled) { block.Enabled = enabled; }}}
@@ -257,104 +271,16 @@ public class CTextSurface {
 	private float m_padding;
 	private List<string> m_text;
 	private List<List<IMyTextSurface>> m_surfaces; }
-public class CBattery : CF<IMyBatteryBlock> {
-	public CBattery(CBB<IMyBatteryBlock> blocks) : base(blocks) { }
-	public bool setChargeMode(ChargeMode mode) {
-		bool result = true;
-		foreach(IMyBatteryBlock battery in m_blocks.blocks()) {
-			if(battery.ChargeMode != mode) { battery.ChargeMode = mode; }
-			result = result && battery.ChargeMode == mode; }
-		return result; }
-	public bool recharge() { return setChargeMode(ChargeMode.Recharge); }
-	public bool discharge() { return setChargeMode(ChargeMode.Discharge); }
-	public bool autocharge() { return setChargeMode(ChargeMode.Auto); } }
-public class CConnector : CF<IMyShipConnector> {
-	public CConnector(CBB<IMyShipConnector> blocks) : base(blocks) { }
-	public bool connect(bool enabled = true) {
-		bool result = true;
-		foreach(IMyShipConnector connector in m_blocks.blocks()) {
-			if(enabled) { connector.Connect(); }
-			else { connector.Disconnect(); }
-			result = result &&
-					 (
-									 enabled ? connector.Status == MyShipConnectorStatus.Connected
-									 : connector.Status == MyShipConnectorStatus.Unconnected
-					 ); }
-		return result; }
-	public bool disconnect() { return connect(false); } }
-public class CLandingGear : CF<IMyLandingGear> {
-	public CLandingGear(CBB<IMyLandingGear> blocks) : base(blocks) { }
-	public bool lockGear(bool enabled = true) {
-		bool result = true;
-		foreach(IMyLandingGear lg in m_blocks.blocks()) {
-			if(enabled) { lg.Lock(); }
-			else { lg.Unlock(); }
-			result = result && lg.IsLocked; }
-		return result; }
-	public bool unlockGear() { return lockGear(false); } }
-public class CTank : CF<IMyGasTank> {
-	public CTank(CBB<IMyGasTank> blocks) : base(blocks) { }
-	public bool enableStockpile(bool enabled = true) {
-		bool result = true;
-		foreach(IMyGasTank tank in m_blocks.blocks()) {
-			if(tank.Stockpile != enabled) { tank.Stockpile = enabled; }
-			result = result && tank.Stockpile == enabled; }
-		return result; }
-	public bool disableStockpile() { return enableStockpile(false); } }
-public CF<IMyGyro> gyroscopes;
-public CF<IMyThrust> thrusters;
-public CF<IMyLightingBlock> lamps;
-public CF<IMyRadioAntenna> antennas;
-public CF<IMyOreDetector> oreDetectors;
-public CF<IMyShipToolBase> tools;
-public CBattery battaryes;
-public CConnector connectors;
-public CLandingGear landGears;
-public CTank tanks;
-IMyProgrammableBlock pbAutoHorizont;
-bool connected;
+public CF<IMyPowerProducer> h2Engines;
+bool generationOn;
 public string program() {
-	pbAutoHorizont = self.GridTerminalSystem.GetBlockWithName($"[{structureName}] ПрБ Атоматический горизонт") as IMyProgrammableBlock;
-	gyroscopes = new CF<IMyGyro>(new CB<IMyGyro>());
-	thrusters = new CF<IMyThrust>(new CB<IMyThrust>());
-	battaryes = new CBattery(new CB<IMyBatteryBlock>());
-	connectors = new CConnector(new CB<IMyShipConnector>());
-	landGears = new CLandingGear(new CB<IMyLandingGear>());
-	lamps = new CF<IMyLightingBlock>(new CB<IMyLightingBlock>());
-	antennas = new CF<IMyRadioAntenna>(new CB<IMyRadioAntenna>());
-	oreDetectors = new CF<IMyOreDetector>(new CB<IMyOreDetector>());
-	tools = new CF<IMyShipToolBase>(new CB<IMyShipToolBase>());
-	tanks = new CTank(new CB<IMyGasTank>());
-	connected = true;
-	return "Управление стыковкой корабля"; }
+	h2Engines = new CF<IMyPowerProducer>(new CBT<IMyPowerProducer>("HydrogenEngine"));
+	generationOn = false;
+	switchGenerate();
+	return "Управление водородными генераторами"; }
+public void switchGenerate() {
+	h2Engines.enable(generationOn);
+	generationOn = !generationOn; }
 public void main(string argument, UpdateType updateSource) {
-	if(argument == "start") {
-		if(connected) { turnOff(); }
-		else { turnOn(); } } }
-public void turnOn() {
-	debug("On");
-	battaryes.autocharge();
-	tanks.disableStockpile();
-	thrusters.enable();
-	gyroscopes.enable();
-	antennas.enable();
-	oreDetectors.enable();
-	if(pbAutoHorizont != null) { pbAutoHorizont.TryRun("start"); }
-	lamps.enable();
-	connectors.disconnect();
-	landGears.unlockGear();
-	connected = true; }
-public void turnOff() {
-	debug("Off");
-	if(connectors.connect()) {
-		landGears.lockGear();
-		tools.disable();
-		lamps.disable();
-		if(pbAutoHorizont != null) { pbAutoHorizont.TryRun("stop"); }
-		gyroscopes.disable();
-		thrusters.disable();
-		oreDetectors.disable();
-		antennas.disable();
-		tanks.enableStockpile();
-		battaryes.recharge();
-		connected = false; } }
+	if(argument == "generate") {
+		switchGenerate(); } }

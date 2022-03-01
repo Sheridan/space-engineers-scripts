@@ -17,9 +17,16 @@ function collect_includes()
     fi
   done
 }
-
 collect_includes "${project}.cs"
 cat ${filelist[@]} ${project}.cs | \
+  sed -r 's@CBlocks@CB@g' | \
+  sed -r 's@CBTyped@CBT@g' | \
+  sed -r 's@CBBase@CBB@g' | \
+  sed -r 's@CBlockGroup@CBG@g' | \
+  sed -r 's@CBlockOptions@CBO@g' | \
+  sed -r 's@CFunctional@CF@g' | \
+  sed -r 's@options@o@g' | \
+  sed -r 's@getValue@g@g' | \
   egrep -v "^ +?(//|$)" | \
   astyle --mode=cs --style=lisp --indent=force-tab --max-code-length=200 --unpad-paren --pad-comma \
          --keep-one-line-statements --keep-one-line-blocks | \

@@ -1,20 +1,13 @@
 static string structureName;
-static string scriptName;
 static Program self;
 static float blockSize;
-static CBO prbOptions;
-public void applyDefaultMeDisplayTexsts() {
-	Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
-	Me.GetSurface(1).WriteText(structureName); }
-public void echoMe(string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
-public void echoMeBig(string text) { echoMe(text, 0); }
-public void echoMeSmall(string text) { echoMe(text, 1); }
-public void setupMe(string i_scriptName) {
-	scriptName = i_scriptName;
+static CBlockOptions prbOptions;
+public void setupMe(string scriptName) {
 	Me.CustomName = $"[{structureName}] ПрБ {scriptName}";
 	setupMeSurface(0, 2f);
 	setupMeSurface(1, 5f);
-	applyDefaultMeDisplayTexsts(); }
+	Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
+	Me.GetSurface(1).WriteText(structureName); }
 public void setupMeSurface(int i, float fontSize) {
 	IMyTextSurface surface = Me.GetSurface(i);
 	surface.ContentType = ContentType.TEXT_AND_IMAGE;
@@ -28,11 +21,11 @@ public Program() {
 	self = this;
 	structureName = Me.CubeGrid.CustomName;
 	blockSize = Me.CubeGrid.GridSize;
-	prbOptions = new CBO(Me);
+	prbOptions = new CBlockOptions(Me);
 	setupMe(program()); }
 public void Main(string argument, UpdateType updateSource) { main(argument, updateSource); }
-public class CBO {
-	public CBO(IMyTerminalBlock block) {
+public class CBlockOptions {
+	public CBlockOptions(IMyTerminalBlock block) {
 		m_available = false;
 		m_block = block;
 		read(); }
@@ -44,19 +37,19 @@ public class CBO {
 			if(!m_available) { debug(result.ToString()); } } }
 	private void write() { m_block.CustomData = m_ini.ToString(); }
 	private bool exists(string section, string name) { return m_available && m_ini.ContainsKey(section, name); }
-	public string g(string section, string name, string defaultValue = "") {
+	public string getValue(string section, string name, string defaultValue = "") {
 		if(exists(section, name)) { return m_ini.Get(section, name).ToString(); }
 		return defaultValue; }
-	public bool g(string section, string name, bool defaultValue = true) {
+	public bool getValue(string section, string name, bool defaultValue = true) {
 		if(exists(section, name)) { return m_ini.Get(section, name).ToBoolean(); }
 		return defaultValue; }
-	public float g(string section, string name, float defaultValue = 0f) {
+	public float getValue(string section, string name, float defaultValue = 0f) {
 		if(exists(section, name)) { return float.Parse(m_ini.Get(section, name).ToString()); }
 		return defaultValue; }
-	public int g(string section, string name, int defaultValue = 0) {
+	public int getValue(string section, string name, int defaultValue = 0) {
 		if(exists(section, name)) { return m_ini.Get(section, name).ToInt32(); }
 		return defaultValue; }
-	public Color g(string section, string name, Color defaultValue) {
+	public Color getValue(string section, string name, Color defaultValue) {
 		if(exists(section, name)) {
 			string[] color = m_ini.Get(section, name).ToString().Split(';');
 			return new Color(float.Parse(color[0]), float.Parse(color[1]), float.Parse(color[2]), float.Parse(color[3])); }
@@ -64,15 +57,30 @@ public class CBO {
 	IMyTerminalBlock m_block;
 	private bool m_available;
 	private MyIni m_ini; }
-public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
-	public CB(string purpose = "", bool loadOnlySameGrid = true) : base(purpose) {
+public CBlockGroup<IMyPistonBase> pistons;
+public CBlockGroup<IMyShipWelder> welders;
+IMyProjector projector;
+IMyMotorStator rotor;
+public void initGroups() {
+	pistons = new CBlockGroup<IMyPistonBase>("[Космос] Поршни космостроя", "Поршни");
+	welders = new CBlockGroup<IMyShipWelder>("[Космос] Сварщики космостроя", "Сварщики");
+	projector = GridTerminalSystem.GetBlockWithName("[Космос] Проектор космостроя") as IMyProjector;
+	rotor = GridTerminalSystem.GetBlockWithName("[Космос] У.Ротор Космострой 0") as IMyMotorStator; }
+public class CBlockGroup<T> : CBlocksBase<T> where T : class, IMyTerminalBlock {
+	public CBlockGroup(string groupName,
+					 string purpose = "",
+					 bool loadOnlySameGrid = true) : base(purpose) {
+		m_groupName = groupName;
 		refresh(loadOnlySameGrid); }
 	public void refresh(bool loadOnlySameGrid = true) {
 		clear();
-		if(loadOnlySameGrid) { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
-		else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks) ; } } }
-public class CBB<T> where T : class, IMyTerminalBlock {
-	public CBB(string purpose = "") {
+		IMyBlockGroup group = self.GridTerminalSystem.GetBlockGroupWithName(m_groupName);
+		if(loadOnlySameGrid) { group.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
+		else { group.GetBlocksOfType<T>(m_blocks) ; } }
+	public string groupName() { return m_groupName; }
+	private string m_groupName; }
+public class CBlocksBase<T> where T : class, IMyTerminalBlock {
+	public CBlocksBase(string purpose = "") {
 		m_blocks = new List<T>();
 		m_purpose = purpose; }
 	public void setup(string name,
@@ -82,43 +90,31 @@ public class CBB<T> where T : class, IMyTerminalBlock {
 		Dictionary<string, int> counetrs = new Dictionary<string, int>();
 		string zeros = new string('0', count().ToString().Length);
 		foreach(T block in m_blocks) {
-			string blockPurpose = "";
-			CBO o = new CBO(block);
+			CBlockOptions options = new CBlockOptions(block);
 			if(isAssignable<IMyShipConnector>()) {
 				IMyShipConnector blk = block as IMyShipConnector;
 				blk.PullStrength = 1f;
-				blk.CollectAll = o.g("connector", "collectAll", false);
-				blk.ThrowOut = o.g("connector", "throwOut", false); }
+				blk.CollectAll = options.getValue("connector", "collectAll", false);
+				blk.ThrowOut = options.getValue("connector", "throwOut", false); }
 			else if(isAssignable<IMyInteriorLight>()) {
 				IMyInteriorLight blk = block as IMyInteriorLight;
 				blk.Radius = 10f;
 				blk.Intensity = 10f;
 				blk.Falloff = 3f;
-				blk.Color = o.g("lamp", "color", Color.White); }
+				blk.Color = options.getValue("lamp", "color", Color.White); }
 			else if(isAssignable<IMyConveyorSorter>()) {
 				IMyConveyorSorter blk = block as IMyConveyorSorter;
-				blk.DrainAll = o.g("sorter", "drainAll", false); }
-			else if(isAssignable<IMyLargeTurretBase>()) {
-				IMyLargeTurretBase blk = block as IMyLargeTurretBase;
-				blk.EnableIdleRotation = true;
-				blk.Elevation = 0f;
-				blk.Azimuth = 0f; }
-			else if(isAssignable<IMyAssembler>()) {
-				blockPurpose = "Master";
-				if(o.g("assembler", "is_slave", false)) {
-					IMyAssembler blk = block as IMyAssembler;
-					blk.CooperativeMode = true;
-					blockPurpose = "Slave"; } }
-			string realPurpose = $"{getPurpose(o).Trim()} {blockPurpose}";
+				blk.DrainAll = options.getValue("sorter", "drainAll", false); }
+			string realPurpose = getPurpose(options);
 			if(!counetrs.ContainsKey(realPurpose)) { counetrs.Add(realPurpose, 0); }
-			block.CustomName = TrimAllSpaces($"[{structureName}] {name} {realPurpose} {counetrs[realPurpose].ToString(zeros).Trim()}");
+			block.CustomName = $"[{structureName}] {name}{realPurpose}{counetrs[realPurpose].ToString(zeros)}";
 			counetrs[realPurpose]++;
 			setupBlocksVisibility(block,
-								 o.g("generic", "visibleInTerminal", visibleInTerminal),
-								 o.g("generic", "visibleInInventory", visibleInInventory),
-								 o.g("generic", "visibleInToolBar", visibleInToolBar)); } }
-	private string getPurpose(CBO o) {
-		string result = o.g("generic", "purpose", m_purpose);
+								 options.getValue("generic", "visibleInTerminal", visibleInTerminal),
+								 options.getValue("generic", "visibleInInventory", visibleInInventory),
+								 options.getValue("generic", "visibleInToolBar", visibleInToolBar)); } }
+	private string getPurpose(CBlockOptions options) {
+		string result = options.getValue("generic", "purpose", m_purpose);
 		return result != "" ? $" {result} " : " "; }
 	private void setupBlocksVisibility(T block,
 									 bool vTerminal,
@@ -139,24 +135,62 @@ public class CBB<T> where T : class, IMyTerminalBlock {
 	protected void clear() { m_blocks.Clear(); }
 	protected List<T> m_blocks;
 	private string m_purpose; }
-public static string TrimAllSpaces(string value) {
-	var newString = new StringBuilder();
-	bool previousIsWhitespace = false;
-	for(int i = 0; i < value.Length; i++) {
-		if(Char.IsWhiteSpace(value[i])) {
-			if(previousIsWhitespace) {
-				continue; }
-			previousIsWhitespace = true; }
-		else {
-			previousIsWhitespace = false; }
-		newString.Append(value[i]); }
-	return newString.ToString(); }
-public class CF<T> : CTerminal<T> where T : class, IMyTerminalBlock {
-	public CF(CBB<T> blocks) : base(blocks) {}
+public class CPiston : CFunctional<IMyPistonBase> {
+	public CPiston(CBlocksBase<IMyPistonBase> blocks, int pistonsInStack = 1) : base(blocks) {
+		m_stackSize = pistonsInStack; }
+	private bool checkLength(float currentPos, float targetPos, float sensetivity = 0.2f) {
+		return currentPos <= targetPos + sensetivity && currentPos >= targetPos - sensetivity; }
+	public bool retract(float length, float velocity) {
+		bool result = true;
+		float realLength = length / m_stackSize;
+		float realVelocity = velocity / m_stackSize;
+		foreach(IMyPistonBase piston in m_blocks.blocks()) {
+			switch(piston.Status) {
+			case PistonStatus.Stopped:
+			case PistonStatus.Extended:
+			case PistonStatus.Extending:
+			case PistonStatus.Retracted: {
+				if(piston.CurrentPosition > realLength) {
+					piston.Velocity = realVelocity;
+					piston.MinLimit = realLength;
+					piston.MaxLimit = 10f;
+					piston.Retract(); } }
+			break; }
+			result = result && (piston.Status == PistonStatus.Retracted ||
+								(
+									piston.Status == PistonStatus.Retracting &&
+									checkLength(piston.CurrentPosition, realLength)
+								)); }
+		return result; }
+	public bool expand(float length, float velocity) {
+		bool result = true;
+		float realLength = length / m_stackSize;
+		float realVelocity = velocity / m_stackSize;
+		foreach(IMyPistonBase piston in m_blocks.blocks()) {
+			switch(piston.Status) {
+			case PistonStatus.Stopped:
+			case PistonStatus.Retracted:
+			case PistonStatus.Retracting:
+			case PistonStatus.Extended: {
+				if(piston.CurrentPosition < realLength) {
+					piston.Velocity = realVelocity;
+					piston.MinLimit = 0f;
+					piston.MaxLimit = realLength;
+					piston.Extend(); } }
+			break; }
+			result = result && (piston.Status == PistonStatus.Extended ||
+								(
+									piston.Status == PistonStatus.Extending &&
+									checkLength(piston.CurrentPosition, realLength)
+								)); }
+		return result; }
+	private int m_stackSize; }
+public class CFunctional<T> : CTerminal<T> where T : class, IMyTerminalBlock {
+	public CFunctional(CBlocksBase<T> blocks) : base(blocks) {}
 	public void enable(bool enabled = true) { foreach(IMyFunctionalBlock block in m_blocks.blocks()) { if(block.Enabled != enabled) { block.Enabled = enabled; }}}
 	public void disable() { enable(false); } }
 public class CTerminal<T> where T : class, IMyTerminalBlock {
-	public CTerminal(CBB<T> blocks) { m_blocks = blocks; }
+	public CTerminal(CBlocksBase<T> blocks) { m_blocks = blocks; }
 	public void listProperties(CTextSurface lcd) {
 		if(m_blocks.count() == 0) { return; }
 		List<ITerminalProperty> properties = new List<ITerminalProperty>();
@@ -177,7 +211,7 @@ public class CTerminal<T> where T : class, IMyTerminalBlock {
 	void hideInInventory() { showInInventory(false); }
 	void showOnHUD(bool show = true) { foreach(T block in m_blocks.blocks()) { if(block.ShowOnHUD != show) { block.ShowOnHUD = show; }}}
 	void hideOnHUD() { showOnHUD(false); }
-	protected CBB<T> m_blocks; }
+	protected CBlocksBase<T> m_blocks; }
 public class CTextSurface {
 	public CTextSurface() {
 		m_text = new List<string>();
@@ -257,104 +291,33 @@ public class CTextSurface {
 	private float m_padding;
 	private List<string> m_text;
 	private List<List<IMyTextSurface>> m_surfaces; }
-public class CBattery : CF<IMyBatteryBlock> {
-	public CBattery(CBB<IMyBatteryBlock> blocks) : base(blocks) { }
-	public bool setChargeMode(ChargeMode mode) {
-		bool result = true;
-		foreach(IMyBatteryBlock battery in m_blocks.blocks()) {
-			if(battery.ChargeMode != mode) { battery.ChargeMode = mode; }
-			result = result && battery.ChargeMode == mode; }
-		return result; }
-	public bool recharge() { return setChargeMode(ChargeMode.Recharge); }
-	public bool discharge() { return setChargeMode(ChargeMode.Discharge); }
-	public bool autocharge() { return setChargeMode(ChargeMode.Auto); } }
-public class CConnector : CF<IMyShipConnector> {
-	public CConnector(CBB<IMyShipConnector> blocks) : base(blocks) { }
-	public bool connect(bool enabled = true) {
-		bool result = true;
-		foreach(IMyShipConnector connector in m_blocks.blocks()) {
-			if(enabled) { connector.Connect(); }
-			else { connector.Disconnect(); }
-			result = result &&
-					 (
-									 enabled ? connector.Status == MyShipConnectorStatus.Connected
-									 : connector.Status == MyShipConnectorStatus.Unconnected
-					 ); }
-		return result; }
-	public bool disconnect() { return connect(false); } }
-public class CLandingGear : CF<IMyLandingGear> {
-	public CLandingGear(CBB<IMyLandingGear> blocks) : base(blocks) { }
-	public bool lockGear(bool enabled = true) {
-		bool result = true;
-		foreach(IMyLandingGear lg in m_blocks.blocks()) {
-			if(enabled) { lg.Lock(); }
-			else { lg.Unlock(); }
-			result = result && lg.IsLocked; }
-		return result; }
-	public bool unlockGear() { return lockGear(false); } }
-public class CTank : CF<IMyGasTank> {
-	public CTank(CBB<IMyGasTank> blocks) : base(blocks) { }
-	public bool enableStockpile(bool enabled = true) {
-		bool result = true;
-		foreach(IMyGasTank tank in m_blocks.blocks()) {
-			if(tank.Stockpile != enabled) { tank.Stockpile = enabled; }
-			result = result && tank.Stockpile == enabled; }
-		return result; }
-	public bool disableStockpile() { return enableStockpile(false); } }
-public CF<IMyGyro> gyroscopes;
-public CF<IMyThrust> thrusters;
-public CF<IMyLightingBlock> lamps;
-public CF<IMyRadioAntenna> antennas;
-public CF<IMyOreDetector> oreDetectors;
-public CF<IMyShipToolBase> tools;
-public CBattery battaryes;
-public CConnector connectors;
-public CLandingGear landGears;
-public CTank tanks;
-IMyProgrammableBlock pbAutoHorizont;
-bool connected;
+public class CWelder : CFunctional<IMyShipWelder> {
+	public CWelder(CBlocksBase<IMyShipWelder> blocks) : base(blocks) { } }
+CPiston pistonsWorker;
+CWelder weldersWorker;
+const float rotorSpeedRPM = 0.8f;
+const float pistonsWeldingSpeed = 0.5f;
+const float pistonsBackSpeed = 1f;
+float currentPistonsLength;
 public string program() {
-	pbAutoHorizont = self.GridTerminalSystem.GetBlockWithName($"[{structureName}] ПрБ Атоматический горизонт") as IMyProgrammableBlock;
-	gyroscopes = new CF<IMyGyro>(new CB<IMyGyro>());
-	thrusters = new CF<IMyThrust>(new CB<IMyThrust>());
-	battaryes = new CBattery(new CB<IMyBatteryBlock>());
-	connectors = new CConnector(new CB<IMyShipConnector>());
-	landGears = new CLandingGear(new CB<IMyLandingGear>());
-	lamps = new CF<IMyLightingBlock>(new CB<IMyLightingBlock>());
-	antennas = new CF<IMyRadioAntenna>(new CB<IMyRadioAntenna>());
-	oreDetectors = new CF<IMyOreDetector>(new CB<IMyOreDetector>());
-	tools = new CF<IMyShipToolBase>(new CB<IMyShipToolBase>());
-	tanks = new CTank(new CB<IMyGasTank>());
-	connected = true;
-	return "Управление стыковкой корабля"; }
+	initGroups();
+	pistonsWorker = new CPiston(pistons, 8);
+	weldersWorker = new CWelder(welders);
+	currentPistonsLength = 0f;
+	return "Космострой"; }
 public void main(string argument, UpdateType updateSource) {
-	if(argument == "start") {
-		if(connected) { turnOff(); }
-		else { turnOn(); } } }
-public void turnOn() {
-	debug("On");
-	battaryes.autocharge();
-	tanks.disableStockpile();
-	thrusters.enable();
-	gyroscopes.enable();
-	antennas.enable();
-	oreDetectors.enable();
-	if(pbAutoHorizont != null) { pbAutoHorizont.TryRun("start"); }
-	lamps.enable();
-	connectors.disconnect();
-	landGears.unlockGear();
-	connected = true; }
-public void turnOff() {
-	debug("Off");
-	if(connectors.connect()) {
-		landGears.lockGear();
-		tools.disable();
-		lamps.disable();
-		if(pbAutoHorizont != null) { pbAutoHorizont.TryRun("stop"); }
-		gyroscopes.disable();
-		thrusters.disable();
-		oreDetectors.disable();
-		antennas.disable();
-		tanks.enableStockpile();
-		battaryes.recharge();
-		connected = false; } }
+	if(argument.Contains("welders")) { enableWelders(argument.Contains("_on")); }
+	else if(argument.Contains("rotor")) { enableRotor(argument.Contains("_on")); }
+	else if(argument.Contains("piston")) {
+		if(argument.Contains("step")) { pistonsStep(); }
+		else { pistonsBack(); } } }
+public void enableRotor(bool enable) { rotor.TargetVelocityRPM = enable ? rotorSpeedRPM : 0f; }
+public void enableWelders(bool enable) {
+	projector.Enabled = enable;
+	weldersWorker.enable(enable); }
+public void pistonsStep() {
+	currentPistonsLength += blockSize;
+	pistonsWorker.expand(currentPistonsLength, pistonsWeldingSpeed); }
+public void pistonsBack() {
+	currentPistonsLength = 0f;
+	pistonsWorker.retract(currentPistonsLength, pistonsBackSpeed); }

@@ -1,17 +1,28 @@
 // #include classes/block_options.cs
 
 static string structureName;
+static string scriptName;
 static Program self;
 static float blockSize;
 static CBlockOptions prbOptions;
 
-public void setupMe(string scriptName)
+public void applyDefaultMeDisplayTexsts()
 {
+  Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
+  Me.GetSurface(1).WriteText(structureName);
+}
+
+public void echoMe     (string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
+public void echoMeBig  (string text) { echoMe(text, 0); }
+public void echoMeSmall(string text) { echoMe(text, 1); }
+
+public void setupMe(string i_scriptName)
+{
+  scriptName = i_scriptName;
   Me.CustomName = $"[{structureName}] ПрБ {scriptName}";
   setupMeSurface(0, 2f);
   setupMeSurface(1, 5f);
-  Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
-  Me.GetSurface(1).WriteText(structureName);
+  applyDefaultMeDisplayTexsts();
 }
 
 public void setupMeSurface(int i, float fontSize)

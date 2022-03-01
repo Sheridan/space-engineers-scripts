@@ -35,10 +35,8 @@ public class CBlockOptions {
 			MyIniParseResult result;
 			m_available = m_ini.TryParse(m_block.CustomData, out result);
 			if(!m_available) { debug(result.ToString()); } } }
-	private void write() {
-		m_block.CustomData = m_ini.ToString(); }
-	private bool exists(string section, string name) {
-		return m_available && m_ini.ContainsKey(section, name); }
+	private void write() { m_block.CustomData = m_ini.ToString(); }
+	private bool exists(string section, string name) { return m_available && m_ini.ContainsKey(section, name); }
 	public string getValue(string section, string name, string defaultValue = "") {
 		if(exists(section, name)) { return m_ini.Get(section, name).ToString(); }
 		return defaultValue; }
@@ -50,6 +48,11 @@ public class CBlockOptions {
 		return defaultValue; }
 	public int getValue(string section, string name, int defaultValue = 0) {
 		if(exists(section, name)) { return m_ini.Get(section, name).ToInt32(); }
+		return defaultValue; }
+	public Color getValue(string section, string name, Color defaultValue) {
+		if(exists(section, name)) {
+			string[] color = m_ini.Get(section, name).ToString().Split(';');
+			return new Color(float.Parse(color[0]), float.Parse(color[1]), float.Parse(color[2]), float.Parse(color[3])); }
 		return defaultValue; }
 	IMyTerminalBlock m_block;
 	private bool m_available;
@@ -336,9 +339,21 @@ public class CBlocksBase<T> where T : class, IMyTerminalBlock {
 		string zeros = new string('0', count().ToString().Length);
 		foreach(T block in m_blocks) {
 			CBlockOptions options = new CBlockOptions(block);
-			string realPurpose = options.getValue("generic", "purpose", m_purpose);
-			if(realPurpose != "") { realPurpose = $" {realPurpose} "; }
-			else { realPurpose = " "; }
+			if(isAssignable<IMyShipConnector>()) {
+				IMyShipConnector blk = block as IMyShipConnector;
+				blk.PullStrength = 1f;
+				blk.CollectAll = options.getValue("connector", "collectAll", false);
+				blk.ThrowOut = options.getValue("connector", "throwOut", false); }
+			else if(isAssignable<IMyInteriorLight>()) {
+				IMyInteriorLight blk = block as IMyInteriorLight;
+				blk.Radius = 10f;
+				blk.Intensity = 10f;
+				blk.Falloff = 3f;
+				blk.Color = options.getValue("lamp", "color", Color.White); }
+			else if(isAssignable<IMyConveyorSorter>()) {
+				IMyConveyorSorter blk = block as IMyConveyorSorter;
+				blk.DrainAll = options.getValue("sorter", "drainAll", false); }
+			string realPurpose = getPurpose(options);
 			if(!counetrs.ContainsKey(realPurpose)) { counetrs.Add(realPurpose, 0); }
 			block.CustomName = $"[{structureName}] {name}{realPurpose}{counetrs[realPurpose].ToString(zeros)}";
 			counetrs[realPurpose]++;
@@ -346,11 +361,15 @@ public class CBlocksBase<T> where T : class, IMyTerminalBlock {
 								 options.getValue("generic", "visibleInTerminal", visibleInTerminal),
 								 options.getValue("generic", "visibleInInventory", visibleInInventory),
 								 options.getValue("generic", "visibleInToolBar", visibleInToolBar)); } }
+	private string getPurpose(CBlockOptions options) {
+		string result = options.getValue("generic", "purpose", m_purpose);
+		return result != "" ? $" {result} " : " "; }
 	private void setupBlocksVisibility(T block,
 									 bool vTerminal,
 									 bool vInventory,
 									 bool vToolBar) {
-		block.ShowInTerminal = vTerminal;
+		IMySlimBlock sBlock = block.CubeGrid.GetCubeBlock(block.Position);
+		block.ShowInTerminal = vTerminal && sBlock.IsFullIntegrity && sBlock.BuildIntegrity < 1f;
 		block.ShowInToolbarConfig = vToolBar;
 		if(block.HasInventory) { block.ShowInInventory = vInventory; } }
 	public bool empty() { return m_blocks.Count == 0; }
@@ -463,14 +482,14 @@ public void initGroups() {
 	thrusters = new CBlocks<IMyThrust>();
 	gyroscopes = new CBlocks<IMyGyro>();
 	turrets = new CBlocks<IMyLargeGatlingTurret>();
-	o2tanks = new CBlocks<IMyOxygenTank>();
-	h2tanks = new CBlocksTyped<IMyGasTank>("HydrogenTank");
+	o2tanks = new CBlocks<IMyOxygenTank>("O2");
+	h2tanks = new CBlocksTyped<IMyGasTank>("HydrogenTank", "H2");
 	battaryes = new CBlocks<IMyBatteryBlock>(); }
 public string program() {
 	Runtime.UpdateFrequency = UpdateFrequency.Update100;
 	lcd = new CBlockStatusDisplay();
-	lcd.addDisplay("[Конь] Дисплей статуса 0", 0, 0);
-	lcd.addDisplay("[Конь] Дисплей статуса 1", 1, 0);
+	lcd.addDisplay("[Конь] Дисплей Статус 0", 0, 0);
+	lcd.addDisplay("[Конь] Дисплей Статус 1", 1, 0);
 	initGroups();
 	return "Отображение статуса"; }
 public void main(string argument, UpdateType updateSource) {
