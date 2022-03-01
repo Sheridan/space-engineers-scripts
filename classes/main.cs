@@ -47,4 +47,14 @@ public Program()
   setupMe(program());
 }
 
-public void Main(string argument, UpdateType updateSource) { main(argument, updateSource); }
+public void Main(string argument, UpdateType updateSource) 
+{ 
+  if(argument == "init")
+  {
+    UpdateFrequency uf = Runtime.UpdateFrequency;
+    Runtime.UpdateFrequency = UpdateFrequency.None;
+    Program();
+    Runtime.UpdateFrequency = uf;
+  }
+  else { main(argument, updateSource); }
+}

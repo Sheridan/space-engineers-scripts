@@ -27,7 +27,18 @@ cat ${filelist[@]} ${project}.cs | \
   sed -r 's@CFunctional@CF@g' | \
   sed -r 's@options@o@g' | \
   sed -r 's@getValue@g@g' | \
+  sed -r 's@toHumanReadable@tHR@g' | \
+  sed -r 's@previousIsWhitespace@pIW@g' | \
+  sed -r 's@setup@s@g' | \
   egrep -v "^ +?(//|$)" | \
-  astyle --mode=cs --style=lisp --indent=force-tab --max-code-length=200 --unpad-paren --pad-comma \
+  astyle --mode=cs --style=lisp --indent=spaces --max-code-length=200 --unpad-paren --pad-comma \
          --keep-one-line-statements --keep-one-line-blocks | \
+  sed -r 's@^ +@@g' | \
+  sed -r 's@ +?\( +?@(@g' | \
+  sed -r 's@ +?\} +?@}@g' | \
+  sed -r 's@ +?\{ +?@{@g' | \
+  sed -r 's@ +?([\+\-\=\*\.\:,;]) +?@\1@g' | \
   sed -r 's@ +@ @g' > ${outfolder}/${project}.cs
+  wc -c ${outfolder}/${project}.cs
+
+#  sed -r 's@visibleIn@vI@g' | \
