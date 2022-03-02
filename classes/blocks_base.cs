@@ -57,7 +57,8 @@ public class CBlocksBase<T> where T : class, IMyTerminalBlock
       // name
       string realPurpose = $"{getPurpose(options).Trim()} {blockPurpose}";
       if (!counetrs.ContainsKey(realPurpose)) { counetrs.Add(realPurpose, 0); }
-      block.CustomName = TrimAllSpaces($"[{structureName}] {name} {realPurpose} {counetrs[realPurpose].ToString(zeros).Trim()}");
+      string sZeros = count() > 1 ? counetrs[realPurpose].ToString(zeros).Trim() : "";
+      block.CustomName = TrimAllSpaces($"[{structureName}] {name} {realPurpose} {sZeros}");
       counetrs[realPurpose]++;
       // visibility
       setupBlocksVisibility(block,

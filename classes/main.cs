@@ -38,22 +38,28 @@ public void setupMeSurface(int i, float fontSize)
 
 public static void debug(string text) { self.Echo(text); }
 
-public Program()
+public void init()
 {
-  self = this;
   structureName = Me.CubeGrid.CustomName;
   blockSize = Me.CubeGrid.GridSize;
   prbOptions = new CBlockOptions(Me);
   setupMe(program());
+  debug($"{Me.CustomName}: init done");
 }
 
-public void Main(string argument, UpdateType updateSource) 
-{ 
+public Program()
+{
+  self = this;
+  init();
+}
+
+public void Main(string argument, UpdateType updateSource)
+{
   if(argument == "init")
   {
     UpdateFrequency uf = Runtime.UpdateFrequency;
     Runtime.UpdateFrequency = UpdateFrequency.None;
-    Program();
+    init();
     Runtime.UpdateFrequency = uf;
   }
   else { main(argument, updateSource); }
