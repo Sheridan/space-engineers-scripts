@@ -11,7 +11,7 @@ public CFunctional<IMyThrust> thrusters;
 public CFunctional<IMyLightingBlock> lamps;
 public CFunctional<IMyRadioAntenna> antennas;
 public CFunctional<IMyOreDetector> oreDetectors;
-public CFunctional<IMyShipToolBase> tools;
+// public CFunctional<IMyShipToolBase> tools;
 public CBattery battaryes;
 public CConnector connectors;
 public CLandingGear landGears;
@@ -28,12 +28,12 @@ public string program()
   gyroscopes = new CFunctional<IMyGyro>(new CBlocks<IMyGyro>());
   thrusters = new CFunctional<IMyThrust>(new CBlocks<IMyThrust>());
   battaryes = new CBattery(new CBlocks<IMyBatteryBlock>());
-  connectors = new CConnector(new CBlocks<IMyShipConnector>());
+  connectors = new CConnector(new CBlocks<IMyShipConnector>("Главный"));
   landGears = new CLandingGear(new CBlocks<IMyLandingGear>());
   lamps = new CFunctional<IMyLightingBlock>(new CBlocks<IMyLightingBlock>());
   antennas = new CFunctional<IMyRadioAntenna>(new CBlocks<IMyRadioAntenna>());
   oreDetectors = new CFunctional<IMyOreDetector>(new CBlocks<IMyOreDetector>());
-  tools = new CFunctional<IMyShipToolBase>(new CBlocks<IMyShipToolBase>());
+  //tools = new CFunctional<IMyShipToolBase>(new CBlocks<IMyShipToolBase>());
   tanks = new CTank(new CBlocks<IMyGasTank>());
   connected = true;
   return "Управление стыковкой корабля";
@@ -69,7 +69,7 @@ public void turnOff()
   if(connectors.connect())
   {
     landGears.lockGear();
-    tools.disable();
+    //tools.disable();
     lamps.disable();
     if (pbAutoHorizont != null) { pbAutoHorizont.TryRun("stop"); }
     gyroscopes.disable();

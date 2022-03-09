@@ -12,29 +12,30 @@ IMyAssembler targetAssembler;
 public string program()
 {
   lcdAssembling = new CDisplay();
-  lcdAssembling.addDisplay("[Земля] Дисплей производства", 0, 0);
+  lcdAssembling.addDisplay($"[{structureName}] Дисплей Производство 0", 0, 0);
   lcdPerBlock = new CDisplay();
-  lcdPerBlock.addDisplay("[Земля] Дисплей хранящихся блоков 0", 0, 0);
-  lcdPerBlock.addDisplay("[Земля] Дисплей хранящихся блоков 1", 0, 1);
-  targetAssembler = GridTerminalSystem.GetBlockWithName("[Земля] Master Сборщик 0") as IMyAssembler;
-  storage = new CStoragesGroup("[Земля] БК Компоненты", "Компоненты");
+  lcdPerBlock.addDisplay($"[{structureName}] Дисплей Хранение 0", 0, 0);
+  lcdPerBlock.addDisplay($"[{structureName}] Дисплей Хранение 1", 0, 1);
+  targetAssembler = GridTerminalSystem.GetBlockWithName($"[{structureName}] Сборщик Master 00") as IMyAssembler;
+  storage = new CStoragesGroup($"[{structureName}] Компоненты", "Компоненты");
 
   // Runtime.UpdateFrequency = UpdateFrequency.Update100;
   recipes = new CRecipes();
-  recipes.add(FRecipe.LargeBlockArmorBlock(1000 * 4));
+  recipes.add(FRecipe.LargeBlockArmorBlock(4*32+32*32));
   recipes.add(FRecipe.Window3x3Flat(8));
-  recipes.add(FRecipe.ArmorSide(64 * 16));
-  recipes.add(FRecipe.ArmorCenter(512 * 16));
-  recipes.add(FRecipe.LargeBlockArmorRoundCorner(32 * 16));
+  recipes.add(FRecipe.ArmorSide(32));
+  recipes.add(FRecipe.ArmorCenter(32));
+  recipes.add(FRecipe.LargeBlockArmorRoundCorner(32));
 
   recipes.add(FRecipe.LargeBlockRadioAntenna(4));
-  recipes.add(FRecipe.SmallLight(16 + 2*4));
-  recipes.add(FRecipe.LargeShipMergeBlock(4 + 16*2 + 4*2));
+  recipes.add(FRecipe.SmallLight(64));
+  recipes.add(FRecipe.LargeShipMergeBlock(16));
   recipes.add(FRecipe.LargePistonBase(16));
   recipes.add(FRecipe.LargeBlockGyro(16));
 
   recipes.add(FRecipe.LargeBlockWindTurbine(32));
   recipes.add(FRecipe.LargeBlockBatteryBlock(32));
+  recipes.add(FRecipe.SolarPanel(32));
 
   recipes.add(FRecipe.LargeBlockSmallContainer(16));
   recipes.add(FRecipe.LargeBlockLargeContainer(16));
@@ -44,6 +45,9 @@ public string program()
 
   recipes.add(FRecipe.Wheel5x5(4));
   recipes.add(FRecipe.Suspension5x5(4));
+  recipes.add(FRecipe.AtmosphericThrust(8));
+
+  recipes.add(FRecipe.MedicalRoom(2));
 
   return "Планирование производства";
 }

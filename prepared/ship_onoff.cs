@@ -1,6 +1,6 @@
 static string structureName;
 static string scriptName;
-static Program self;
+static Program _;
 static float blockSize;
 static CBO prbOptions;
 public void applyDefaultMeDisplayTexsts() {
@@ -23,7 +23,7 @@ surface.FontColor = new Color(255, 255, 255);
 surface.BackgroundColor = new Color(0, 0, 0);
 surface.FontSize = fontSize;
 surface.Alignment = TextAlignment.CENTER; }
-public static void debug(string text) { self.Echo(text); }
+public static void debug(string text) { _.Echo(text); }
 public void init() {
 structureName = Me.CubeGrid.CustomName;
 blockSize = Me.CubeGrid.GridSize;
@@ -31,7 +31,7 @@ prbOptions = new CBO(Me);
 sMe(program());
 debug($"{Me.CustomName}: init done"); }
 public Program() {
-self = this;
+_ = this;
 init(); }
 public void Main(string argument, UpdateType updateSource) {
 if(argument == "init") {
@@ -48,9 +48,9 @@ read(); }
 private void read() {
 if(m_block.CustomData.Length > 0) {
 m_ini = new MyIni();
-MyIniParseResult result;
-m_available = m_ini.TryParse(m_block.CustomData, out result);
-if(!m_available) { debug(result.ToString()); } } }
+MyIniParseResult r;
+m_available = m_ini.TryParse(m_block.CustomData, out r);
+if(!m_available) { debug(r.ToString()); } } }
 private void write() { m_block.CustomData = m_ini.ToString(); }
 private bool exists(string section, string name) { return m_available && m_ini.ContainsKey(section, name); }
 public string g(string section, string name, string defaultValue = "") {
@@ -74,12 +74,15 @@ IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
 public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CB(string purpose = "", bool loadOnlySameGrid = true) : base(purpose) {
-refresh(loadOnlySameGrid); }
-public void refresh(bool loadOnlySameGrid = true) {
+public CB(string name = "", string purpose = "", bool loadOnlySameGrid = true) : base(purpose) {
+refresh(name, loadOnlySameGrid); }
+public void refresh(string name = "", bool loadOnlySameGrid = true) {
 clear();
-if(loadOnlySameGrid) { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
-else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks) ; } } }
+if(loadOnlySameGrid) { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(_.Me)); }
+else { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks) ; }
+if(name != string.Empty) {
+for(int i = count() - 1; i >= 0; i--) {
+if(!m_blocks[i].CustomName.Contains(name)) { removeBlockAt(i); } } } } }
 public class CBB<T> where T : class, IMyTerminalBlock {
 public CBB(string purpose = "") {
 m_blocks = new List<T>();
@@ -93,26 +96,26 @@ string zeros = new string('0', count().ToString().Length);
 foreach(T block in m_blocks) {
 string blockPurpose = "";
 CBO o = new CBO(block);
-if(isAssignable<IMyShipConnector>()) {
+if(iA<IMyShipConnector>()) {
 IMyShipConnector blk = block as IMyShipConnector;
 blk.PullStrength = 1f;
 blk.CollectAll = o.g("connector", "collectAll", false);
 blk.ThrowOut = o.g("connector", "throwOut", false); }
-else if(isAssignable<IMyInteriorLight>()) {
+else if(iA<IMyInteriorLight>()) {
 IMyInteriorLight blk = block as IMyInteriorLight;
 blk.Radius = 10f;
 blk.Intensity = 10f;
 blk.Falloff = 3f;
 blk.Color = o.g("lamp", "color", Color.White); }
-else if(isAssignable<IMyConveyorSorter>()) {
+else if(iA<IMyConveyorSorter>()) {
 IMyConveyorSorter blk = block as IMyConveyorSorter;
 blk.DrainAll = o.g("sorter", "drainAll", false); }
-else if(isAssignable<IMyLargeTurretBase>()) {
+else if(iA<IMyLargeTurretBase>()) {
 IMyLargeTurretBase blk = block as IMyLargeTurretBase;
 blk.EnableIdleRotation = true;
 blk.Elevation = 0f;
 blk.Azimuth = 0f; }
-else if(isAssignable<IMyAssembler>()) {
+else if(iA<IMyAssembler>()) {
 blockPurpose = "Master";
 if(o.g("assembler", "is_slave", false)) {
 IMyAssembler blk = block as IMyAssembler;
@@ -128,8 +131,7 @@ o.g("generic", "visibleInTerminal", visibleInTerminal),
 o.g("generic", "visibleInInventory", visibleInInventory),
 o.g("generic", "visibleInToolBar", visibleInToolBar)); } }
 private string getPurpose(CBO o) {
-string result = o.g("generic", "purpose", m_purpose);
-return result != "" ? $" {result} " : " "; }
+return o.g("generic", "purpose", m_purpose); }
 private void sBlocksVisibility(T block,
 bool vTerminal,
 bool vInventory,
@@ -138,10 +140,12 @@ IMySlimBlock sBlock = block.CubeGrid.GetCubeBlock(block.Position);
 block.ShowInTerminal = vTerminal && sBlock.IsFullIntegrity && sBlock.BuildIntegrity < 1f;
 block.ShowInToolbarConfig = vToolBar;
 if(block.HasInventory) { block.ShowInInventory = vInventory; } }
-public bool empty() { return m_blocks.Count == 0; }
+public bool empty() { return count() == 0; }
 public int count() { return m_blocks.Count; }
+public void removeBlock(T blk) { m_blocks.Remove(blk); }
+public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
 public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
-public bool isAssignable<U>() where U : class, IMyTerminalBlock {
+public bool iA<U>() where U : class, IMyTerminalBlock {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
 public List<T> blocks() { return m_blocks; }
@@ -163,8 +167,16 @@ newString.Append(value[i]); }
 return newString.ToString(); }
 public class CF<T> : CT<T> where T : class, IMyTerminalBlock {
 public CF(CBB<T> blocks) : base(blocks) {}
-public void enable(bool enabled = true) { foreach(IMyFunctionalBlock block in m_blocks.blocks()) { if(block.Enabled != enabled) { block.Enabled = enabled; }}}
-public void disable() { enable(false); } }
+public bool enable(bool target = true) {
+foreach(IMyFunctionalBlock block in m_blocks.blocks()) {
+if(block.Enabled != target) { block.Enabled = target; } }
+return enabled() == target; }
+public bool disable() { return enable(false); }
+public bool enabled() {
+bool r = true;
+foreach(IMyFunctionalBlock block in m_blocks.blocks()) {
+r = r && block.Enabled; }
+return r; } }
 public class CT<T> where T : class, IMyTerminalBlock {
 public CT(CBB<T> blocks) { m_blocks = blocks; }
 public void listProperties(CTS lcd) {
@@ -187,6 +199,8 @@ void showInInventory(bool show = true) { foreach(T block in m_blocks.blocks()) {
 void hideInInventory() { showInInventory(false); }
 void showOnHUD(bool show = true) { foreach(T block in m_blocks.blocks()) { if(block.ShowOnHUD != show) { block.ShowOnHUD = show; }}}
 void hideOnHUD() { showOnHUD(false); }
+public bool empty() { return m_blocks.empty(); }
+public int count() { return m_blocks.count(); }
 protected CBB<T> m_blocks; }
 public class CTS {
 public CTS() {
@@ -267,73 +281,80 @@ private float m_fontSize;
 private float m_padding;
 private List<string> m_text;
 private List<List<IMyTextSurface>> m_s; }
-public class CBattery : CF<IMyBatteryBlock> {
-public CBattery(CBB<IMyBatteryBlock> blocks) : base(blocks) { }
+public class CBt : CF<IMyBatteryBlock> {
+public CBt(CBB<IMyBatteryBlock> blocks) : base(blocks) { }
 public bool setChargeMode(ChargeMode mode) {
-bool result = true;
+bool r = true;
 foreach(IMyBatteryBlock battery in m_blocks.blocks()) {
 if(battery.ChargeMode != mode) { battery.ChargeMode = mode; }
-result = result && battery.ChargeMode == mode; }
-return result; }
+r = r && battery.ChargeMode == mode; }
+return r; }
 public bool recharge() { return setChargeMode(ChargeMode.Recharge); }
 public bool discharge() { return setChargeMode(ChargeMode.Discharge); }
 public bool autocharge() { return setChargeMode(ChargeMode.Auto); } }
-public class CConnector : CF<IMyShipConnector> {
-public CConnector(CBB<IMyShipConnector> blocks) : base(blocks) { }
-public bool connect(bool enabled = true) {
-bool result = true;
+public class CC : CF<IMyShipConnector> {
+public CC(CBB<IMyShipConnector> blocks) : base(blocks) { }
+public bool connect(bool target = true) {
 foreach(IMyShipConnector connector in m_blocks.blocks()) {
-if(enabled) { connector.Connect(); }
-else { connector.Disconnect(); }
-result = result &&
+if(target) { connector.Connect(); }
+else { connector.Disconnect(); } }
+return checkConnected(target); }
+public bool disconnect() { return connect(false); }
+public bool connected() { return checkConnected(true); }
+private bool checkConnected(bool target) {
+bool r = true;
+foreach(IMyShipConnector connector in m_blocks.blocks()) {
+r = r &&
 (
-enabled ? connector.Status == MyShipConnectorStatus.Connected
-: connector.Status == MyShipConnectorStatus.Unconnected
+target ? connector.Status == MyShipConnectorStatus.Connected
+: connector.Status == MyShipConnectorStatus.Unconnected || connector.Status == MyShipConnectorStatus.Connectable
 ); }
-return result; }
-public bool disconnect() { return connect(false); } }
-public class CLandingGear : CF<IMyLandingGear> {
-public CLandingGear(CBB<IMyLandingGear> blocks) : base(blocks) { }
+return r; }
+public bool connectable() {
+bool r = true;
+foreach(IMyShipConnector connector in m_blocks.blocks()) {
+r = r && connector.Status == MyShipConnectorStatus.Connectable; }
+return r; } }
+public class CLG : CF<IMyLandingGear> {
+public CLG(CBB<IMyLandingGear> blocks) : base(blocks) { }
 public bool lockGear(bool enabled = true) {
-bool result = true;
+bool r = true;
 foreach(IMyLandingGear lg in m_blocks.blocks()) {
 if(enabled) { lg.Lock(); }
 else { lg.Unlock(); }
-result = result && lg.IsLocked; }
-return result; }
+r = r && lg.IsLocked; }
+return r; }
 public bool unlockGear() { return lockGear(false); } }
 public class CTank : CF<IMyGasTank> {
 public CTank(CBB<IMyGasTank> blocks) : base(blocks) { }
 public bool enableStockpile(bool enabled = true) {
-bool result = true;
+bool r = true;
 foreach(IMyGasTank tank in m_blocks.blocks()) {
 if(tank.Stockpile != enabled) { tank.Stockpile = enabled; }
-result = result && tank.Stockpile == enabled; }
-return result; }
+r = r && tank.Stockpile == enabled; }
+return r; }
 public bool disableStockpile() { return enableStockpile(false); } }
 public CF<IMyGyro> gyroscopes;
 public CF<IMyThrust> thrusters;
 public CF<IMyLightingBlock> lamps;
 public CF<IMyRadioAntenna> antennas;
 public CF<IMyOreDetector> oreDetectors;
-public CF<IMyShipToolBase> tools;
-public CBattery battaryes;
-public CConnector connectors;
-public CLandingGear landGears;
+public CBt battaryes;
+public CC connectors;
+public CLG landGears;
 public CTank tanks;
 IMyProgrammableBlock pbAutoHorizont;
 bool connected;
 public string program() {
-pbAutoHorizont = self.GridTerminalSystem.GetBlockWithName($"[{structureName}] ПрБ Атоматический горизонт") as IMyProgrammableBlock;
+pbAutoHorizont = _.GridTerminalSystem.GetBlockWithName($"[{structureName}] ПрБ Атоматический горизонт") as IMyProgrammableBlock;
 gyroscopes = new CF<IMyGyro>(new CB<IMyGyro>());
 thrusters = new CF<IMyThrust>(new CB<IMyThrust>());
-battaryes = new CBattery(new CB<IMyBatteryBlock>());
-connectors = new CConnector(new CB<IMyShipConnector>());
-landGears = new CLandingGear(new CB<IMyLandingGear>());
+battaryes = new CBt(new CB<IMyBatteryBlock>());
+connectors = new CC(new CB<IMyShipConnector>("Главный"));
+landGears = new CLG(new CB<IMyLandingGear>());
 lamps = new CF<IMyLightingBlock>(new CB<IMyLightingBlock>());
 antennas = new CF<IMyRadioAntenna>(new CB<IMyRadioAntenna>());
 oreDetectors = new CF<IMyOreDetector>(new CB<IMyOreDetector>());
-tools = new CF<IMyShipToolBase>(new CB<IMyShipToolBase>());
 tanks = new CTank(new CB<IMyGasTank>());
 connected = true;
 return "Управление стыковкой корабля"; }
@@ -358,7 +379,6 @@ public void turnOff() {
 debug("Off");
 if(connectors.connect()) {
 landGears.lockGear();
-tools.disable();
 lamps.disable();
 if(pbAutoHorizont != null) { pbAutoHorizont.TryRun("stop"); }
 gyroscopes.disable();

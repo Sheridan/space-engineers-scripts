@@ -70,8 +70,7 @@ public class CBlocksBase<T> where T : class, IMyTerminalBlock
 
   private string getPurpose(CBlockOptions options)
   {
-    string result = options.getValue("generic", "purpose", m_purpose);
-    return result != "" ? $" {result} " : " ";
+    return options.getValue("generic", "purpose", m_purpose);
   }
 
   private void setupBlocksVisibility(T block,
@@ -86,8 +85,10 @@ public class CBlocksBase<T> where T : class, IMyTerminalBlock
   }
 
 
-  public bool empty() { return m_blocks.Count == 0; }
+  public bool empty() { return count() == 0; }
   public int count() { return m_blocks.Count; }
+  public void removeBlock(T blk) { m_blocks.Remove(blk); }
+  public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
   public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
   public bool isAssignable<U>() where U : class, IMyTerminalBlock
   {

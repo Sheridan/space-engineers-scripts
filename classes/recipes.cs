@@ -37,6 +37,9 @@ public class FRecipe
       case "MyObjectBuilder_MotorSuspension/Suspension5x5"          : return Suspension5x5              (amount);
       case "MyObjectBuilder_ExtendedPistonBase/LargePistonBase"     : return LargePistonBase            (amount);
       case "MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner"   : return LargeBlockArmorRoundCorner (amount);
+      case "MyObjectBuilder_MedicalRoom/LargeMedicalRoom"           : return MedicalRoom                (amount);
+      case "MyObjectBuilder_SolarPanel/LargeBlockSolarPanel"        : return SolarPanel                 (amount);
+      case "MyObjectBuilder_Thrust/LargeBlockLargeAtmosphericThrust": return AtmosphericThrust          (amount);
     }
     throw new System.ArgumentException("Не знаю такой строки", itemString);
   }
@@ -218,6 +221,40 @@ public class FRecipe
     recipe.addItem(FComponentItem.SmallTube(20 * amount));
     recipe.addItem(FComponentItem.Construction(30 * amount));
     recipe.addItem(FComponentItem.InteriorPlate(20 * amount));
+    return recipe;
+  }
+  static public CRecipe MedicalRoom(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_MedicalRoom/LargeMedicalRoom");
+    recipe.addItem(FComponentItem.Medical(15 * amount));
+    recipe.addItem(FComponentItem.Computer(10 * amount));
+    recipe.addItem(FComponentItem.Display(10 * amount));
+    recipe.addItem(FComponentItem.LargeTube(5 * amount));
+    recipe.addItem(FComponentItem.SmallTube(20 * amount));
+    recipe.addItem(FComponentItem.MetalGrid(60 * amount));
+    recipe.addItem(FComponentItem.Construction(80 * amount));
+    recipe.addItem(FComponentItem.InteriorPlate(240 * amount));
+    return recipe;
+  }
+  static public CRecipe SolarPanel(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_SolarPanel/LargeBlockSolarPanel");
+    recipe.addItem(FComponentItem.BulletproofGlass(4 * amount));
+    recipe.addItem(FComponentItem.SolarCell(32 * amount));
+    recipe.addItem(FComponentItem.Computer(4 * amount));
+    recipe.addItem(FComponentItem.Girder(12 * amount));
+    recipe.addItem(FComponentItem.Construction(14 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(4 * amount));
+    return recipe;
+  }
+  static public CRecipe AtmosphericThrust(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Thrust/LargeBlockLargeAtmosphericThrust");
+    recipe.addItem(FComponentItem.Motor(1100 * amount));
+    recipe.addItem(FComponentItem.MetalGrid(40 * amount));
+    recipe.addItem(FComponentItem.LargeTube(50 * amount));
+    recipe.addItem(FComponentItem.Construction(60 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(230 * amount));
     return recipe;
   }
 }

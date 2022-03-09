@@ -25,40 +25,70 @@ function replace()
   sed -r "s@${regexp}@${what}@g"
 }
 
-collect_includes "${project}.cs"
-cat ${filelist[@]} ${project}.cs | \
-  replace "CBlocks"              "CB"   | \
-  replace "CBTyped"              "CBT"  | \
-  replace "CBlockGroup"          "CBG"  | \
-  replace "CBBase"               "CBB"  | \
-  replace "CBlockOptions"        "CBO"  | \
-  replace "CFunctional"          "CF"   | \
-  replace "options"              "o"    | \
-  replace "getValue"             "g"    | \
-  replace "toHumanReadable"      "tHR"  | \
-  replace "previousIsWhitespace" "pIW"  | \
-  replace "setup"                "s"    | \
-  replace "CDisplay"             "CD"   | \
-  replace "CBlockStatusDisplay"  "CBSD" | \
-  replace "CBlockPowerInfo"      "CBPI" | \
-  replace "CBlockUpgrades"       "CBU"  | \
-  replace "CTextSurface"         "CTS"  | \
-  replace "CTerminal"            "CT"   | \
-  replace "countSurfacesX"       "csX"  | \
-  replace "countSurfacesY"       "csY"  | \
-  replace "m_surfaces"           "m_s"  | \
-  replace "showStatus"           "sS"   | \
-  replace "addDisplay"           "aD"   | \
-  replace "EHRUnit"              "EHRU" | \
-  replace "//.*$"                ""     | \
-  egrep -v "^ +?(//|$)" | \
-  astyle --mode=cs --style=lisp --indent=spaces --max-code-length=200 --unpad-paren --pad-comma \
-         --keep-one-line-statements --keep-one-line-blocks --convert-tabs --delete-empty-lines | \
-  sed -r 's@^ +@@g' | \
-  sed -r 's@ +@ @g'   \
-    > ${outfolder}/${project}.cs
+function sed_preproc()
+{
+  cat ${filelist[@]} ${project}.cs | \
+   replace "CBlocks"                  "CB"   | \
+   replace "CBTyped"                  "CBT"  | \
+   replace "CBlockGroup"              "CBG"  | \
+   replace "CBBase"                   "CBB"  | \
+   replace "CBlockOptions"            "CBO"  | \
+   replace "CFunctional"              "CF"   | \
+   replace "options"                  "o"    | \
+   replace "getValue"                 "g"    | \
+   replace "toHumanReadable"          "tHR"  | \
+   replace "previousIsWhitespace"     "pIW"  | \
+   replace "setup"                    "s"    | \
+   replace "CDisplay"                 "CD"   | \
+   replace "CConnector"               "CC"   | \
+   replace "CLandingGear"             "CLG"  | \
+   replace "CBattery"                 "CBt"  | \
+   replace "CBlockStatusDisplay"      "CBSD" | \
+   replace "CBlockPowerInfo"          "CBPI" | \
+   replace "CBlockUpgrades"           "CBU"  | \
+   replace "CTextSurface"             "CTS"  | \
+   replace "CTerminal"                "CT"   | \
+   replace "countSurfacesX"           "csX"  | \
+   replace "countSurfacesY"           "csY"  | \
+   replace "m_surfaces"               "m_s"  | \
+   replace "result"                   "r"    | \
+   replace "self"                     "_"    | \
+   replace "showStatus"               "sS"   | \
+   replace "addDisplay"               "aD"   | \
+   replace "EHRUnit"                  "EHRU" | \
+   replace "getPistonsStatus"         "gPsS" | \
+   replace "getConnectorsStatus"      "gCS"  | \
+   replace "getMergersStatus"         "gMS"  | \
+   replace "getProjectorsStatus"      "gPS"  | \
+   replace "getRotorsStatus"          "gRS"  | \
+   replace "getGyroStatus"            "gGS"  | \
+   replace "getBatteryesStatus"       "gBS"  | \
+   replace "getGasTanksStatus"        "gGTS" | \
+   replace "getPowerProducersStatus"  "gPPS" | \
+   replace "getInvertoryesStatus"     "gIS"  | \
+   replace "getFunctionaBlocksStatus" "gFBS" | \
+   replace "isAssignable"             "iA"   | \
+   replace "//.*$"                ""     | \
+   egrep -v "^ +?(//|$)" | \
+   astyle --mode=cs --style=lisp --indent=spaces --max-code-length=200 --unpad-paren --pad-comma \
+          --keep-one-line-statements --keep-one-line-blocks --convert-tabs --delete-empty-lines | \
+   sed -r 's@^ +@@g' | \
+   sed -r 's@ +@ @g'   \
+     > ${outfolder}/${project}.cs
+}
 
-  wc -c ${outfolder}/${project}.cs
+function reduce_preproc()
+{
+  cat ${filelist[@]} ${project}.cs | \
+     replace "//.*$"                ""     | \
+    ./reduce.pl \
+    > ${outfolder}/${project}.cs
+}
+
+collect_includes "${project}.cs"
+sed_preproc
+#reduce_preproc
+wc -c ${outfolder}/${project}.cs
 
 # clang-format --style=file --verbose
 #  astyle --mode=cs --style=lisp --indent=spaces --max-code-length=200 --unpad-paren --pad-comma \

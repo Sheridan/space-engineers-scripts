@@ -69,12 +69,8 @@ public string program()
 {
   Runtime.UpdateFrequency = UpdateFrequency.Update100;
   lcd = new CBlockStatusDisplay();
-  lcd.addDisplay("[Земля] Дисплей Статус 4", 0, 0);
+  lcd.addDisplay("[Земля] Дисплей Статус 0", 0, 0);
   lcd.addDisplay("[Земля] Дисплей Статус 1", 1, 0);
-  lcd.addDisplay("[Земля] Дисплей Статус 0", 2, 0);
-  lcd.addDisplay("[Земля] Дисплей Статус 5", 0, 1);
-  lcd.addDisplay("[Земля] Дисплей Статус 2", 1, 1);
-  lcd.addDisplay("[Земля] Дисплей Статус 3", 2, 1);
   debug("Done displays");
   initGroups();
   return "Отображение статуса базы";

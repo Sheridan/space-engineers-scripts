@@ -12,6 +12,16 @@ public class CPiston : CFunctional<IMyPistonBase>
     return currentPos <= targetPos + sensetivity && currentPos >= targetPos - sensetivity;
   }
 
+  public float currentLength()
+  {
+    float l = 0;
+    foreach (IMyPistonBase piston in m_blocks.blocks())
+    {
+      l += piston.CurrentPosition;
+    }
+    return l/m_blocks.count()/m_stackSize;
+  }
+
   public bool retract(float length, float velocity)
   {
     bool result = true;
@@ -80,6 +90,9 @@ public class CPiston : CFunctional<IMyPistonBase>
     }
     return result;
   }
+
+  public bool expandRelative (float length, float velocity) { return expand (currentLength() + length, velocity); }
+  public bool retractRelative(float length, float velocity) { return retract(currentLength() - length, velocity); }
 
   private int m_stackSize;
   // private const float pistonHeadLength = 0.11f;

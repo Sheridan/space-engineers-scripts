@@ -1,6 +1,6 @@
 static string structureName;
 static string scriptName;
-static Program self;
+static Program _;
 static float blockSize;
 static CBO prbOptions;
 public void applyDefaultMeDisplayTexsts() {
@@ -23,7 +23,7 @@ surface.FontColor = new Color(255, 255, 255);
 surface.BackgroundColor = new Color(0, 0, 0);
 surface.FontSize = fontSize;
 surface.Alignment = TextAlignment.CENTER; }
-public static void debug(string text) { self.Echo(text); }
+public static void debug(string text) { _.Echo(text); }
 public void init() {
 structureName = Me.CubeGrid.CustomName;
 blockSize = Me.CubeGrid.GridSize;
@@ -31,7 +31,7 @@ prbOptions = new CBO(Me);
 sMe(program());
 debug($"{Me.CustomName}: init done"); }
 public Program() {
-self = this;
+_ = this;
 init(); }
 public void Main(string argument, UpdateType updateSource) {
 if(argument == "init") {
@@ -48,9 +48,9 @@ read(); }
 private void read() {
 if(m_block.CustomData.Length > 0) {
 m_ini = new MyIni();
-MyIniParseResult result;
-m_available = m_ini.TryParse(m_block.CustomData, out result);
-if(!m_available) { debug(result.ToString()); } } }
+MyIniParseResult r;
+m_available = m_ini.TryParse(m_block.CustomData, out r);
+if(!m_available) { debug(r.ToString()); } } }
 private void write() { m_block.CustomData = m_ini.ToString(); }
 private bool exists(string section, string name) { return m_available && m_ini.ContainsKey(section, name); }
 public string g(string section, string name, string defaultValue = "") {
@@ -74,12 +74,15 @@ IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
 public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CB(string purpose = "", bool loadOnlySameGrid = true) : base(purpose) {
-refresh(loadOnlySameGrid); }
-public void refresh(bool loadOnlySameGrid = true) {
+public CB(string name = "", string purpose = "", bool loadOnlySameGrid = true) : base(purpose) {
+refresh(name, loadOnlySameGrid); }
+public void refresh(string name = "", bool loadOnlySameGrid = true) {
 clear();
-if(loadOnlySameGrid) { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
-else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks) ; } } }
+if(loadOnlySameGrid) { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(_.Me)); }
+else { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks) ; }
+if(name != string.Empty) {
+for(int i = count() - 1; i >= 0; i--) {
+if(!m_blocks[i].CustomName.Contains(name)) { removeBlockAt(i); } } } } }
 public class CBB<T> where T : class, IMyTerminalBlock {
 public CBB(string purpose = "") {
 m_blocks = new List<T>();
@@ -93,26 +96,26 @@ string zeros = new string('0', count().ToString().Length);
 foreach(T block in m_blocks) {
 string blockPurpose = "";
 CBO o = new CBO(block);
-if(isAssignable<IMyShipConnector>()) {
+if(iA<IMyShipConnector>()) {
 IMyShipConnector blk = block as IMyShipConnector;
 blk.PullStrength = 1f;
 blk.CollectAll = o.g("connector", "collectAll", false);
 blk.ThrowOut = o.g("connector", "throwOut", false); }
-else if(isAssignable<IMyInteriorLight>()) {
+else if(iA<IMyInteriorLight>()) {
 IMyInteriorLight blk = block as IMyInteriorLight;
 blk.Radius = 10f;
 blk.Intensity = 10f;
 blk.Falloff = 3f;
 blk.Color = o.g("lamp", "color", Color.White); }
-else if(isAssignable<IMyConveyorSorter>()) {
+else if(iA<IMyConveyorSorter>()) {
 IMyConveyorSorter blk = block as IMyConveyorSorter;
 blk.DrainAll = o.g("sorter", "drainAll", false); }
-else if(isAssignable<IMyLargeTurretBase>()) {
+else if(iA<IMyLargeTurretBase>()) {
 IMyLargeTurretBase blk = block as IMyLargeTurretBase;
 blk.EnableIdleRotation = true;
 blk.Elevation = 0f;
 blk.Azimuth = 0f; }
-else if(isAssignable<IMyAssembler>()) {
+else if(iA<IMyAssembler>()) {
 blockPurpose = "Master";
 if(o.g("assembler", "is_slave", false)) {
 IMyAssembler blk = block as IMyAssembler;
@@ -128,8 +131,7 @@ o.g("generic", "visibleInTerminal", visibleInTerminal),
 o.g("generic", "visibleInInventory", visibleInInventory),
 o.g("generic", "visibleInToolBar", visibleInToolBar)); } }
 private string getPurpose(CBO o) {
-string result = o.g("generic", "purpose", m_purpose);
-return result != "" ? $" {result} " : " "; }
+return o.g("generic", "purpose", m_purpose); }
 private void sBlocksVisibility(T block,
 bool vTerminal,
 bool vInventory,
@@ -138,10 +140,12 @@ IMySlimBlock sBlock = block.CubeGrid.GetCubeBlock(block.Position);
 block.ShowInTerminal = vTerminal && sBlock.IsFullIntegrity && sBlock.BuildIntegrity < 1f;
 block.ShowInToolbarConfig = vToolBar;
 if(block.HasInventory) { block.ShowInInventory = vInventory; } }
-public bool empty() { return m_blocks.Count == 0; }
+public bool empty() { return count() == 0; }
 public int count() { return m_blocks.Count; }
+public void removeBlock(T blk) { m_blocks.Remove(blk); }
+public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
 public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
-public bool isAssignable<U>() where U : class, IMyTerminalBlock {
+public bool iA<U>() where U : class, IMyTerminalBlock {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
 public List<T> blocks() { return m_blocks; }
@@ -163,9 +167,9 @@ newString.Append(value[i]); }
 return newString.ToString(); }
 public class CBSD : CD {
 public CBSD() : base() {}
-private string getFunctionaBlocksStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.isAssignable<IMyFunctionalBlock>()) { return ""; }
-string result = "";
+private string gFBS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+if(!group.iA<IMyFunctionalBlock>()) { return ""; }
+string r = "";
 int pOn = 0;
 int fOn = 0;
 int wOn = 0;
@@ -179,36 +183,36 @@ powerConsumed += pInfo.currentConsume();
 powerMaxConsumed += pInfo.maxConsume(); }
 if(block.IsFunctional) { fOn++; }
 if(block.IsWorking) { wOn++; } }
-result += $"PFW: {pOn}:{fOn}:{wOn} ";
+r += $"PFW: {pOn}:{fOn}:{wOn} ";
 if(powerMaxConsumed > 0) {
-result += $"Consuming (now,max): {tHR(powerConsumed, EHRU.Power)}:{tHR(powerMaxConsumed, EHRU.Power)} "; }
-return result; }
-private string getRotorsStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.isAssignable<IMyMotorStator>()) { return ""; }
-string result = "";
+r += $"Consuming (now,max): {tHR(powerConsumed, EHRU.Power)}:{tHR(powerMaxConsumed, EHRU.Power)} "; }
+return r; }
+private string gRS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+if(!group.iA<IMyMotorStator>()) { return ""; }
+string r = "";
 List<string> rpm = new List<string>();
 List<string> angle = new List<string>();
 foreach(IMyMotorStator block in group.blocks()) {
 float angleGrad = block.Angle * 180 / (float)Math.PI;
 rpm.Add($"{block.TargetVelocityRPM:f2}");
 angle.Add($"{angleGrad:f2}°"); }
-result += $"Angle: {string.Join(":", angle)} "
+r += $"Angle: {string.Join(":", angle)} "
 + $"RPM: {string.Join(":", rpm)} ";
-return result; }
-private string getGasTanksStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.isAssignable<IMyGasTank>()) { return ""; }
-string result = "";
+return r; }
+private string gGTS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+if(!group.iA<IMyGasTank>()) { return ""; }
+string r = "";
 float capacity = 0;
 double filledRatio = 0;
 foreach(IMyGasTank block in group.blocks()) {
 capacity += block.Capacity;
 filledRatio += block.FilledRatio; }
-result += $"Capacity: {tHR(capacity, EHRU.Volume)} "
+r += $"Capacity: {tHR(capacity, EHRU.Volume)} "
 + $"Filled: {filledRatio/group.count()*100:f2}% ";
-return result; }
-private string getBatteryesStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.isAssignable<IMyBatteryBlock>()) { return ""; }
-string result = "";
+return r; }
+private string gBS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+if(!group.iA<IMyBatteryBlock>()) { return ""; }
+string r = "";
 float currentStored = 0;
 float maxStored = 0;
 foreach(IMyBatteryBlock block in group.blocks()) {
@@ -216,9 +220,9 @@ currentStored += block.CurrentStoredPower;
 maxStored += block.MaxStoredPower; }
 currentStored *= 1000000;
 maxStored *= 1000000;
-result += $"Capacity: {tHR(currentStored, EHRU.PowerCapacity)}:{tHR(maxStored, EHRU.PowerCapacity)} ";
-return result; }
-private string getInvertoryesStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+r += $"Capacity: {tHR(currentStored, EHRU.PowerCapacity)}:{tHR(maxStored, EHRU.PowerCapacity)} ";
+return r; }
+private string gIS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 long volume = 0;
 long volumeMax = 0;
 int mass = 0;
@@ -238,9 +242,9 @@ if(inventoryes > 0) {
 mass *= 1000;
 return $"VMI: ({tHR(volume, EHRU.Volume)}:{tHR(volumeMax, EHRU.Volume)}):{tHR(mass, EHRU.Mass)}:{tHR(items)} from {inventoryes} "; }
 return ""; }
-private string getPistonsStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.isAssignable<IMyPistonBase>()) { return ""; }
-string result = "";
+private string gPsS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+if(!group.iA<IMyPistonBase>()) { return ""; }
+string r = "";
 List<string> positions = new List<string>();
 int statusStopped = 0;
 int statusExtending = 0;
@@ -255,12 +259,12 @@ case PistonStatus.Extended: statusExtended++; break;
 case PistonStatus.Retracting: statusRetracting++; break;
 case PistonStatus.Retracted: statusRetracted++; break; }
 positions.Add($"{block.CurrentPosition:f2}"); }
-result += $"SeErR: {statusStopped}:{statusExtending}:{statusExtended}:{statusRetracting}:{statusRetracted} "
+r += $"SeErR: {statusStopped}:{statusExtending}:{statusExtended}:{statusRetracting}:{statusRetracted} "
 + $"Pos: {string.Join(":", positions)} ";
-return result; }
-private string getGyroStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.isAssignable<IMyGyro>()) { return ""; }
-string result = "";
+return r; }
+private string gGS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+if(!group.iA<IMyGyro>()) { return ""; }
+string r = "";
 float yaw = 0;
 float pitch = 0;
 float roll = 0;
@@ -268,19 +272,19 @@ foreach(IMyGyro block in group.blocks()) {
 yaw += Math.Abs(block.Yaw);
 pitch += Math.Abs(block.Pitch);
 roll += Math.Abs(block.Roll); }
-result += $"YPR: {yaw/group.count():f4}:{pitch/group.count():f4}:{roll/group.count():f4} ";
-return result; }
-private string getMergersStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.isAssignable<IMyShipMergeBlock>()) { return ""; }
-string result = "";
+r += $"YPR: {yaw/group.count():f4}:{pitch/group.count():f4}:{roll/group.count():f4} ";
+return r; }
+private string gMS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+if(!group.iA<IMyShipMergeBlock>()) { return ""; }
+string r = "";
 int connected = 0;
 foreach(IMyShipMergeBlock block in group.blocks()) {
 if(block.IsConnected) { connected++; } }
-result += $"Connected: {connected} ";
-return result; }
-private string getConnectorsStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.isAssignable<IMyShipConnector>()) { return ""; }
-string result = "";
+r += $"Connected: {connected} ";
+return r; }
+private string gCS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+if(!group.iA<IMyShipConnector>()) { return ""; }
+string r = "";
 int statusUnconnected = 0;
 int statusConnectable = 0;
 int statusConnected = 0;
@@ -289,11 +293,11 @@ switch(block.Status) {
 case MyShipConnectorStatus.Unconnected: statusUnconnected++; break;
 case MyShipConnectorStatus.Connectable: statusConnectable++; break;
 case MyShipConnectorStatus.Connected: statusConnected++; break; } }
-result += $"UcC: {statusUnconnected}:{statusConnectable}:{statusConnected} ";
-return result; }
-private string getProjectorsStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.isAssignable<IMyProjector>()) { return ""; }
-string result = "";
+r += $"UcC: {statusUnconnected}:{statusConnectable}:{statusConnected} ";
+return r; }
+private string gPS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+if(!group.iA<IMyProjector>()) { return ""; }
+string r = "";
 int projecting = 0;
 List<string> blocksTotal = new List<string>();
 List<string> blocksRemaining = new List<string>();
@@ -303,42 +307,42 @@ if(block.IsProjecting) { projecting++; }
 blocksTotal.Add($"{block.TotalBlocks}");
 blocksRemaining.Add($"{block.RemainingBlocks}");
 blocksBuildable.Add($"{block.BuildableBlocksCount}"); }
-result += $"Pr: {projecting} "
+r += $"Pr: {projecting} "
 + $"B: {string.Join(":", blocksBuildable)} "
 + $"R: {string.Join(":", blocksRemaining)} "
 + $"T: {string.Join(":", blocksTotal)} "
 ;
-return result; }
-private string getPowerProducersStatus<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.isAssignable<IMyPowerProducer>()) { return ""; }
-string result = "";
+return r; }
+private string gPPS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
+if(!group.iA<IMyPowerProducer>()) { return ""; }
+string r = "";
 float currentOutput = 0f;
 float maxOutput = 0f;
 foreach(IMyPowerProducer block in group.blocks()) {
 CBPI pInfo = new CBPI(block);
 currentOutput += pInfo.currentProduce();
 maxOutput += pInfo.maxProduce(); }
-result += $"Ген. энергии (now:max): {tHR(currentOutput, EHRU.Power)}:{tHR(maxOutput, EHRU.Power)} ";
-return result; }
+r += $"Ген. энергии (now:max): {tHR(currentOutput, EHRU.Power)}:{tHR(maxOutput, EHRU.Power)} ";
+return r; }
 public void sS<T>(CBB<T> group, int position) where T : class, IMyTerminalBlock {
-string result = $"[{group.subtypeName()}] {group.purpose()} ";
+string r = $"[{group.subtypeName()}] {group.purpose()} ";
 if(!group.empty()) {
-result += $"({group.count()}) "
-+ getPistonsStatus<T>(group)
-+ getConnectorsStatus<T>(group)
-+ getMergersStatus<T>(group)
-+ getProjectorsStatus<T>(group)
-+ getRotorsStatus<T>(group)
-+ getGyroStatus<T>(group)
-+ getBatteryesStatus<T>(group)
-+ getGasTanksStatus<T>(group)
-+ getPowerProducersStatus<T>(group)
-+ getInvertoryesStatus<T>(group)
-+ getFunctionaBlocksStatus<T>(group)
+r += $"({group.count()}) "
++ gPsS<T>(group)
++ gCS<T>(group)
++ gMS<T>(group)
++ gPS<T>(group)
++ gRS<T>(group)
++ gGS<T>(group)
++ gBS<T>(group)
++ gGTS<T>(group)
++ gPPS<T>(group)
++ gIS<T>(group)
++ gFBS<T>(group)
 ; }
 else {
-result += "Таких блоков нет"; }
-echo_at(result, position); } }
+r += "Таких блоков нет"; }
+echo_at(r, position); } }
 public class CD : CTS {
 public CD() : base() {
 m_initialized = false; }
@@ -346,11 +350,12 @@ private void initSize(IMyTextPanel display) {
 if(!m_initialized) {
 debug($"{display.BlockDefinition.SubtypeName}");
 switch(display.BlockDefinition.SubtypeName) {
-case "LargeLCDPanelWide": s(0.602f, 28, 87, 0.35f); break;
+case "LargeLCDPanelWide" : s(0.602f, 28, 87, 0.35f); break;
 case "LargeLCDPanel" : s(0.602f, 28, 44, 0.35f); break;
+case "TransparentLCDLarge": s(0.602f, 28, 44, 0.35f); break;
 default: s(1f, 1, 1, 1f); break; } } }
 public void aD(string name, int x, int y) {
-IMyTextPanel display = self.GridTerminalSystem.GetBlockWithName(name) as IMyTextPanel;
+IMyTextPanel display = _.GridTerminalSystem.GetBlockWithName(name) as IMyTextPanel;
 initSize(display);
 addSurface(display as IMyTextSurface, x, y); }
 private bool m_initialized; }
@@ -460,16 +465,16 @@ if(canProduce()) { return (m_block as IMyPowerProducer).MaxOutput*1000000; }
 return 0f; }
 public float currentConsume() {
 if(canConsume()) {
-float result = m_blockSinkComponent.CurrentInputByType(Electricity);
-return result * 1000000; }
+float r = m_blockSinkComponent.CurrentInputByType(Electricity);
+return r * 1000000; }
 return 0f; }
 public float maxConsume() {
 if(canConsume()) {
-float result = m_blockSinkComponent.MaxRequiredInputByType(Electricity);
+float r = m_blockSinkComponent.MaxRequiredInputByType(Electricity);
 if(m_block is IMyAssembler || m_block is IMyRefinery) {
 CBU upgrades = new CBU(m_block as IMyUpgradableBlock);
-upgrades.calcPowerUse(result); }
-return result * 1000000; }
+upgrades.calcPowerUse(r); }
+return r * 1000000; }
 return 0f; }
 MyResourceSinkComponent m_blockSinkComponent;
 IMyTerminalBlock m_block;
@@ -563,13 +568,13 @@ bool autorotate;
 public string program() {
 autorotate = false;
 string cockpitName = prbOptions.g("script", "cockpitName", "");
-cockpit = self.GridTerminalSystem.GetBlockWithName(cockpitName) as IMyCockpit;
+cockpit = _.GridTerminalSystem.GetBlockWithName(cockpitName) as IMyCockpit;
 lcd = new CTS();
 int cockpitSurface = prbOptions.g("script", "cockpitSurface", -1);
 if(cockpitSurface >= 0) { lcd.setSurface(cockpit.GetSurface(cockpitSurface), 2f, 7, 30); }
 else { lcd.setSurface(Me.GetSurface(0), 2f, 7, 14); }
 gyroscopes = new CB<IMyGyro>();
-controller = new CShipController(self.GridTerminalSystem.GetBlockWithName(prbOptions.g("script", "controllerName", cockpitName)) as IMyShipController, gyroscopes);
+controller = new CShipController(_.GridTerminalSystem.GetBlockWithName(prbOptions.g("script", "controllerName", cockpitName)) as IMyShipController, gyroscopes);
 return "Атоматический горизонт"; }
 public void main(string argument, UpdateType updateSource) {
 if(argument.Length == 0) {

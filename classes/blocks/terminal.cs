@@ -38,5 +38,8 @@ public class CTerminal<T> where T : class, IMyTerminalBlock
   void showOnHUD(bool show = true) { foreach (T block in m_blocks.blocks()) { if(block.ShowOnHUD != show) { block.ShowOnHUD = show; }}}
   void hideOnHUD() { showOnHUD(false); }
 
+  public bool empty() { return m_blocks.empty(); }
+  public int count() { return m_blocks.count(); }
+
   protected CBlocksBase<T> m_blocks;
 }

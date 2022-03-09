@@ -59,3 +59,6 @@ space_builder: prepare to_clipboard
 
 h2_generators_control: project=h2_generators_control
 h2_generators_control: prepare to_clipboard
+
+worker_ship_tools: project=worker_ship_tools
+worker_ship_tools: prepare to_clipboard

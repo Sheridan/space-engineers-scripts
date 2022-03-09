@@ -1,237 +1,188 @@
 // #include classes/main.cs
+// #include classes/blocks.cs
+// #include classes/blocks/rotor.cs
+// #include classes/blocks/piston.cs
+// #include classes/blocks/merger.cs
+// #include classes/blocks/ship_tool.cs
+// #include classes/blocks/projector.cs
+// #include classes/state_machine.cs
 // #include classes/display.cs
 // #include helpers/bool.cs
-// #include parts/mole_digger.cs
-// #include classes/angle.cs
 
-public void expandPistons(CBlockGroup<IMyPistonBase> pistons,
-                          float length,
-                          float velocity,
-                          float force,
-                          int stackSize = 1)
-{
-  float realLength = length / stackSize;
-  float realVelocity = velocity / stackSize;
-  float currentPosition = 0;
-  foreach (IMyPistonBase piston in pistons.blocks())
-  {
-    switch (piston.Status)
-    {
-      case PistonStatus.Stopped:
-      case PistonStatus.Retracted:
-      case PistonStatus.Retracting:
-      case PistonStatus.Extended:
-        {
-          if (piston.CurrentPosition < realLength)
-          {
-            piston.Velocity = realVelocity;
-            piston.MinLimit = 0f;
-            piston.MaxLimit = realLength;
-            piston.SetValue<float>("MaxImpulseAxis", force);
-            piston.SetValue<float>("MaxImpulseNonAxis", force);
-            piston.Extend();
-          }
-        }
-        break;
-    }
-    currentPosition += piston.CurrentPosition;
-  }
-  currentPosition = currentPosition / pistons.count();
-  lcd.echo($"[{pistons.purpose()}] Выдвигаются до {currentPosition:f2}->{realLength:f2}");
-}
+float drillRotorsRPM = 0.5f;
 
-public void retractPistons(CBlockGroup<IMyPistonBase> pistons,
-                          float minLength,
-                          float velocity,
-                          float force,
-                          int stackSize = 1)
-{
-  float realLength = minLength / stackSize;
-  float realVelocity = velocity / stackSize;
-  float currentPosition = 0;
-  foreach (IMyPistonBase piston in pistons.blocks())
-  {
-    switch (piston.Status)
-    {
-      case PistonStatus.Stopped:
-      case PistonStatus.Extended:
-      case PistonStatus.Extending:
-      case PistonStatus.Retracted:
-        {
-          if (piston.CurrentPosition > realLength)
-          {
-            piston.Velocity = realVelocity;
-            piston.MinLimit = realLength;
-            piston.MaxLimit = 10f;
-            piston.SetValue<float>("MaxImpulseAxis", force);
-            piston.SetValue<float>("MaxImpulseNonAxis", force);
-            piston.Retract();
-          }
-        }
-        break;
-    }
-    currentPosition += piston.CurrentPosition;
-  }
-  currentPosition = currentPosition / pistons.count();
-  lcd.echo($"[{pistons.purpose()}] Задвигаются до {currentPosition:f2}->{realLength:f2}");
-}
+float wallHeight = 4f * 2.5f;
+float drillSteps = 20f;
+float drillPistonsStep;
+float drillPistonsSpeed = 1f;
+float lastRotorsAngle = 0f;
+float stepRotorsAngle = 190f;
+float continuosRotorAngle = 0f;
 
-public void playSound(string name)
-{
-  soundBlock.SelectedSound = name;
-  soundBlock.Play();
-}
+int lastAngleFactor = 1;
 
-CAngle nextStepAngle;
-const float stepAtEveryDegree = 100f;
-public void incrementNextStepAngle(CAngle currentAngle)
-{
-  nextStepAngle = currentAngle + stepAtEveryDegree;
-  lcd.echo($"Следующий угол шага: {currentAngle.ToString()} -> {nextStepAngle.ToString()}");
-}
+CDisplay logLcd;
+CDisplay statusLcd;
+CRotor drillRotors0;
+CRotor drillRotors45;
+CPiston drillPistons;
+CPiston welderPistons;
+CPiston platformPistons;
+CShipTool drills;
+CShipTool welders;
+CMerger topMergers;
+CMerger bottomMergers;
+CProjector wallProjector;
 
-public bool canStep(CAngle currentAngle, float delta = 1f)
-{
-  lcd.echo_at($"Осталось до следующего шага: {(nextStepAngle - currentAngle).ToString()}", 0);
-  if ((nextStepAngle - currentAngle) <= delta)
-  {
-    incrementNextStepAngle(currentAngle + delta);
-    return true;
-  }
-  return false;
-}
-
-CDisplay lcd;
-IMySoundBlock soundBlock;
-
-const float pistonDrillVelocity = 0.1f;
-const float pistonUpVelocity = 0.5f;
-
-const float pistonDrillForce = 1000000f;
-const float pistonUpForce = 500000f;
-const int pistonsInStack = 3;
-
-const float gyroscopeMaxPR = 0.01f;
-
-float maxDrillLength;
-float pistonStep;
-
-IMyProgrammableBlock autoHorizont;
+CStateMachine states;
 
 public string program()
 {
-  Runtime.UpdateFrequency = UpdateFrequency.Update100;
-  autoHorizont = GridTerminalSystem.GetBlockWithName("[Крот] ПрБ Атоматический горизонт") as IMyProgrammableBlock;
-  pistonStep = blockSize;
-  maxDrillLength = pistonStep*10;
-  lcd = new CDisplay();
-  lcd.addDisplay("[Крот] Дисплей логов бурения 0", 0, 0);
-  lcd.addDisplay("[Крот] Дисплей логов бурения 1", 1, 0);
-  initGroups();
-  soundBlock = GridTerminalSystem.GetBlockWithName("[Крот] Динамик") as IMySoundBlock;
-  nextStepAngle = new CAngle(0);
-  return "Управление бурением";
+  // Runtime.UpdateFrequency = UpdateFrequency.Update100;
+  drillPistonsStep = wallHeight / drillSteps;
+
+  logLcd = new CDisplay();
+  logLcd.addDisplay($"[{structureName}] Дисплей Лог 1", 0, 0);
+  logLcd.addDisplay($"[{structureName}] Дисплей Лог 0", 1, 0);
+
+  statusLcd = new CDisplay();
+  statusLcd.addDisplay($"[{structureName}] Дисплей Статус 0", 0, 0);
+
+  drillRotors0     = new CRotor    (new CBlocks<IMyMotorStator   >("Инструмент (0)"));
+  drillRotors45    = new CRotor    (new CBlocks<IMyMotorStator   >("Инструмент (45)"));
+  drillPistons     = new CPiston   (new CBlocks<IMyPistonBase    >("Бур"));
+  welderPistons    = new CPiston   (new CBlocks<IMyPistonBase    >("Сварщик"));
+  platformPistons  = new CPiston   (new CBlocks<IMyPistonBase    >("Подвес"));
+  drills           = new CShipTool (new CBlocks<IMyShipToolBase  >("Бур"));
+  welders          = new CShipTool (new CBlocks<IMyShipToolBase  >("Сварщик"));
+  topMergers       = new CMerger   (new CBlocks<IMyShipMergeBlock>("Верхний"));
+  bottomMergers    = new CMerger   (new CBlocks<IMyShipMergeBlock>("Нижний"));
+  wallProjector    = new CProjector(new CBlocks<IMyProjector     >("Тоннель"));
+
+  states = new CStateMachine(logLcd);
+  states.addState("Подготовка к запуску", prepareStart);
+  states.addState("Запуск вращения буров", startDrillRotors);
+  states.addState("Запуск буров", startDrill);
+  for(int i = 1; i<=drillSteps; i++)
+  {
+    states.addState($"Опускание буров (шаг {i})", stepDrillPiston, i*drillPistonsStep);
+    states.addState($"Получение текущего угла роторов (шаг {i})", prepareRotorsAngleCalc);
+    states.addState($"Ожидание поворота роторов (шаг {i})", waitRotorsTurn);
+  }
+  states.addState("Остановка буров", stopDrill);
+  states.addState("Остановка вращения буров", stopDrillRotors);
+  states.addState("Поднятие поршней буров", retractDrillPiston);
+// welded: 1: 120 2:240 3:360 4:480
+  showStatus();
+
+  return "Управление кротом";
 }
 
 public void main(string argument, UpdateType updateSource)
 {
-  if(!parseArgumets(argument))
+  if (argument == "start")
   {
-    IMyMotorStator rotor = rotors.blocks()[0];
-    if(rotor.TargetVelocityRPM > 0f)
-    {
-      float pitch = 0;
-      float roll = 0;
-      foreach (IMyGyro gyroscope in gyroscopes.blocks())
-      {
-        pitch += Math.Abs(gyroscope.Pitch);
-        roll  += Math.Abs(gyroscope.Roll);
-      }
-      if(!pauseWork(pitch/gyroscopes.count() > gyroscopeMaxPR ||
-                    roll /gyroscopes.count() > gyroscopeMaxPR)    &&
-          canStep(CAngle.fromRad(rotor.Angle)))
-      {
-        bool pistonsAtMaxLength = true;
-        foreach (IMyPistonBase piston in pistons.blocks())
-        {
-          pistonsAtMaxLength = pistonsAtMaxLength && piston.CurrentPosition >= maxDrillLength/pistonsInStack;
-        }
-        if(!pistonsAtMaxLength) { pistonsStep(); }
-        else                    { stopWork   (); }
-      }
-    }
+    states.start(true);
   }
+  else if(argument == "to_zero") { toZero(); }
+  else if(argument == "to_zero_stop") { stopDrillRotors(null); }
+  else if(argument == "rotate") { prepareStart(null); startDrillRotors(null); }
+  else if(argument == "stats") { self.Runtime.UpdateFrequency = UpdateFrequency.Update100; }
+  else { if(states.active()) { states.step(); } showStatus(); }
 }
 
-float pistonPosition = 0f;
-public bool parseArgumets(string argument)
+// helpers
+public float maxGradPerRun()
 {
-  if(argument.Length == 0) { return false; }
-  if      (argument == "go")           { startWork(); }
-  else if (argument == "stop")         { stopWork (); }
-  else if (argument.Contains("power")) { turnDrills(argument.Contains("_on")); }
-  else if (argument.Contains("rotor")) { turnRotors(argument.Contains("_start")); }
-  else if (argument.Contains("piston"))
-  {
-    if      (argument.Contains("_up"  )) { pistonsUp()  ; }
-    else if (argument.Contains("_step")) { pistonsStep(); }
-  }
+  return drillRotorsRPM * 6f * (float)Runtime.TimeSinceLastRun.TotalSeconds * lastAngleFactor + ((lastAngleFactor-1) * 0.5f);
+}
+
+public float getRotors45Angle()
+{
+  float r45 = drillRotors45.angle()+45f;
+  return r45 >= 360f ? r45-360f : r45;
+}
+
+public float getRotorsAngle()
+{
+  return (drillRotors0.angle() + getRotors45Angle())/2;
+}
+
+public void showStatus()
+{
+  int i = 0;
+  statusLcd.echo_at($"Состояние системы: {boolToString(states.active())}", i++);
+  if(states.active()) { statusLcd.echo_at($"Текущий шаг: {states.currentState().name()}", i++); }
+  statusLcd.echo_at($"Состояние буров: {boolToString(drills.active())}", i++);
+  statusLcd.echo_at($"Углы роторов: [0:{drillRotors0.angle():f2},45:{getRotors45Angle():f2}] -> [avg:{getRotorsAngle():f2},cont:{continuosRotorAngle:f2},max:{maxGradPerRun():f2}]", i++);
+  statusLcd.echo_at($"Длинна буровых поршней: {drillPistons.currentLength():f2}", i++);
+  statusLcd.echo_at($"Состояние сварщиков: {boolToString(welders.active())}", i++);
+  statusLcd.echo_at($"Длинна сварочных поршней: {welderPistons.currentLength():f2}", i++);
+  statusLcd.echo_at($"Длинна подвесных поршней: {platformPistons.currentLength():f2}", i++);
+  statusLcd.echo_at($"Состояние верхних соединителей: {boolToString(topMergers.connected())}", i++);
+  statusLcd.echo_at($"Состояние нижних соединителей: {boolToString(bottomMergers.connected())}", i++);
+  statusLcd.echo_at($"Состояние проектора тоннеля: {boolToString(wallProjector.enabled())}; total:{wallProjector.totalBlocks()}; remaining:{wallProjector.remainingBlocks()}; welded:{wallProjector.weldedBlocks()}", i++);
+}
+
+public void toZero()
+{
+  drillRotors0.setLimit(0f, 0f);
+  drillRotors45.setLimit(45f, 45f);
+  startDrillRotors(null);
+}
+
+// state machine
+public bool prepareStart(object data)
+{
+  statusLcd.clear();
+  logLcd.clear();
+  drillRotors0.setLimit();
+  drillRotors45.setLimit();
   return true;
 }
 
-public void pistonsStep(int steps = 1)
+public bool startDrillRotors(object data)
 {
-  playSound("Operation Alarm");
-  pistonPosition += pistonStep*steps;
-  lcd.echo($"Шаг {pistonPosition/pistonStep:f0} на позицию {pistonPosition:f2}");
-  expandPistons(pistons, pistonPosition, pistonDrillVelocity, pistonDrillForce, pistonsInStack);
+  drillRotors0.rotate(drillRotorsRPM);
+  drillRotors45.rotate(drillRotorsRPM);
+  drillRotors45.reverse();
+  return true;
 }
 
-public void pistonsUp()
+public bool stopDrillRotors(object data)
 {
-  retractPistons(pistons, 0f, pistonUpVelocity, pistonUpForce, pistonsInStack);
-  pistonPosition = 0f;
+  drillRotors0.stop();
+  drillRotors45.stop();
+  return true;
 }
 
-public void turnRotors(bool enable)
+public bool startDrill(object data) { return drills.on(); }
+public bool stopDrill(object data) { return drills.off(); }
+
+public bool stepDrillPiston(object data)
 {
-  lcd.echo($"Вращение ({rotors.count()} шт.): {boolToString(enable, EBoolToString.btsOnOff)}");
-  foreach (IMyMotorStator rotor in rotors.blocks())
-  { rotor.TargetVelocityRPM = enable ? drillRPM : 0f; }
+  return drillPistons.expand((float)data, drillPistonsSpeed);
 }
 
-public void turnDrills(bool enable)
+public bool retractDrillPiston(object data)
 {
-  lcd.echo($"Питание буров ({drills.count()} шт.): {boolToString(enable, EBoolToString.btsOnOff)}");
-  foreach (IMyShipDrill drill in drills.blocks()) { drill.Enabled = enable; }
+  return drillPistons.retract(0f, drillPistonsSpeed);
 }
 
-public void stopWork()
+public bool prepareRotorsAngleCalc(object data)
 {
-  turnDrills(false);
-  turnRotors(false);
-  pistonsUp();
-  autoHorizont.TryRun("stop");
+  lastRotorsAngle = getRotorsAngle();
+  continuosRotorAngle = 0f;
+  return true;
 }
 
-public void startWork()
+public bool waitRotorsTurn(object data)
 {
-  workPaused = false;
-  incrementNextStepAngle(CAngle.fromRad(rotors.blocks()[0].Angle));
-  turnDrills(true);
-  turnRotors(true);
-  autoHorizont.TryRun("start");
-  // pistonsStep();
-}
-
-bool workPaused;
-public bool pauseWork(bool wait)
-{
-  if(workPaused != wait)
-  {
-    turnDrills(!wait);
-    turnRotors(!wait);
-    workPaused = wait;
-  }
-  return wait;
+  float currAngle = getRotorsAngle();
+  float angleDiff = currAngle >= lastRotorsAngle ? currAngle - lastRotorsAngle : (360f-lastRotorsAngle) + currAngle;
+  if(angleDiff > maxGradPerRun()) { lastAngleFactor++; return false; }
+  lastAngleFactor = 1;
+  lastRotorsAngle = currAngle;
+  continuosRotorAngle += angleDiff;
+  return continuosRotorAngle >= stepRotorsAngle;
 }

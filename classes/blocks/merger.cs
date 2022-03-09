@@ -4,16 +4,21 @@ public class CMerger : CFunctional<IMyShipMergeBlock>
 {
   public CMerger(CBlocksBase<IMyShipMergeBlock> blocks) : base(blocks) { }
 
-  public bool connect(bool enabled = true)
+  public bool connect(bool target = true)
   {
-    enable(enabled);
+    enable(target);
+    return connected() == target;
+  }
+  public bool disconnect() { return connect(false); }
+  public bool connected ()
+  {
+    if(!enabled()) { return false; }
     bool result = true;
-    foreach (IMyShipMergeBlock merger in m_blocks.blocks())
+    foreach (IMyShipMergeBlock blk in m_blocks.blocks())
     {
-      result = result && merger.Enabled == enabled;
+      result = result && blk.IsConnected;
     }
     return result;
   }
-  public bool disconnect() { return connect(false); }
 
 }
