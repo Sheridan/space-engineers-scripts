@@ -1,4 +1,4 @@
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/functional.cs
 
 public class CLamp : CFunctional<IMyLightingBlock>
 {

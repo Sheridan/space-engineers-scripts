@@ -6,7 +6,3 @@ The simplest code reuse is implemented using the #include "directive" in the cod
 Currently linux-only preparing.
 
 Ready-to-use scripts are in the "prepared" directory, you only need to specify the names of groups / blocks
-
-
-# tools
-https://github.com/atifaziz/CSharpMinifier

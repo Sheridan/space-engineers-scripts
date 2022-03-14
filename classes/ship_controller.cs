@@ -1,4 +1,4 @@
-// #include classes/blocks_base.cs
+// #include classes/blocks/base/blocks_base.cs
 // #include classes/auto_horizont.cs
 
 public class CShipController

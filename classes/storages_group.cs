@@ -1,11 +1,9 @@
-// #include classes/blocks_group.cs
+// #include classes/blocks/base/blocks_group.cs
 // #include classes/recipes.cs
 
 public class CStoragesGroup : CBlockGroup<IMyCargoContainer>
 {
-  public CStoragesGroup(string groupName,
-                        string purpose = "") : base(groupName, purpose)
-  {}
+  public CStoragesGroup(string groupName) : base(groupName) {}
 
   public int countItems(EItemType itemType)
   {

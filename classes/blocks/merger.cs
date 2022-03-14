@@ -1,4 +1,4 @@
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/functional.cs
 
 public class CMerger : CFunctional<IMyShipMergeBlock>
 {
@@ -14,9 +14,9 @@ public class CMerger : CFunctional<IMyShipMergeBlock>
   {
     if(!enabled()) { return false; }
     bool result = true;
-    foreach (IMyShipMergeBlock blk in m_blocks.blocks())
+    foreach (IMyShipMergeBlock b in m_blocks.blocks())
     {
-      result = result && blk.IsConnected;
+      result = result && b.IsConnected;
     }
     return result;
   }

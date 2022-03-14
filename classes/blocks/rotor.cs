@@ -1,4 +1,4 @@
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/functional.cs
 
 public class CRotor : CFunctional<IMyMotorStator>
 {
@@ -9,25 +9,25 @@ public class CRotor : CFunctional<IMyMotorStator>
 
   public void rotate(float rpm = 1f)
   {
-    foreach (IMyMotorStator block in m_blocks.blocks())
+    foreach (IMyMotorStator b in m_blocks.blocks())
     {
-      block.TargetVelocityRPM = rpm;
+      b.TargetVelocityRPM = rpm;
     }
   }
 
   public void stop()
   {
-    foreach (IMyMotorStator block in m_blocks.blocks())
+    foreach (IMyMotorStator b in m_blocks.blocks())
     {
-      block.TargetVelocityRPM = 0f;
+      b.TargetVelocityRPM = 0f;
     }
   }
 
   public void reverse()
   {
-    foreach (IMyMotorStator block in m_blocks.blocks())
+    foreach (IMyMotorStator b in m_blocks.blocks())
     {
-      block.GetActionWithName("Reverse").Apply(block);
+      b.GetActionWithName("Reverse").Apply(b);
     }
     m_reversed = !m_reversed;
   }
@@ -35,9 +35,9 @@ public class CRotor : CFunctional<IMyMotorStator>
   public float angle()
   {
     float result = 0f;
-    foreach (IMyMotorStator block in m_blocks.blocks())
+    foreach (IMyMotorStator b in m_blocks.blocks())
     {
-      result += block.Angle;
+      result += b.Angle;
     }
     float agl = (result/m_blocks.count()) * (180f/3.1415926f);
     return m_reversed ? 360f - agl : agl;
@@ -45,10 +45,10 @@ public class CRotor : CFunctional<IMyMotorStator>
 
   public void setLimit(float lmin = float.MinValue, float lmax = float.MaxValue)
   {
-    foreach (IMyMotorStator block in m_blocks.blocks())
+    foreach (IMyMotorStator b in m_blocks.blocks())
     {
-      block.LowerLimitDeg = lmin;
-      block.UpperLimitRad = lmax;
+      b.LowerLimitDeg = lmin;
+      b.UpperLimitDeg = lmax;
     }
   }
 

@@ -1,5 +1,5 @@
 // #include classes/main.cs
-// #include classes/blocks.cs
+// #include classes/blocks/base/blocks.cs
 // #include classes/blockstatus_display.cs
 // #include classes/ship_controller.cs
 // #include classes/textsurface.cs
@@ -36,11 +36,12 @@ public void main(string argument, UpdateType updateSource)
   }
   else
   {
-         if (argument == "check"     ) { controller.autoHorizont().debugAH(); }
-    else if (argument == "start"     ) { if(controller.autoHorizont().enabled()) { disableAH(); } else { enableAH(); } }
-    else if (argument == "stop"      ) { disableAH(); }
-    else if (argument == "restart"   ) { disableAH(); enableAH(); }
-    else if (argument == "autorotate") { autorotate = !autorotate; }
+         if (argument == "check"       ) { controller.autoHorizont().debugAH(); }
+    else if (argument == "start"       ) { if(controller.autoHorizont().enabled()) { disableAH(); } else { enableAH(); } }
+    else if (argument == "stop"        ) { disableAH(); }
+    else if (argument == "restart"     ) { disableAH(); enableAH(); }
+    else if (argument == "init_restart") { init(); disableAH(); enableAH(); }
+    else if (argument == "autorotate"  ) { autorotate = !autorotate; }
     lcd.echo_at($"АГ: {boolToString(controller.autoHorizont().enabled())}", 0);
     lcd.echo_at($"Авто: {boolToString(autorotate)}", 1);
     lcd.echo_at($"Гир: {gyroscopes.count()}", 2);

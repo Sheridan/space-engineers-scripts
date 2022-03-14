@@ -1,4 +1,4 @@
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/functional.cs
 
 public class CProjector : CFunctional<IMyProjector>
 {
@@ -6,9 +6,9 @@ public class CProjector : CFunctional<IMyProjector>
   public bool projecting()
   {
     bool result = true;
-    foreach (IMyProjector blk in m_blocks.blocks())
+    foreach (IMyProjector b in m_blocks.blocks())
     {
-      result = result && blk.IsProjecting;
+      result = result && b.IsProjecting;
     }
     return result;
   }
@@ -16,9 +16,9 @@ public class CProjector : CFunctional<IMyProjector>
   public int totalBlocks()
   {
     int result = 0;
-    foreach (IMyProjector blk in m_blocks.blocks())
+    foreach (IMyProjector b in m_blocks.blocks())
     {
-      result = result + blk.TotalBlocks;
+      result = result + b.TotalBlocks;
     }
     return result;
   }
@@ -26,15 +26,22 @@ public class CProjector : CFunctional<IMyProjector>
   public int remainingBlocks()
   {
     int result = 0;
-    foreach (IMyProjector blk in m_blocks.blocks())
+    foreach (IMyProjector b in m_blocks.blocks())
     {
-      result = result + blk.RemainingBlocks;
+      result = result + b.RemainingBlocks;
     }
     return result;
   }
 
-  public int weldedBlocks()
+  public int buildableBlocks()
   {
-    return totalBlocks() - remainingBlocks();
+    int result = 0;
+    foreach (IMyProjector b in m_blocks.blocks())
+    {
+      result = result + b.BuildableBlocksCount;
+    }
+    return result;
   }
+
+  public int weldedBlocks() { return totalBlocks() - remainingBlocks(); }
 }

@@ -1,17 +1,17 @@
-static string structureName;
+static string sN;
 static string scriptName;
 static Program _;
 static float blockSize;
 static CBO prbOptions;
 public void applyDefaultMeDisplayTexsts() {
 Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
-Me.GetSurface(1).WriteText(structureName); }
+Me.GetSurface(1).WriteText(sN); }
 public void echoMe(string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
 public void echoMeBig(string text) { echoMe(text, 0); }
 public void echoMeSmall(string text) { echoMe(text, 1); }
 public void sMe(string i_scriptName) {
 scriptName = i_scriptName;
-Me.CustomName = $"[{structureName}] ПрБ {scriptName}";
+Me.CustomName = $"[{sN}] ПрБ {scriptName}";
 sMeSurface(0, 2f);
 sMeSurface(1, 5f);
 applyDefaultMeDisplayTexsts(); }
@@ -25,7 +25,7 @@ surface.FontSize = fontSize;
 surface.Alignment = TextAlignment.CENTER; }
 public static void debug(string text) { _.Echo(text); }
 public void init() {
-structureName = Me.CubeGrid.CustomName;
+sN = Me.CubeGrid.CustomName;
 blockSize = Me.CubeGrid.GridSize;
 prbOptions = new CBO(Me);
 sMe(program());
@@ -73,221 +73,248 @@ return defaultValue; }
 IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
-public class CRecipe {
-public CRecipe(string blueprint) { m_blueprint = blueprint; m_sourceItems = new List<CComponentItem>(); }
-public void addItem(CComponentItem item) { m_sourceItems.Add(item); }
+public class cR {
+public cR(string blueprint) { m_blueprint = blueprint; m_sourceItems = new List<CCI>(); }
+public void addItem(CCI item) { m_sourceItems.Add(item); }
 public string blueprint() { return m_blueprint; }
-public List<CComponentItem> sourceItems() { return m_sourceItems; }
+public List<CCI> sourceItems() { return m_sourceItems; }
 private string m_blueprint;
-private List<CComponentItem> m_sourceItems; }
-public class FRecipe {
-static public CRecipe fromString(string itemString, int amount = 1) {
+private List<CCI> m_sourceItems; }
+public class FR {
+static public cR fromString(string itemString, int a = 1) {
 switch(itemString) {
-case "MyObjectBuilder_CubeBlock/LargeBlockArmorBlock" : return LargeBlockArmorBlock(amount);
-case "MyObjectBuilder_InteriorLight/SmallLight" : return SmallLight(amount);
-case "MyObjectBuilder_ConveyorConnector/ConveyorTube" : return ConveyorTube(amount);
-case "MyObjectBuilder_MergeBlock/LargeShipMergeBlock" : return LargeShipMergeBlock(amount);
-case "MyObjectBuilder_ShipConnector/Connector" : return Connector(amount);
-case "MyObjectBuilder_Conveyor/LargeBlockConveyor" : return LargeBlockConveyor(amount);
-case "MyObjectBuilder_CubeBlock/ArmorCorner" : return ArmorCorner(amount);
-case "MyObjectBuilder_CubeBlock/ArmorInvCorner" : return ArmorInvCorner(amount);
-case "MyObjectBuilder_CubeBlock/ArmorSide" : return ArmorSide(amount);
-case "MyObjectBuilder_CubeBlock/ArmorCenter" : return ArmorCenter(amount);
-case "MyObjectBuilder_CargoContainer/LargeBlockLargeContainer": return LargeBlockLargeContainer(amount);
-case "MyObjectBuilder_CargoContainer/LargeBlockSmallContainer": return LargeBlockSmallContainer(amount);
-case "MyObjectBuilder_RadioAntenna/LargeBlockRadioAntenna" : return LargeBlockRadioAntenna(amount);
-case "MyObjectBuilder_BatteryBlock/LargeBlockBatteryBlock" : return LargeBlockBatteryBlock(amount);
-case "MyObjectBuilder_WindTurbine/LargeBlockWindTurbine" : return LargeBlockWindTurbine(amount);
-case "MyObjectBuilder_Gyro/LargeBlockGyro" : return LargeBlockGyro(amount);
-case "MyObjectBuilder_CubeBlock/Window3x3Flat" : return Window3x3Flat(amount);
-case "MyObjectBuilder_Wheel/Wheel5x5" : return Wheel5x5(amount);
-case "MyObjectBuilder_MotorSuspension/Suspension5x5" : return Suspension5x5(amount);
-case "MyObjectBuilder_ExtendedPistonBase/LargePistonBase" : return LargePistonBase(amount);
-case "MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner" : return LargeBlockArmorRoundCorner(amount);
-case "MyObjectBuilder_MedicalRoom/LargeMedicalRoom" : return MedicalRoom(amount);
-case "MyObjectBuilder_SolarPanel/LargeBlockSolarPanel" : return SolarPanel(amount);
-case "MyObjectBuilder_Thrust/LargeBlockLargeAtmosphericThrust": return AtmosphericThrust(amount); }
+case "MyObjectBuilder_CubeBlock/LargeBlockArmorBlock" : return LargeArmorBlock(a);
+case "MyObjectBuilder_InteriorLight/SmallLight" : return SmallLight(a);
+case "MyObjectBuilder_ConveyorConnector/ConveyorTube" : return ConveyorTube(a);
+case "MyObjectBuilder_MergeBlock/LargeShipMergeBlock" : return LargeShipMergeBlock(a);
+case "MyObjectBuilder_ShipConnector/Connector" : return Connector(a);
+case "MyObjectBuilder_Conveyor/LargeBlockConveyor" : return LargeConveyor(a);
+case "MyObjectBuilder_CubeBlock/ArmorCorner" : return ArmorCorner(a);
+case "MyObjectBuilder_CubeBlock/ArmorInvCorner" : return ArmorInvCorner(a);
+case "MyObjectBuilder_CubeBlock/ArmorSide" : return ArmorSide(a);
+case "MyObjectBuilder_CubeBlock/ArmorCenter" : return ArmorCenter(a);
+case "MyObjectBuilder_CargoContainer/LargeBlockLargeContainer": return LargeLargeContainer(a);
+case "MyObjectBuilder_CargoContainer/LargeBlockSmallContainer": return LargeSmallContainer(a);
+case "MyObjectBuilder_RadioAntenna/LargeBlockRadioAntenna" : return LargeRadioAntenna(a);
+case "MyObjectBuilder_BatteryBlock/LargeBlockBatteryBlock" : return LargeBattery(a);
+case "MyObjectBuilder_WindTurbine/LargeBlockWindTurbine" : return LargeWindTurbine(a);
+case "MyObjectBuilder_Gyro/LargeBlockGyro" : return LargeGyro(a);
+case "MyObjectBuilder_CubeBlock/Window3x3Flat" : return Window3x3Flat(a);
+case "MyObjectBuilder_Wheel/Wheel5x5" : return Wheel5x5(a);
+case "MyObjectBuilder_MotorSuspension/Suspension5x5" : return Suspension5x5(a);
+case "MyObjectBuilder_ExtendedPistonBase/LargePistonBase" : return LargePistonBase(a);
+case "MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner" : return LargeArmorRoundCorner(a);
+case "MyObjectBuilder_MedicalRoom/LargeMedicalRoom" : return MedicalRoom(a);
+case "MyObjectBuilder_SolarPanel/LargeBlockSolarPanel" : return SolarPanel(a);
+case "MyObjectBuilder_Thrust/LargeBlockLargeAtmosphericThrust": return AtmosphericThrust(a);
+case "MyObjectBuilder_ShipWelder/LargeShipWelder" : return LargeWelder(a);
+case "MyObjectBuilder_ShipGrinder/LargeShipGrinder" : return LargeGrinder(a);
+case "MyObjectBuilder_Drill/LargeBlockDrill" : return LargeDrill(a); }
 throw new System.ArgumentException("Не знаю такой строки", itemString); }
-static public CRecipe LargePistonBase(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_ExtendedPistonBase/LargePistonBase");
-recipe.addItem(FComponentItem.Computer(2 * amount));
-recipe.addItem(FComponentItem.Motor(4 * amount));
-recipe.addItem(FComponentItem.LargeTube((8+4) * amount));
-recipe.addItem(FComponentItem.Construction(10 * amount));
-recipe.addItem(FComponentItem.SteelPlate((10+15) * amount));
-return recipe; }
-static public CRecipe Wheel5x5(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_Wheel/Wheel5x5");
-recipe.addItem(FComponentItem.LargeTube(8 * amount));
-recipe.addItem(FComponentItem.Construction(30 * amount));
-recipe.addItem(FComponentItem.SteelPlate(16 * amount));
-return recipe; }
-static public CRecipe Suspension5x5(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_MotorSuspension/Suspension5x5");
-recipe.addItem(FComponentItem.Motor(20 * amount));
-recipe.addItem(FComponentItem.SmallTube(30 * amount));
-recipe.addItem(FComponentItem.LargeTube(20 * amount));
-recipe.addItem(FComponentItem.Construction(40 * amount));
-recipe.addItem(FComponentItem.SteelPlate(70 * amount));
-return recipe; }
-static public CRecipe Window3x3Flat(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/Window3x3Flat");
-recipe.addItem(FComponentItem.BulletproofGlass(196 * amount));
-recipe.addItem(FComponentItem.Girder(40 * amount));
-return recipe; }
-static public CRecipe LargeBlockGyro(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_Gyro/LargeBlockGyro");
-recipe.addItem(FComponentItem.Computer(5 * amount));
-recipe.addItem(FComponentItem.Motor(4 * amount));
-recipe.addItem(FComponentItem.MetalGrid(50 * amount));
-recipe.addItem(FComponentItem.LargeTube(4 * amount));
-recipe.addItem(FComponentItem.Construction(40 * amount));
-recipe.addItem(FComponentItem.SteelPlate(600 * amount));
-return recipe; }
-static public CRecipe LargeBlockWindTurbine(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_WindTurbine/LargeBlockWindTurbine");
-recipe.addItem(FComponentItem.Computer(2 * amount));
-recipe.addItem(FComponentItem.Girder(24 * amount));
-recipe.addItem(FComponentItem.Construction(20 * amount));
-recipe.addItem(FComponentItem.Motor(8 * amount));
-recipe.addItem(FComponentItem.InteriorPlate(40 * amount));
-return recipe; }
-static public CRecipe LargeBlockBatteryBlock(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_BatteryBlock/LargeBlockBatteryBlock");
-recipe.addItem(FComponentItem.Computer(25 * amount));
-recipe.addItem(FComponentItem.PowerCell(80 * amount));
-recipe.addItem(FComponentItem.Construction(30 * amount));
-recipe.addItem(FComponentItem.SteelPlate(80 * amount));
-return recipe; }
-static public CRecipe LargeBlockRadioAntenna(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_RadioAntenna/LargeBlockRadioAntenna");
-recipe.addItem(FComponentItem.RadioCommunication(40 * amount));
-recipe.addItem(FComponentItem.Computer(8 * amount));
-recipe.addItem(FComponentItem.Construction(30 * amount));
-recipe.addItem(FComponentItem.SmallTube(60 * amount));
-recipe.addItem(FComponentItem.LargeTube(40 * amount));
-recipe.addItem(FComponentItem.SteelPlate(80 * amount));
-return recipe; }
-static public CRecipe LargeBlockLargeContainer(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_CargoContainer/LargeBlockLargeContainer");
-recipe.addItem(FComponentItem.Computer(8 * amount));
-recipe.addItem(FComponentItem.Display(1 * amount));
-recipe.addItem(FComponentItem.Motor(20 * amount));
-recipe.addItem(FComponentItem.SmallTube(60 * amount));
-recipe.addItem(FComponentItem.MetalGrid(24 * amount));
-recipe.addItem(FComponentItem.Construction(80 * amount));
-recipe.addItem(FComponentItem.InteriorPlate(360 * amount));
-return recipe; }
-static public CRecipe LargeBlockSmallContainer(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_CargoContainer/LargeBlockSmallContainer");
-recipe.addItem(FComponentItem.Computer(2 * amount));
-recipe.addItem(FComponentItem.Display(1 * amount));
-recipe.addItem(FComponentItem.Motor(4 * amount));
-recipe.addItem(FComponentItem.SmallTube(20 * amount));
-recipe.addItem(FComponentItem.MetalGrid(4 * amount));
-recipe.addItem(FComponentItem.Construction(40 * amount));
-recipe.addItem(FComponentItem.InteriorPlate(40 * amount));
-return recipe; }
-static public CRecipe ArmorCorner(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/ArmorCorner");
-recipe.addItem(FComponentItem.SteelPlate(135 * amount));
-return recipe; }
-static public CRecipe ArmorInvCorner(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/ArmorInvCorner");
-recipe.addItem(FComponentItem.SteelPlate(135 * amount));
-return recipe; }
-static public CRecipe ArmorSide(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/ArmorSide");
-recipe.addItem(FComponentItem.SteelPlate(130 * amount));
-return recipe; }
-static public CRecipe ArmorCenter(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/ArmorCenter");
-recipe.addItem(FComponentItem.SteelPlate(140 * amount));
-return recipe; }
-static public CRecipe LargeBlockArmorBlock(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/LargeBlockArmorBlock");
-recipe.addItem(FComponentItem.SteelPlate(25 * amount));
-return recipe; }
-static public CRecipe LargeBlockArmorRoundCorner(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner");
-recipe.addItem(FComponentItem.SteelPlate(13 * amount));
-return recipe; }
-static public CRecipe SmallLight(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_InteriorLight/SmallLight");
-recipe.addItem(FComponentItem.Construction(2 * amount));
-return recipe; }
-static public CRecipe ConveyorTube(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_ConveyorConnector/ConveyorTube");
-recipe.addItem(FComponentItem.Motor(6 * amount));
-recipe.addItem(FComponentItem.SmallTube(12 * amount));
-recipe.addItem(FComponentItem.Construction(20 * amount));
-recipe.addItem(FComponentItem.InteriorPlate(14 * amount));
-return recipe; }
-static public CRecipe LargeShipMergeBlock(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_MergeBlock/LargeShipMergeBlock");
-recipe.addItem(FComponentItem.Computer(2 * amount));
-recipe.addItem(FComponentItem.LargeTube(6 * amount));
-recipe.addItem(FComponentItem.Motor(2 * amount));
-recipe.addItem(FComponentItem.Construction(15 * amount));
-recipe.addItem(FComponentItem.SteelPlate(12 * amount));
-return recipe; }
-static public CRecipe Connector(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_ShipConnector/Connector");
-recipe.addItem(FComponentItem.Computer(20 * amount));
-recipe.addItem(FComponentItem.Motor(8 * amount));
-recipe.addItem(FComponentItem.SmallTube(12 * amount));
-recipe.addItem(FComponentItem.Construction(40 * amount));
-recipe.addItem(FComponentItem.SteelPlate(150 * amount));
-return recipe; }
-static public CRecipe LargeBlockConveyor(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_Conveyor/LargeBlockConveyor");
-recipe.addItem(FComponentItem.Motor(6 * amount));
-recipe.addItem(FComponentItem.SmallTube(20 * amount));
-recipe.addItem(FComponentItem.Construction(30 * amount));
-recipe.addItem(FComponentItem.InteriorPlate(20 * amount));
-return recipe; }
-static public CRecipe MedicalRoom(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_MedicalRoom/LargeMedicalRoom");
-recipe.addItem(FComponentItem.Medical(15 * amount));
-recipe.addItem(FComponentItem.Computer(10 * amount));
-recipe.addItem(FComponentItem.Display(10 * amount));
-recipe.addItem(FComponentItem.LargeTube(5 * amount));
-recipe.addItem(FComponentItem.SmallTube(20 * amount));
-recipe.addItem(FComponentItem.MetalGrid(60 * amount));
-recipe.addItem(FComponentItem.Construction(80 * amount));
-recipe.addItem(FComponentItem.InteriorPlate(240 * amount));
-return recipe; }
-static public CRecipe SolarPanel(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_SolarPanel/LargeBlockSolarPanel");
-recipe.addItem(FComponentItem.BulletproofGlass(4 * amount));
-recipe.addItem(FComponentItem.SolarCell(32 * amount));
-recipe.addItem(FComponentItem.Computer(4 * amount));
-recipe.addItem(FComponentItem.Girder(12 * amount));
-recipe.addItem(FComponentItem.Construction(14 * amount));
-recipe.addItem(FComponentItem.SteelPlate(4 * amount));
-return recipe; }
-static public CRecipe AtmosphericThrust(int amount = 1) {
-CRecipe recipe = new CRecipe("MyObjectBuilder_Thrust/LargeBlockLargeAtmosphericThrust");
-recipe.addItem(FComponentItem.Motor(1100 * amount));
-recipe.addItem(FComponentItem.MetalGrid(40 * amount));
-recipe.addItem(FComponentItem.LargeTube(50 * amount));
-recipe.addItem(FComponentItem.Construction(60 * amount));
-recipe.addItem(FComponentItem.SteelPlate(230 * amount));
-return recipe; } }
-public class CRecipes {
-public CRecipes() { m_recipes = new List<CRecipe>(); }
-public void add(CRecipe recipe) { m_recipes.Add(recipe); }
-public List<CRecipe> recipes() { return m_recipes; }
-public List<CComponentItem> sourceItems() {
-Dictionary<EItemType, CComponentItem> tmpDict = new Dictionary<EItemType, CComponentItem>();
-foreach(CRecipe recipe in m_recipes) {
-foreach(CComponentItem srcItem in recipe.sourceItems()) {
+static public cR LargePistonBase(int a = 1) {
+cR R = new cR("MyObjectBuilder_ExtendedPistonBase/LargePistonBase");
+R.addItem(FCI.Computer(2 * a));
+R.addItem(FCI.Motor(4 * a));
+R.addItem(FCI.LargeTube((8+4) * a));
+R.addItem(FCI.Construction(10 * a));
+R.addItem(FCI.SteelPlate((10+15) * a));
+return R; }
+static public cR Wheel5x5(int a = 1) {
+cR R = new cR("MyObjectBuilder_Wheel/Wheel5x5");
+R.addItem(FCI.LargeTube(8 * a));
+R.addItem(FCI.Construction(30 * a));
+R.addItem(FCI.SteelPlate(16 * a));
+return R; }
+static public cR Suspension5x5(int a = 1) {
+cR R = new cR("MyObjectBuilder_MotorSuspension/Suspension5x5");
+R.addItem(FCI.Motor(20 * a));
+R.addItem(FCI.SmallTube(30 * a));
+R.addItem(FCI.LargeTube(20 * a));
+R.addItem(FCI.Construction(40 * a));
+R.addItem(FCI.SteelPlate(70 * a));
+return R; }
+static public cR Window3x3Flat(int a = 1) {
+cR R = new cR("MyObjectBuilder_CubeBlock/Window3x3Flat");
+R.addItem(FCI.BulletproofGlass(196 * a));
+R.addItem(FCI.Girder(40 * a));
+return R; }
+static public cR LargeGyro(int a = 1) {
+cR R = new cR("MyObjectBuilder_Gyro/LargeBlockGyro");
+R.addItem(FCI.Computer(5 * a));
+R.addItem(FCI.Motor(4 * a));
+R.addItem(FCI.MetalGrid(50 * a));
+R.addItem(FCI.LargeTube(4 * a));
+R.addItem(FCI.Construction(40 * a));
+R.addItem(FCI.SteelPlate(600 * a));
+return R; }
+static public cR LargeWindTurbine(int a = 1) {
+cR R = new cR("MyObjectBuilder_WindTurbine/LargeBlockWindTurbine");
+R.addItem(FCI.Computer(2 * a));
+R.addItem(FCI.Girder(24 * a));
+R.addItem(FCI.Construction(20 * a));
+R.addItem(FCI.Motor(8 * a));
+R.addItem(FCI.InteriorPlate(40 * a));
+return R; }
+static public cR LargeBattery(int a = 1) {
+cR R = new cR("MyObjectBuilder_BatteryBlock/LargeBlockBatteryBlock");
+R.addItem(FCI.Computer(25 * a));
+R.addItem(FCI.PowerCell(80 * a));
+R.addItem(FCI.Construction(30 * a));
+R.addItem(FCI.SteelPlate(80 * a));
+return R; }
+static public cR LargeRadioAntenna(int a = 1) {
+cR R = new cR("MyObjectBuilder_RadioAntenna/LargeBlockRadioAntenna");
+R.addItem(FCI.RadioCommunication(40 * a));
+R.addItem(FCI.Computer(8 * a));
+R.addItem(FCI.Construction(30 * a));
+R.addItem(FCI.SmallTube(60 * a));
+R.addItem(FCI.LargeTube(40 * a));
+R.addItem(FCI.SteelPlate(80 * a));
+return R; }
+static public cR LargeLargeContainer(int a = 1) {
+cR R = new cR("MyObjectBuilder_CargoContainer/LargeBlockLargeContainer");
+R.addItem(FCI.Computer(8 * a));
+R.addItem(FCI.Display(1 * a));
+R.addItem(FCI.Motor(20 * a));
+R.addItem(FCI.SmallTube(60 * a));
+R.addItem(FCI.MetalGrid(24 * a));
+R.addItem(FCI.Construction(80 * a));
+R.addItem(FCI.InteriorPlate(360 * a));
+return R; }
+static public cR LargeSmallContainer(int a = 1) {
+cR R = new cR("MyObjectBuilder_CargoContainer/LargeBlockSmallContainer");
+R.addItem(FCI.Computer(2 * a));
+R.addItem(FCI.Display(1 * a));
+R.addItem(FCI.Motor(4 * a));
+R.addItem(FCI.SmallTube(20 * a));
+R.addItem(FCI.MetalGrid(4 * a));
+R.addItem(FCI.Construction(40 * a));
+R.addItem(FCI.InteriorPlate(40 * a));
+return R; }
+static public cR ArmorCorner(int a = 1) {
+cR R = new cR("MyObjectBuilder_CubeBlock/ArmorCorner");
+R.addItem(FCI.SteelPlate(135 * a));
+return R; }
+static public cR ArmorInvCorner(int a = 1) {
+cR R = new cR("MyObjectBuilder_CubeBlock/ArmorInvCorner");
+R.addItem(FCI.SteelPlate(135 * a));
+return R; }
+static public cR ArmorSide(int a = 1) {
+cR R = new cR("MyObjectBuilder_CubeBlock/ArmorSide");
+R.addItem(FCI.SteelPlate(130 * a));
+return R; }
+static public cR ArmorCenter(int a = 1) {
+cR R = new cR("MyObjectBuilder_CubeBlock/ArmorCenter");
+R.addItem(FCI.SteelPlate(140 * a));
+return R; }
+static public cR LargeArmorBlock(int a = 1) {
+cR R = new cR("MyObjectBuilder_CubeBlock/LargeBlockArmorBlock");
+R.addItem(FCI.SteelPlate(25 * a));
+return R; }
+static public cR LargeArmorRoundCorner(int a = 1) {
+cR R = new cR("MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner");
+R.addItem(FCI.SteelPlate(13 * a));
+return R; }
+static public cR SmallLight(int a = 1) {
+cR R = new cR("MyObjectBuilder_InteriorLight/SmallLight");
+R.addItem(FCI.Construction(2 * a));
+return R; }
+static public cR ConveyorTube(int a = 1) {
+cR R = new cR("MyObjectBuilder_ConveyorConnector/ConveyorTube");
+R.addItem(FCI.Motor(6 * a));
+R.addItem(FCI.SmallTube(12 * a));
+R.addItem(FCI.Construction(20 * a));
+R.addItem(FCI.InteriorPlate(14 * a));
+return R; }
+static public cR LargeShipMergeBlock(int a = 1) {
+cR R = new cR("MyObjectBuilder_MergeBlock/LargeShipMergeBlock");
+R.addItem(FCI.Computer(2 * a));
+R.addItem(FCI.LargeTube(6 * a));
+R.addItem(FCI.Motor(2 * a));
+R.addItem(FCI.Construction(15 * a));
+R.addItem(FCI.SteelPlate(12 * a));
+return R; }
+static public cR Connector(int a = 1) {
+cR R = new cR("MyObjectBuilder_ShipConnector/Connector");
+R.addItem(FCI.Computer(20 * a));
+R.addItem(FCI.Motor(8 * a));
+R.addItem(FCI.SmallTube(12 * a));
+R.addItem(FCI.Construction(40 * a));
+R.addItem(FCI.SteelPlate(150 * a));
+return R; }
+static public cR LargeConveyor(int a = 1) {
+cR R = new cR("MyObjectBuilder_Conveyor/LargeBlockConveyor");
+R.addItem(FCI.Motor(6 * a));
+R.addItem(FCI.SmallTube(20 * a));
+R.addItem(FCI.Construction(30 * a));
+R.addItem(FCI.InteriorPlate(20 * a));
+return R; }
+static public cR MedicalRoom(int a = 1) {
+cR R = new cR("MyObjectBuilder_MedicalRoom/LargeMedicalRoom");
+R.addItem(FCI.Medical(15 * a));
+R.addItem(FCI.Computer(10 * a));
+R.addItem(FCI.Display(10 * a));
+R.addItem(FCI.LargeTube(5 * a));
+R.addItem(FCI.SmallTube(20 * a));
+R.addItem(FCI.MetalGrid(60 * a));
+R.addItem(FCI.Construction(80 * a));
+R.addItem(FCI.InteriorPlate(240 * a));
+return R; }
+static public cR SolarPanel(int a = 1) {
+cR R = new cR("MyObjectBuilder_SolarPanel/LargeBlockSolarPanel");
+R.addItem(FCI.BulletproofGlass(4 * a));
+R.addItem(FCI.SolarCell(32 * a));
+R.addItem(FCI.Computer(4 * a));
+R.addItem(FCI.Girder(12 * a));
+R.addItem(FCI.Construction(14 * a));
+R.addItem(FCI.SteelPlate(4 * a));
+return R; }
+static public cR AtmosphericThrust(int a = 1) {
+cR R = new cR("MyObjectBuilder_Thrust/LargeBlockLargeAtmosphericThrust");
+R.addItem(FCI.Motor(1100 * a));
+R.addItem(FCI.MetalGrid(40 * a));
+R.addItem(FCI.LargeTube(50 * a));
+R.addItem(FCI.Construction(60 * a));
+R.addItem(FCI.SteelPlate(230 * a));
+return R; }
+static public cR LargeWelder(int a = 1) {
+cR R = new cR("MyObjectBuilder_ShipWelder/LargeShipWelder");
+R.addItem(FCI.Computer(2 * a));
+R.addItem(FCI.Motor(2 * a));
+R.addItem(FCI.LargeTube(1 * a));
+R.addItem(FCI.Construction(30 * a));
+R.addItem(FCI.SteelPlate(20 * a));
+return R; }
+static public cR LargeGrinder(int a = 1) {
+cR R = new cR("MyObjectBuilder_ShipGrinder/LargeShipGrinder");
+R.addItem(FCI.Computer(2 * a));
+R.addItem(FCI.Motor(4 * a));
+R.addItem(FCI.LargeTube(1 * a));
+R.addItem(FCI.Construction(30 * a));
+R.addItem(FCI.SteelPlate(20 * a));
+return R; }
+static public cR LargeDrill(int a = 1) {
+cR R = new cR("MyObjectBuilder_Drill/LargeBlockDrill");
+R.addItem(FCI.Computer(5 * a));
+R.addItem(FCI.Motor(5 * a));
+R.addItem(FCI.LargeTube(12 * a));
+R.addItem(FCI.Construction(40 * a));
+R.addItem(FCI.SteelPlate(300 * a));
+return R; } }
+public class cRs {
+public cRs() { m_Rs = new List<cR>(); }
+public void add(cR R) { m_Rs.Add(R); }
+public List<cR> Rs() { return m_Rs; }
+public List<CCI> sourceItems() {
+Dictionary<EIT, CCI> tmpDict = new Dictionary<EIT, CCI>();
+foreach(cR R in m_Rs) {
+foreach(CCI srcItem in R.sourceItems()) {
 if(!tmpDict.ContainsKey(srcItem.itemType())) {
-tmpDict.Add(srcItem.itemType(), new CComponentItem(srcItem.itemType(), 0)); }
-tmpDict[srcItem.itemType()].appendAmount(srcItem.amount()); } }
+tmpDict.Add(srcItem.itemType(), new CCI(srcItem.itemType(), 0)); }
+tmpDict[srcItem.itemType()].appendAmount(srcItem.a()); } }
 return tmpDict.Values.ToList(); }
-private List<CRecipe> m_recipes; }
-public enum EItemType {
+private List<cR> m_Rs; }
+public enum EIT {
 BulletproofGlass,
 Canvas,
 Computer,
@@ -311,177 +338,174 @@ SteelPlate,
 Superconductor,
 Thrust,
 ZoneChip }
-public class CComponentItem {
-public CComponentItem(string itemType) { m_itemType = fromString(itemType); m_amount = 0; }
-public CComponentItem(EItemType itemType, int amount = 0) { m_itemType = itemType ; m_amount = amount; }
-public static EItemType fromString(string itemType) {
-if(itemType.Contains("BulletproofGlass")) { return EItemType.BulletproofGlass; }
-else if(itemType.Contains("Canvas")) { return EItemType.Canvas; }
-else if(itemType.Contains("Computer")) { return EItemType.Computer; }
-else if(itemType.Contains("Construction")) { return EItemType.Construction; }
-else if(itemType.Contains("Detector")) { return EItemType.Detector; }
-else if(itemType.Contains("Display")) { return EItemType.Display; }
-else if(itemType.Contains("Explosives")) { return EItemType.Explosives; }
-else if(itemType.Contains("Girder")) { return EItemType.Girder; }
-else if(itemType.Contains("GravityGenerator")) { return EItemType.GravityGenerator; }
-else if(itemType.Contains("InteriorPlate")) { return EItemType.InteriorPlate; }
-else if(itemType.Contains("LargeTube")) { return EItemType.LargeTube; }
-else if(itemType.Contains("Medical")) { return EItemType.Medical; }
-else if(itemType.Contains("MetalGrid")) { return EItemType.MetalGrid; }
-else if(itemType.Contains("Motor")) { return EItemType.Motor; }
-else if(itemType.Contains("PowerCell")) { return EItemType.PowerCell; }
-else if(itemType.Contains("RadioCommunication")) { return EItemType.RadioCommunication; }
-else if(itemType.Contains("Reactor")) { return EItemType.Reactor; }
-else if(itemType.Contains("SmallTube")) { return EItemType.SmallTube; }
-else if(itemType.Contains("SolarCell")) { return EItemType.SolarCell; }
-else if(itemType.Contains("SteelPlate")) { return EItemType.SteelPlate; }
-else if(itemType.Contains("Superconductor")) { return EItemType.Superconductor; }
-else if(itemType.Contains("Thrust")) { return EItemType.Thrust; }
-else if(itemType.Contains("ZoneChip")) { return EItemType.ZoneChip; }
+public class CCI {
+public CCI(string itemType, int a = 0) { m_itemType = fromString(itemType); m_a = a; }
+public CCI(EIT itemType, int a = 0) { m_itemType = itemType ; m_a = a; }
+public static EIT fromString(string itemType) {
+if(itemType.Contains("BulletproofGlass")) { return EIT.BulletproofGlass; }
+else if(itemType.Contains("Canvas")) { return EIT.Canvas; }
+else if(itemType.Contains("Computer")) { return EIT.Computer; }
+else if(itemType.Contains("Construction")) { return EIT.Construction; }
+else if(itemType.Contains("Detector")) { return EIT.Detector; }
+else if(itemType.Contains("Display")) { return EIT.Display; }
+else if(itemType.Contains("Explosives")) { return EIT.Explosives; }
+else if(itemType.Contains("Girder")) { return EIT.Girder; }
+else if(itemType.Contains("GravityGenerator")) { return EIT.GravityGenerator; }
+else if(itemType.Contains("InteriorPlate")) { return EIT.InteriorPlate; }
+else if(itemType.Contains("LargeTube")) { return EIT.LargeTube; }
+else if(itemType.Contains("Medical")) { return EIT.Medical; }
+else if(itemType.Contains("MetalGrid")) { return EIT.MetalGrid; }
+else if(itemType.Contains("Motor")) { return EIT.Motor; }
+else if(itemType.Contains("PowerCell")) { return EIT.PowerCell; }
+else if(itemType.Contains("RadioCommunication")) { return EIT.RadioCommunication; }
+else if(itemType.Contains("Reactor")) { return EIT.Reactor; }
+else if(itemType.Contains("SmallTube")) { return EIT.SmallTube; }
+else if(itemType.Contains("SolarCell")) { return EIT.SolarCell; }
+else if(itemType.Contains("SteelPlate")) { return EIT.SteelPlate; }
+else if(itemType.Contains("Superconductor")) { return EIT.Superconductor; }
+else if(itemType.Contains("Thrust")) { return EIT.Thrust; }
+else if(itemType.Contains("ZoneChip")) { return EIT.ZoneChip; }
 throw new System.ArgumentException("Не знаю такой строки", itemType); }
-public int amount() { return m_amount; }
-public void appendAmount(int amountDelta) { m_amount += amountDelta; }
-public EItemType itemType() { return m_itemType; }
+public int a() { return m_a; }
+public void appendAmount(int aDelta) { m_a += aDelta; }
+public EIT itemType() { return m_itemType; }
 public string asComponent() {
 string name = "";
 switch(m_itemType) {
-case EItemType.BulletproofGlass: name = "BulletproofGlass"; break;
-case EItemType.Canvas: name = "Canvas"; break;
-case EItemType.Computer: name = "Computer"; break;
-case EItemType.Construction: name = "Construction"; break;
-case EItemType.Detector: name = "Detector"; break;
-case EItemType.Display: name = "Display"; break;
-case EItemType.Explosives: name = "Explosives"; break;
-case EItemType.Girder: name = "Girder"; break;
-case EItemType.GravityGenerator: name = "GravityGenerator"; break;
-case EItemType.InteriorPlate: name = "InteriorPlate"; break;
-case EItemType.LargeTube: name = "LargeTube"; break;
-case EItemType.Medical: name = "Medical"; break;
-case EItemType.MetalGrid: name = "MetalGrid"; break;
-case EItemType.Motor: name = "Motor"; break;
-case EItemType.PowerCell: name = "PowerCell"; break;
-case EItemType.RadioCommunication: name = "RadioCommunication"; break;
-case EItemType.Reactor: name = "Reactor"; break;
-case EItemType.SmallTube: name = "SmallTube"; break;
-case EItemType.SolarCell: name = "SolarCell"; break;
-case EItemType.SteelPlate: name = "SteelPlate"; break;
-case EItemType.Superconductor: name = "Superconductor"; break;
-case EItemType.Thrust: name = "Thrust"; break;
-case EItemType.ZoneChip: name = "ZoneChip"; break; }
+case EIT.BulletproofGlass: name = "BulletproofGlass"; break;
+case EIT.Canvas: name = "Canvas"; break;
+case EIT.Computer: name = "Computer"; break;
+case EIT.Construction: name = "Construction"; break;
+case EIT.Detector: name = "Detector"; break;
+case EIT.Display: name = "Display"; break;
+case EIT.Explosives: name = "Explosives"; break;
+case EIT.Girder: name = "Girder"; break;
+case EIT.GravityGenerator: name = "GravityGenerator"; break;
+case EIT.InteriorPlate: name = "InteriorPlate"; break;
+case EIT.LargeTube: name = "LargeTube"; break;
+case EIT.Medical: name = "Medical"; break;
+case EIT.MetalGrid: name = "MetalGrid"; break;
+case EIT.Motor: name = "Motor"; break;
+case EIT.PowerCell: name = "PowerCell"; break;
+case EIT.RadioCommunication: name = "RadioCommunication"; break;
+case EIT.Reactor: name = "Reactor"; break;
+case EIT.SmallTube: name = "SmallTube"; break;
+case EIT.SolarCell: name = "SolarCell"; break;
+case EIT.SteelPlate: name = "SteelPlate"; break;
+case EIT.Superconductor: name = "Superconductor"; break;
+case EIT.Thrust: name = "Thrust"; break;
+case EIT.ZoneChip: name = "ZoneChip"; break; }
 return $"MyObjectBuilder_Component/{name}"; }
 public string asBlueprintDefinition() {
 string name = "";
 switch(m_itemType) {
-case EItemType.BulletproofGlass: name = "BulletproofGlass"; break;
-case EItemType.Canvas: name = "Canvas"; break;
-case EItemType.Computer: name = "ComputerComponent"; break;
-case EItemType.Construction: name = "ConstructionComponent"; break;
-case EItemType.Detector: name = "DetectorComponent"; break;
-case EItemType.Display: name = "Display"; break;
-case EItemType.Explosives: name = "ExplosivesComponent"; break;
-case EItemType.Girder: name = "GirderComponent"; break;
-case EItemType.GravityGenerator: name = "GravityGeneratorComponent"; break;
-case EItemType.InteriorPlate: name = "InteriorPlate"; break;
-case EItemType.LargeTube: name = "LargeTube"; break;
-case EItemType.Medical: name = "MedicalComponent"; break;
-case EItemType.MetalGrid: name = "MetalGrid"; break;
-case EItemType.Motor: name = "MotorComponent"; break;
-case EItemType.PowerCell: name = "PowerCell"; break;
-case EItemType.RadioCommunication: name = "RadioCommunicationComponent"; break;
-case EItemType.Reactor: name = "ReactorComponent"; break;
-case EItemType.SmallTube: name = "SmallTube"; break;
-case EItemType.SolarCell: name = "SolarCell"; break;
-case EItemType.SteelPlate: name = "SteelPlate"; break;
-case EItemType.Superconductor: name = "Superconductor"; break;
-case EItemType.Thrust: name = "ThrustComponent"; break;
-case EItemType.ZoneChip: name = "ZoneChip"; break; }
+case EIT.BulletproofGlass: name = "BulletproofGlass"; break;
+case EIT.Canvas: name = "Canvas"; break;
+case EIT.Computer: name = "ComputerComponent"; break;
+case EIT.Construction: name = "ConstructionComponent"; break;
+case EIT.Detector: name = "DetectorComponent"; break;
+case EIT.Display: name = "Display"; break;
+case EIT.Explosives: name = "ExplosivesComponent"; break;
+case EIT.Girder: name = "GirderComponent"; break;
+case EIT.GravityGenerator: name = "GravityGeneratorComponent"; break;
+case EIT.InteriorPlate: name = "InteriorPlate"; break;
+case EIT.LargeTube: name = "LargeTube"; break;
+case EIT.Medical: name = "MedicalComponent"; break;
+case EIT.MetalGrid: name = "MetalGrid"; break;
+case EIT.Motor: name = "MotorComponent"; break;
+case EIT.PowerCell: name = "PowerCell"; break;
+case EIT.RadioCommunication: name = "RadioCommunicationComponent"; break;
+case EIT.Reactor: name = "ReactorComponent"; break;
+case EIT.SmallTube: name = "SmallTube"; break;
+case EIT.SolarCell: name = "SolarCell"; break;
+case EIT.SteelPlate: name = "SteelPlate"; break;
+case EIT.Superconductor: name = "Superconductor"; break;
+case EIT.Thrust: name = "ThrustComponent"; break;
+case EIT.ZoneChip: name = "ZoneChip"; break; }
 return $"MyObjectBuilder_BlueprintDefinition/{name}"; }
 public MyItemType asMyItemType() { return MyItemType.Parse(asComponent()); }
-private EItemType m_itemType;
-private int m_amount; }
-public class FComponentItem {
-static public CComponentItem BulletproofGlass(int amount = 0) { return new CComponentItem(EItemType.BulletproofGlass, amount); }
-static public CComponentItem Canvas(int amount = 0) { return new CComponentItem(EItemType.Canvas, amount); }
-static public CComponentItem Computer(int amount = 0) { return new CComponentItem(EItemType.Computer, amount); }
-static public CComponentItem Construction(int amount = 0) { return new CComponentItem(EItemType.Construction, amount); }
-static public CComponentItem Detector(int amount = 0) { return new CComponentItem(EItemType.Detector, amount); }
-static public CComponentItem Display(int amount = 0) { return new CComponentItem(EItemType.Display, amount); }
-static public CComponentItem Explosives(int amount = 0) { return new CComponentItem(EItemType.Explosives, amount); }
-static public CComponentItem Girder(int amount = 0) { return new CComponentItem(EItemType.Girder, amount); }
-static public CComponentItem GravityGenerator(int amount = 0) { return new CComponentItem(EItemType.GravityGenerator, amount); }
-static public CComponentItem InteriorPlate(int amount = 0) { return new CComponentItem(EItemType.InteriorPlate, amount); }
-static public CComponentItem LargeTube(int amount = 0) { return new CComponentItem(EItemType.LargeTube, amount); }
-static public CComponentItem Medical(int amount = 0) { return new CComponentItem(EItemType.Medical, amount); }
-static public CComponentItem MetalGrid(int amount = 0) { return new CComponentItem(EItemType.MetalGrid, amount); }
-static public CComponentItem Motor(int amount = 0) { return new CComponentItem(EItemType.Motor, amount); }
-static public CComponentItem PowerCell(int amount = 0) { return new CComponentItem(EItemType.PowerCell, amount); }
-static public CComponentItem RadioCommunication(int amount = 0) { return new CComponentItem(EItemType.RadioCommunication, amount); }
-static public CComponentItem Reactor(int amount = 0) { return new CComponentItem(EItemType.Reactor, amount); }
-static public CComponentItem SmallTube(int amount = 0) { return new CComponentItem(EItemType.SmallTube, amount); }
-static public CComponentItem SolarCell(int amount = 0) { return new CComponentItem(EItemType.SolarCell, amount); }
-static public CComponentItem SteelPlate(int amount = 0) { return new CComponentItem(EItemType.SteelPlate, amount); }
-static public CComponentItem Superconductor(int amount = 0) { return new CComponentItem(EItemType.Superconductor, amount); }
-static public CComponentItem Thrust(int amount = 0) { return new CComponentItem(EItemType.Thrust, amount); }
-static public CComponentItem ZoneChip(int amount = 0) { return new CComponentItem(EItemType.ZoneChip, amount); } }
+private EIT m_itemType;
+private int m_a; }
+public class FCI {
+static public CCI BulletproofGlass(int a = 0) { return new CCI(EIT.BulletproofGlass, a); }
+static public CCI Canvas(int a = 0) { return new CCI(EIT.Canvas, a); }
+static public CCI Computer(int a = 0) { return new CCI(EIT.Computer, a); }
+static public CCI Construction(int a = 0) { return new CCI(EIT.Construction, a); }
+static public CCI Detector(int a = 0) { return new CCI(EIT.Detector, a); }
+static public CCI Display(int a = 0) { return new CCI(EIT.Display, a); }
+static public CCI Explosives(int a = 0) { return new CCI(EIT.Explosives, a); }
+static public CCI Girder(int a = 0) { return new CCI(EIT.Girder, a); }
+static public CCI GravityGenerator(int a = 0) { return new CCI(EIT.GravityGenerator, a); }
+static public CCI InteriorPlate(int a = 0) { return new CCI(EIT.InteriorPlate, a); }
+static public CCI LargeTube(int a = 0) { return new CCI(EIT.LargeTube, a); }
+static public CCI Medical(int a = 0) { return new CCI(EIT.Medical, a); }
+static public CCI MetalGrid(int a = 0) { return new CCI(EIT.MetalGrid, a); }
+static public CCI Motor(int a = 0) { return new CCI(EIT.Motor, a); }
+static public CCI PowerCell(int a = 0) { return new CCI(EIT.PowerCell, a); }
+static public CCI RadioCommunication(int a = 0) { return new CCI(EIT.RadioCommunication, a); }
+static public CCI Reactor(int a = 0) { return new CCI(EIT.Reactor, a); }
+static public CCI SmallTube(int a = 0) { return new CCI(EIT.SmallTube, a); }
+static public CCI SolarCell(int a = 0) { return new CCI(EIT.SolarCell, a); }
+static public CCI SteelPlate(int a = 0) { return new CCI(EIT.SteelPlate, a); }
+static public CCI Superconductor(int a = 0) { return new CCI(EIT.Superconductor, a); }
+static public CCI Thrust(int a = 0) { return new CCI(EIT.Thrust, a); }
+static public CCI ZoneChip(int a = 0) { return new CCI(EIT.ZoneChip, a); } }
 public class CD : CTS {
-public CD() : base() {
-m_initialized = false; }
-private void initSize(IMyTextPanel display) {
-if(!m_initialized) {
+public CD() : base()
+{}
+private void mineDimensions(IMyTextPanel display) {
 debug($"{display.BlockDefinition.SubtypeName}");
 switch(display.BlockDefinition.SubtypeName) {
 case "LargeLCDPanelWide" : s(0.602f, 28, 87, 0.35f); break;
 case "LargeLCDPanel" : s(0.602f, 28, 44, 0.35f); break;
 case "TransparentLCDLarge": s(0.602f, 28, 44, 0.35f); break;
-default: s(1f, 1, 1, 1f); break; } } }
-public void aD(string name, int x, int y) {
-IMyTextPanel display = _.GridTerminalSystem.GetBlockWithName(name) as IMyTextPanel;
-initSize(display);
+case "TransparentLCDSmall": s(0.602f, 26, 40, 4f); break;
+default: s(1f, 1, 1, 1f); break; } }
+public void aDs(string name) {
+CBNamed<IMyTextPanel> displays = new CBNamed<IMyTextPanel>(name);
+if(displays.empty()) { throw new System.ArgumentException("Не найдены дисплеи", name); }
+mineDimensions(displays.blocks()[0]);
+foreach(IMyTextPanel display in displays.blocks()) {
+CBO o = displays.o(display);
+int x = o.g("display", "x", -1);
+int y = o.g("display", "y", -1);
+if(x<0 || y<0) { throw new System.ArgumentException("Не указаны координаты дисплея", display.CustomName); }
 addSurface(display as IMyTextSurface, x, y); }
-private bool m_initialized; }
+clear(); } }
 public class CTS {
 public CTS() {
 m_text = new List<string>();
-m_s = new List<List<IMyTextSurface>>(); }
+m_s = new CXYCollection<IMyTextSurface>(); }
 public void setSurface(IMyTextSurface surface, float fontSize, int maxLines, int maxColumns, float padding = 0) {
 s(fontSize, maxLines, maxColumns, padding);
 addSurface(surface, 0, 0); }
 public void addSurface(IMyTextSurface surface, int x, int y) {
-if(csX() <= x) { m_s.Add(new List<IMyTextSurface>()); }
-if(csY(x) <= y) { m_s[x].Add(surface); }
-else { m_s[x][y] = surface; }
-s(); }
-public void s(float fontSize, int maxLines, int maxColumns, float padding) {
+m_s.set(x, y, s(surface)); }
+protected void s(float fontSize, int maxLines, int maxColumns, float padding) {
 m_fontSize = fontSize;
 m_maxLines = maxLines;
 m_maxColumns = maxColumns;
-m_padding = padding;
-s(); }
-private void s() {
-foreach(List<IMyTextSurface> sfList in m_s) {
-foreach(IMyTextSurface surface in sfList) {
+m_padding = padding; }
+private IMyTextSurface s(IMyTextSurface surface) {
 surface.ContentType = ContentType.TEXT_AND_IMAGE;
 surface.Font = "Monospace";
 surface.FontColor = new Color(255, 255, 255);
 surface.BackgroundColor = new Color(0, 0, 0);
 surface.FontSize = m_fontSize;
 surface.Alignment = TextAlignment.LEFT;
-surface.TextPadding = m_padding; } }
-clear(); }
+surface.TextPadding = m_padding;
+return surface; }
 public void clear() {
-foreach(List<IMyTextSurface> sfList in m_s) {
-foreach(IMyTextSurface surface in sfList) {
-surface.WriteText("", false); } } }
-private bool surfaceExists(int x, int y) {
-return y < csY(x); }
+clearSurfaces();
+m_text.Clear(); }
+private void clearSurfaces() {
+foreach(IMyTextSurface surface in m_s) { surface.WriteText("", false); } }
 private bool unknownTypeEcho(string text) {
-if(m_maxLines == 0 && surfaceExists(0, 0)) { m_s[0][0].WriteText(text + '\n', true); return true; }
+if(m_maxLines == 0 && m_s.exists(0, 0)) { m_s.get(0, 0).WriteText(text + '\n', true); return true; }
 return false; }
-private int csX() { return m_s.Count; }
-private int csY(int x) { return x < csX() ? m_s[x].Count : 0; }
 public void echo(string text) {
 if(!unknownTypeEcho(text)) {
-if(m_text.Count > m_maxLines * csY(0)) { m_text.RemoveAt(0); }
+if(m_text.Count > m_maxLines * m_s.countY()) { m_text.RemoveAt(0); }
 m_text.Add(text); }
 echoText(); }
 public void echo_last(string text) {
@@ -504,113 +528,69 @@ if(m_text.Count <= lineNum) { break; }
 string line = m_text[lineNum];
 int substringLength = line.Length > maxColumn ? m_maxColumns : line.Length - minColumn;
 if(substringLength > 0) {
-m_s[x][y].WriteText(line.Substring(minColumn, substringLength) + '\n', true); }
+m_s.get(x, y).WriteText(line.Substring(minColumn, substringLength) + '\n', true); }
 else {
-m_s[x][y].WriteText("\n", true); } } }
+m_s.get(x, y).WriteText("\n", true); } } }
 private void echoText() {
-clear();
-for(int x = 0; x < csX(); x++) {
-for(int y = 0; y < csY(x); y++) {
+clearSurfaces();
+for(int x = 0; x < m_s.countX(); x++) {
+for(int y = 0; y < m_s.countY(); y++) {
 updateSurface(x, y); } } }
 private int m_maxLines;
 private int m_maxColumns;
 private float m_fontSize;
 private float m_padding;
 private List<string> m_text;
-private List<List<IMyTextSurface>> m_s; }
-public class CStoragesGroup : CBG<IMyCargoContainer> {
-public CStoragesGroup(string groupName,
-string purpose = "") : base(groupName, purpose)
-{}
-public int countItems(EItemType itemType) {
-CComponentItem r = new CComponentItem(itemType);
-MyItemType miType = r.asMyItemType();
-foreach(IMyCargoContainer container in blocks()) {
-r.appendAmount(container.GetInventory().GetItemAmount(miType).ToIntSafe()); }
-return r.amount(); } }
-public class CBG<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CBG(string groupName,
-string purpose = "",
-bool loadOnlySameGrid = true) : base(purpose) {
-m_groupName = groupName;
-refresh(loadOnlySameGrid); }
-public void refresh(bool loadOnlySameGrid = true) {
-clear();
-IMyBlockGroup group = _.GridTerminalSystem.GetBlockGroupWithName(m_groupName);
-if(loadOnlySameGrid) { group.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(_.Me)); }
-else { group.GetBlocksOfType<T>(m_blocks) ; } }
-public string groupName() { return m_groupName; }
-private string m_groupName; }
+CXYCollection<IMyTextSurface> m_s; }
+public class CXYCollection<T> : IEnumerable {
+public CXYCollection() {
+m_data = new Dictionary<int, Dictionary<int, T>>(); }
+public T get(int x, int y) {
+if(exists(x, y)) {
+return m_data[x][y]; }
+return default(T); }
+public void set(int x, int y, T data) {
+debug($"set {x}:{y}");
+if(!m_data.ContainsKey(x)) { m_data[x] = new Dictionary<int, T>(); }
+m_data[x][y] = data; }
+public bool exists(int x, int y) {
+return m_data.ContainsKey(x) && m_data[x].ContainsKey(y); }
+public int count() {
+int r = 0;
+foreach(KeyValuePair<int, Dictionary<int, T>> i in m_data) {
+r += i.Value.Count; }
+return r; }
+public int countX() { return m_data.Count; }
+public int countY() { return empty() ? 0 : m_data[0].Count; }
+public bool empty() { return countX() == 0; }
+public IEnumerator GetEnumerator() {
+foreach(KeyValuePair<int, Dictionary<int, T>> i in m_data) {
+foreach(KeyValuePair<int, T> j in i.Value) {
+yield return j.Value; } } }
+private Dictionary<int, Dictionary<int, T>> m_data; }
+public class CBNamed<T> : CBB<T> where T : class, IMyTerminalBlock {
+public CBNamed(string name, bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { m_name = name; load(); }
+protected override bool checkBlock(T b) {
+return (m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
+public string name() { return m_name; }
+private string m_name; }
 public class CBB<T> where T : class, IMyTerminalBlock {
-public CBB(string purpose = "") {
-m_blocks = new List<T>();
-m_purpose = purpose; }
-public void s(string name,
-bool visibleInTerminal = false,
-bool visibleInInventory = false,
-bool visibleInToolBar = false) {
-Dictionary<string, int> counetrs = new Dictionary<string, int>();
-string zeros = new string('0', count().ToString().Length);
-foreach(T block in m_blocks) {
-string blockPurpose = "";
-CBO o = new CBO(block);
-if(iA<IMyShipConnector>()) {
-IMyShipConnector blk = block as IMyShipConnector;
-blk.PullStrength = 1f;
-blk.CollectAll = o.g("connector", "collectAll", false);
-blk.ThrowOut = o.g("connector", "throwOut", false); }
-else if(iA<IMyInteriorLight>()) {
-IMyInteriorLight blk = block as IMyInteriorLight;
-blk.Radius = 10f;
-blk.Intensity = 10f;
-blk.Falloff = 3f;
-blk.Color = o.g("lamp", "color", Color.White); }
-else if(iA<IMyConveyorSorter>()) {
-IMyConveyorSorter blk = block as IMyConveyorSorter;
-blk.DrainAll = o.g("sorter", "drainAll", false); }
-else if(iA<IMyLargeTurretBase>()) {
-IMyLargeTurretBase blk = block as IMyLargeTurretBase;
-blk.EnableIdleRotation = true;
-blk.Elevation = 0f;
-blk.Azimuth = 0f; }
-else if(iA<IMyAssembler>()) {
-blockPurpose = "Master";
-if(o.g("assembler", "is_slave", false)) {
-IMyAssembler blk = block as IMyAssembler;
-blk.CooperativeMode = true;
-blockPurpose = "Slave"; } }
-string realPurpose = $"{getPurpose(o).Trim()} {blockPurpose}";
-if(!counetrs.ContainsKey(realPurpose)) { counetrs.Add(realPurpose, 0); }
-string sZeros = count() > 1 ? counetrs[realPurpose].ToString(zeros).Trim() : "";
-block.CustomName = TrimAllSpaces($"[{structureName}] {name} {realPurpose} {sZeros}");
-counetrs[realPurpose]++;
-sBlocksVisibility(block,
-o.g("generic", "visibleInTerminal", visibleInTerminal),
-o.g("generic", "visibleInInventory", visibleInInventory),
-o.g("generic", "visibleInToolBar", visibleInToolBar)); } }
-private string getPurpose(CBO o) {
-return o.g("generic", "purpose", m_purpose); }
-private void sBlocksVisibility(T block,
-bool vTerminal,
-bool vInventory,
-bool vToolBar) {
-IMySlimBlock sBlock = block.CubeGrid.GetCubeBlock(block.Position);
-block.ShowInTerminal = vTerminal && sBlock.IsFullIntegrity && sBlock.BuildIntegrity < 1f;
-block.ShowInToolbarConfig = vToolBar;
-if(block.HasInventory) { block.ShowInInventory = vInventory; } }
+public CBB(bool loadOnlySameGrid = true) { m_blocks = new List<T>(); m_loadOnlySameGrid = loadOnlySameGrid; }
 public bool empty() { return count() == 0; }
 public int count() { return m_blocks.Count; }
-public void removeBlock(T blk) { m_blocks.Remove(blk); }
+public List<T> blocks() { return m_blocks; }
+protected void clear() { m_blocks.Clear(); }
+public void removeBlock(T b) { m_blocks.Remove(b); }
 public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
 public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
+public CBO o(T b) { return new CBO(b); }
 public bool iA<U>() where U : class, IMyTerminalBlock {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
-public List<T> blocks() { return m_blocks; }
-public string purpose() { return m_purpose; }
-protected void clear() { m_blocks.Clear(); }
+protected virtual void load() { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => checkBlock(x)); }
+protected virtual bool checkBlock(T b) { return m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true; }
 protected List<T> m_blocks;
-private string m_purpose; }
+protected bool m_loadOnlySameGrid; }
 public static string TrimAllSpaces(string value) {
 var newString = new StringBuilder();
 bool pIW = false;
@@ -623,55 +603,144 @@ else {
 pIW = false; }
 newString.Append(value[i]); }
 return newString.ToString(); }
-CRecipes recipes;
+public class CAssembler : CF<IMyAssembler> {
+public CAssembler(CBB<IMyAssembler> blocks) : base(blocks) {
+m_master = null;
+foreach(IMyAssembler b in m_blocks.blocks()) {
+if(b.CustomName.Contains("Master")) { m_master = b; } }
+if(m_master != null) { m_blocks.removeBlock(m_master); } }
+public bool producing() {
+if(m_master != null && m_master.IsProducing) { return true; }
+foreach(IMyAssembler b in m_blocks.blocks()) { if(b.IsProducing) { return true; } }
+return false; }
+public void produce(string bpDefinition, int a) {
+if(m_master != null) { m_master.AddQueueItem(MyDefinitionId.Parse(bpDefinition), (double)a); }
+else {
+int realAmount = (int)Math.Ceiling((double)a/m_blocks.count());
+foreach(IMyAssembler b in m_blocks.blocks()) { b.AddQueueItem(MyDefinitionId.Parse(bpDefinition), (double)realAmount); } } }
+public void clear() {
+if(m_master != null) { m_master.ClearQueue(); }
+foreach(IMyAssembler b in m_blocks.blocks()) { b.ClearQueue(); } }
+private IMyAssembler m_master; }
+public class CF<T> : CT<T> where T : class, IMyTerminalBlock {
+public CF(CBB<T> blocks) : base(blocks) {}
+public bool enable(bool target = true) {
+foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+if(b.Enabled != target) { b.Enabled = target; } }
+return enabled() == target; }
+public bool disable() { return enable(false); }
+public bool enabled() {
+bool r = true;
+foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+r = r && b.Enabled; }
+return r; } }
+public class CT<T> where T : class, IMyTerminalBlock {
+public CT(CBB<T> blocks) { m_blocks = blocks; }
+public void listProperties(CTS lcd) {
+if(m_blocks.count() == 0) { return; }
+List<ITerminalProperty> properties = new List<ITerminalProperty>();
+m_blocks.blocks()[0].GetProperties(properties);
+foreach(var property in properties) {
+lcd.echo($"id: {property.Id}, type: {property.TypeName}"); } }
+public void listActions(CTS lcd) {
+if(m_blocks.count() == 0) { return; }
+List<ITerminalAction> actions = new List<ITerminalAction>();
+m_blocks.blocks()[0].GetActions(actions);
+foreach(var action in actions) {
+lcd.echo($"id: {action.Id}, name: {action.Name}"); } }
+void showInTerminal(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
+void hideInTerminal() { showInTerminal(false); }
+void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
+void hideInToolbarConfig() { showInToolbarConfig(false); }
+void showInInventory(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
+void hideInInventory() { showInInventory(false); }
+void showOnHUD(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
+void hideOnHUD() { showOnHUD(false); }
+public bool empty() { return m_blocks.empty(); }
+public int count() { return m_blocks.count(); }
+protected CBB<T> m_blocks; }
+public class CContainer : CT<IMyCargoContainer> {
+public CContainer(CBB<IMyCargoContainer> blocks) : base(blocks) { }
+public int items(EIT itemType) {
+CCI r = new CCI(itemType);
+MyItemType miType = r.asMyItemType();
+foreach(IMyCargoContainer b in m_blocks.blocks()) {
+r.appendAmount(b.GetInventory().GetItemAmount(miType).ToIntSafe()); }
+return r.a(); }
+public Dictionary<MyItemType, float> items() {
+Dictionary<MyItemType, float> r = new Dictionary<MyItemType, float>();
+foreach(IMyCargoContainer b in m_blocks.blocks()) {
+List<MyInventoryItem> ci = new List<MyInventoryItem>();
+b.GetInventory().GetItems(ci, x => true);
+foreach(MyInventoryItem i in ci) {
+if(!r.ContainsKey(i.Type)) { r.Add(i.Type, (float)i.Amount); }
+else { r[i.Type] += (float)i.Amount; } } }
+return r; }
+public float maxVolume() {
+float r = 0;
+foreach(IMyCargoContainer b in m_blocks.blocks()) {
+r += (float)b.GetInventory().MaxVolume; }
+return r; }
+public float volume() {
+float r = 0;
+foreach(IMyCargoContainer b in m_blocks.blocks()) {
+r += (float)b.GetInventory().CurrentVolume; }
+return r; }
+public float mass() {
+float r = 0;
+foreach(IMyCargoContainer b in m_blocks.blocks()) {
+r += (float)b.GetInventory().CurrentMass; }
+return r; } }
+public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
+public CB(bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { load(); } }
+cRs Rs;
 CD lcdAssembling;
-CD lcdPerBlock;
-CStoragesGroup storage;
-IMyAssembler targetAssembler;
+CContainer storage;
+CAssembler assembler;
 public string program() {
 lcdAssembling = new CD();
-lcdAssembling.aD($"[{structureName}] Дисплей Производство 0", 0, 0);
-lcdPerBlock = new CD();
-lcdPerBlock.aD($"[{structureName}] Дисплей Хранение 0", 0, 0);
-lcdPerBlock.aD($"[{structureName}] Дисплей Хранение 1", 0, 1);
-targetAssembler = GridTerminalSystem.GetBlockWithName($"[{structureName}] Сборщик Master 00") as IMyAssembler;
-storage = new CStoragesGroup($"[{structureName}] Компоненты", "Компоненты");
-recipes = new CRecipes();
-recipes.add(FRecipe.LargeBlockArmorBlock(4*32+32*32));
-recipes.add(FRecipe.Window3x3Flat(8));
-recipes.add(FRecipe.ArmorSide(32));
-recipes.add(FRecipe.ArmorCenter(32));
-recipes.add(FRecipe.LargeBlockArmorRoundCorner(32));
-recipes.add(FRecipe.LargeBlockRadioAntenna(4));
-recipes.add(FRecipe.SmallLight(64));
-recipes.add(FRecipe.LargeShipMergeBlock(16));
-recipes.add(FRecipe.LargePistonBase(16));
-recipes.add(FRecipe.LargeBlockGyro(16));
-recipes.add(FRecipe.LargeBlockWindTurbine(32));
-recipes.add(FRecipe.LargeBlockBatteryBlock(32));
-recipes.add(FRecipe.SolarPanel(32));
-recipes.add(FRecipe.LargeBlockSmallContainer(16));
-recipes.add(FRecipe.LargeBlockLargeContainer(16));
-recipes.add(FRecipe.Connector(8));
-recipes.add(FRecipe.ConveyorTube(32));
-recipes.add(FRecipe.LargeBlockConveyor(32));
-recipes.add(FRecipe.Wheel5x5(4));
-recipes.add(FRecipe.Suspension5x5(4));
-recipes.add(FRecipe.AtmosphericThrust(8));
-recipes.add(FRecipe.MedicalRoom(2));
+lcdAssembling.aDs("Производство");
+assembler = new CAssembler(new CB<IMyAssembler>());
+storage = new CContainer(new CBNamed<IMyCargoContainer>("Компоненты"));
+Rs = new cRs();
+Rs.add(FR.LargeArmorBlock(4*32+32*32));
+Rs.add(FR.Window3x3Flat(8));
+Rs.add(FR.ArmorSide(32));
+Rs.add(FR.ArmorCenter(32));
+Rs.add(FR.LargeArmorRoundCorner(32));
+Rs.add(FR.LargeRadioAntenna(4));
+Rs.add(FR.SmallLight(64));
+Rs.add(FR.LargeShipMergeBlock(16));
+Rs.add(FR.LargePistonBase(16));
+Rs.add(FR.LargeGyro(16));
+Rs.add(FR.LargeWindTurbine(32));
+Rs.add(FR.LargeBattery(32));
+Rs.add(FR.SolarPanel(32));
+Rs.add(FR.LargeSmallContainer(16));
+Rs.add(FR.LargeLargeContainer(16));
+Rs.add(FR.Connector(8));
+Rs.add(FR.ConveyorTube(32));
+Rs.add(FR.LargeConveyor(32));
+Rs.add(FR.Wheel5x5(4));
+Rs.add(FR.Suspension5x5(4));
+Rs.add(FR.AtmosphericThrust(8));
+Rs.add(FR.LargeWelder(16));
+Rs.add(FR.LargeGrinder(16));
+Rs.add(FR.LargeDrill(16));
+Rs.add(FR.MedicalRoom(2));
 return "Планирование производства"; }
 public void main(string argument, UpdateType updateSource) {
-bool assemblerProducing = targetAssembler.IsProducing;
+if(argument == "start") { process(); } }
+public void process() {
+int i = 0;
+bool assemblerProducing = assembler.producing();
 string state = assemblerProducing ? "Producing" : "Stopped";
-lcdAssembling.echo_at($"Assemblesr state: {state}", 0);
-lcdAssembling.echo_at("---", 1);
-int lcdAssemblingIndex = 2;
-foreach(CComponentItem component in recipes.sourceItems()) {
-int inStorageAmount = storage.countItems(component.itemType());
-int needAmount = component.amount();
-int amount = needAmount - inStorageAmount;
-lcdAssembling.echo_at($"{component.itemType().ToString()}: {inStorageAmount} of {needAmount}", lcdAssemblingIndex); lcdAssemblingIndex++;
-if(amount > 0 && !assemblerProducing) {
-targetAssembler.AddQueueItem(
-MyDefinitionId.Parse(component.asBlueprintDefinition()),
-(double)amount); } } }
+lcdAssembling.echo_at($"Assemblesr state: {state}", i++);
+lcdAssembling.echo_at("---", i++);
+foreach(CCI component in Rs.sourceItems()) {
+int inStorageAmount = storage.items(component.itemType());
+int needAmount = component.a();
+int a = needAmount - inStorageAmount;
+lcdAssembling.echo_at($"{component.itemType().ToString()}: {inStorageAmount} of {needAmount} - {inStorageAmount/(needAmount/100f):f2}%", i++);
+if(a > 0 && !assemblerProducing) {
+assembler.produce(component.asBlueprintDefinition(), a); } } }

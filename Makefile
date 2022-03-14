@@ -62,3 +62,15 @@ h2_generators_control: prepare to_clipboard
 
 worker_ship_tools: project=worker_ship_tools
 worker_ship_tools: prepare to_clipboard
+
+storage_info: project=storage_info
+storage_info: prepare to_clipboard
+
+mole_storage_info: project=mole_storage_info
+mole_storage_info: prepare to_clipboard
+
+deleter_onoff: project=deleter_onoff
+deleter_onoff: prepare to_clipboard
+
+ship_storage: project=ship_storage
+ship_storage: prepare to_clipboard

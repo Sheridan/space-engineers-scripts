@@ -1,3 +1,4 @@
+// #include classes/blocks/base/blocks_base.cs
 // #include classes/textsurface.cs
 
 public class CTerminal<T> where T : class, IMyTerminalBlock
@@ -26,16 +27,16 @@ public class CTerminal<T> where T : class, IMyTerminalBlock
     }
   }
 
-  void showInTerminal(bool show = true) { foreach (T block in m_blocks.blocks()) { if(block.ShowInTerminal != show) { block.ShowInTerminal = show; }}}
+  void showInTerminal(bool show = true) { foreach (T b in m_blocks.blocks()) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
   void hideInTerminal() { showInTerminal(false); }
 
-  void showInToolbarConfig(bool show = true) { foreach (T block in m_blocks.blocks()) { if(block.ShowInToolbarConfig != show) { block.ShowInToolbarConfig = show; }}}
+  void showInToolbarConfig(bool show = true) { foreach (T b in m_blocks.blocks()) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
   void hideInToolbarConfig() { showInToolbarConfig(false); }
 
-  void showInInventory(bool show = true) { foreach (T block in m_blocks.blocks()) { if(block.ShowInInventory != show) { block.ShowInInventory = show; }}}
+  void showInInventory(bool show = true) { foreach (T b in m_blocks.blocks()) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
   void hideInInventory() { showInInventory(false); }
 
-  void showOnHUD(bool show = true) { foreach (T block in m_blocks.blocks()) { if(block.ShowOnHUD != show) { block.ShowOnHUD = show; }}}
+  void showOnHUD(bool show = true) { foreach (T b in m_blocks.blocks()) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
   void hideOnHUD() { showOnHUD(false); }
 
   public bool empty() { return m_blocks.empty(); }

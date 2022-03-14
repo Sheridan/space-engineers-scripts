@@ -1,40 +1,38 @@
 // #include classes/textsurface.cs
+// #include classes/blocks/base/blocks_named.cs
 
 public class CDisplay : CTextSurface
 {
   public CDisplay() : base()
-  {
-    // m_displays = new List<List<IMyTextPanel>>();
-    m_initialized = false;
-  }
+  {}
 
-  private void initSize(IMyTextPanel display)
+  private void mineDimensions(IMyTextPanel display)
   {
-    if (!m_initialized)
+    debug($"{display.BlockDefinition.SubtypeName}");
+    switch (display.BlockDefinition.SubtypeName)
     {
-      debug($"{display.BlockDefinition.SubtypeName}");
-      switch (display.BlockDefinition.SubtypeName)
-      {
-        case "LargeLCDPanelWide"  : setup(0.602f, 28, 87, 0.35f); break;
-        case "LargeLCDPanel"      : setup(0.602f, 28, 44, 0.35f); break;
-        case "TransparentLCDLarge": setup(0.602f, 28, 44, 0.35f); break;
-        default: setup(1f, 1, 1, 1f); break;
-      }
+      case "LargeLCDPanelWide"  : setup(0.602f, 28, 87, 0.35f); break;
+      case "LargeLCDPanel"      : setup(0.602f, 28, 44, 0.35f); break;
+      case "TransparentLCDLarge": setup(0.602f, 28, 44, 0.35f); break;
+      case "TransparentLCDSmall": setup(0.602f, 26, 40,    4f); break;
+      default: setup(1f, 1, 1, 1f); break;
     }
   }
 
-  public void addDisplay(string name, int x, int y)
+  public void addDisplays(string name)
   {
-    IMyTextPanel display = self.GridTerminalSystem.GetBlockWithName(name) as IMyTextPanel;
-    // if (m_displays.Count <= x) { m_displays.Add(new List<IMyTextPanel>()); }
-    // if (m_displays[x].Count <= y) { m_displays[x].Add(display); }
-    // else { m_displays[x][y] = display; }
-    initSize(display);
-    addSurface(display as IMyTextSurface, x, y);
+    CBlocksNamed<IMyTextPanel> displays = new CBlocksNamed<IMyTextPanel>(name);
+    if(displays.empty()) { throw new System.ArgumentException("Не найдены дисплеи", name); }
+    mineDimensions(displays.blocks()[0]);
+    foreach(IMyTextPanel display in displays.blocks())
+    {
+      CBlockOptions options = displays.options(display);
+      int x = options.getValue("display", "x", -1);
+      int y = options.getValue("display", "y", -1);
+      if(x<0 || y<0) { throw new System.ArgumentException("Не указаны координаты дисплея", display.CustomName); }
+      addSurface(display as IMyTextSurface, x, y);
+    }
+    clear();
   }
 
-  private bool m_initialized;
-  // private string m_displayName;
-  // private IMyTextPanel m_display;
-  // private List<List<IMyTextPanel>> m_displays;
 }

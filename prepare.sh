@@ -67,7 +67,16 @@ function sed_preproc()
    replace "getPowerProducersStatus"  "gPPS" | \
    replace "getInvertoryesStatus"     "gIS"  | \
    replace "getFunctionaBlocksStatus" "gFBS" | \
+   replace "CRecipe"                  "cR"   | \
+   replace "FComponentItem"           "FCI"  | \
+   replace "CComponentItem"           "CCI"  | \
+   replace "EItemType"                "EIT"  | \
    replace "isAssignable"             "iA"   | \
+   replace "structureName"            "sN"   | \
+   replace "CSetup"                   "CS"   | \
+   replace "FRecipe"                  "FR"   | \
+   replace "recipe"                   "R"    | \
+   replace "amount"                   "a"    | \
    replace "//.*$"                ""     | \
    egrep -v "^ +?(//|$)" | \
    astyle --mode=cs --style=lisp --indent=spaces --max-code-length=200 --unpad-paren --pad-comma \
@@ -85,10 +94,16 @@ function reduce_preproc()
     > ${outfolder}/${project}.cs
 }
 
+function calc_chars()
+{
+  wc -c ${outfolder}/${project}.cs
+}
+
+calc_chars
 collect_includes "${project}.cs"
 sed_preproc
 #reduce_preproc
-wc -c ${outfolder}/${project}.cs
+calc_chars
 
 # clang-format --style=file --verbose
 #  astyle --mode=cs --style=lisp --indent=spaces --max-code-length=200 --unpad-paren --pad-comma \

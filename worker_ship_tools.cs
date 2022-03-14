@@ -1,7 +1,8 @@
 // #include classes/main.cs
 // #include classes/display.cs
 // #include classes/state_machine.cs
-// #include classes/blocks.cs
+// #include classes/blocks/base/blocks_named.cs
+// #include classes/blocks/base/blocks.cs
 // #include classes/blocks/piston.cs
 // #include classes/blocks/merger.cs
 // #include classes/blocks/connector.cs
@@ -40,11 +41,11 @@ private bool toolsActive;
 
 public string program()
 {
-  frontShipMerger = new CMerger(new CBlocks<IMyShipMergeBlock>("Фронтальный"));
-  bottomShipMerger = new CMerger(new CBlocks<IMyShipMergeBlock>("Нижний"));
+  frontShipMerger = new CMerger(new CBlocksNamed<IMyShipMergeBlock>("Фронтальный"));
+  bottomShipMerger = new CMerger(new CBlocksNamed<IMyShipMergeBlock>("Нижний"));
 
-  frontShipConnector = new CConnector(new CBlocks<IMyShipConnector>("Фронтальный"));
-  bottomShipConnector = new CConnector(new CBlocks<IMyShipConnector>("Нижний"));
+  frontShipConnector = new CConnector(new CBlocksNamed<IMyShipConnector>("Фронтальный"));
+  bottomShipConnector = new CConnector(new CBlocksNamed<IMyShipConnector>("Нижний"));
 
   statusLcd = new CDisplay();
   statusLcd.addDisplay("[Универсал] Дисплей Лог 1", 0, 0);
@@ -69,7 +70,7 @@ public string program()
   parkStates.addState("Ожидание отхода", parkBack);
   parkStates.addState("Отмена инициализации", toolsInit);
 
-  toolsInit();
+  toolsInit(null);
   searchActiveShipConnector();
   return "Управление инструментом";
 }
@@ -99,14 +100,16 @@ public void main(string argument, UpdateType updateSource)
         } else { statusLcd.echo($"Парковочный коннектор не в состоянии ожидания ({boolToString(parkingConnector.connectable())})"); }
       }
     }
-  //  else if (argument == "on" ) { if (toolsConnected) { toolsOn (); } }
-  //  else if (argument == "off") { if (toolsConnected) { toolsOff(); } }
+    else if (argument == "on" ) { if (toolsConnected) { toolsOn (null); } }
+    else if (argument == "off") { if (toolsConnected) { toolsOff(null); } }
     else if (argument == "onoff")
     {
-      if (toolsConnected) { if (!toolsActive) { toolsOn(); } else { toolsOff(); } }
+      if (toolsConnected) { if (!toolsActive) { toolsOn(null); } else { toolsOff(null); } }
     }
-    else if (argument == "expand" ) { if (toolsConnected) { toolExtender.expandRelative (1,1); } }
-    else if (argument == "retract") { if (toolsConnected) { toolExtender.retractRelative(1,1); } }
+    else if (argument == "expand" )      { if (toolsConnected) { toolExtender.expandRelative (1f,2f); } }
+    else if (argument == "retract")      { if (toolsConnected) { toolExtender.retractRelative(1f,2f); } }
+    else if (argument == "expand_full" ) { if (toolsConnected) { toolExtender.expand (10f,2f); } }
+    else if (argument == "retract_full") { if (toolsConnected) { toolExtender.retract(0f ,2f); } }
   }
   else
   {
@@ -158,29 +161,29 @@ void searchActiveShipConnector()
   }
 }
 
-public bool renameGrid() { Me.CubeGrid.CustomName = structureName; return Me.CubeGrid.CustomName == structureName; }
+public bool renameGrid(object data) { Me.CubeGrid.CustomName = structureName; return Me.CubeGrid.CustomName == structureName; }
 
-public bool connect () { return  activeShipConnector.connect(); }
-public bool park    () { return  parkingConnector   .connect(); }
-public bool parkBack() { return !activeShipConnector.connectable(); }
-public bool merge   () { return  activeShipMerger   .connect(); }
+public bool connect (object data) { return  activeShipConnector.connect(); }
+public bool park    (object data) { return  parkingConnector   .connect(); }
+public bool parkBack(object data) { return !activeShipConnector.connectable(); }
+public bool merge   (object data) { return  activeShipMerger   .connect(); }
 
-public bool disconnect() { return  activeShipConnector.disconnect (); }
-public bool unpark    () { return  parkingConnector   .disconnect (); }
-public bool unparkBack() { return !parkingConnector   .connectable(); }
-public bool unmerge   () { return  activeShipMerger   .disconnect (); }
+public bool disconnect(object data) { return  activeShipConnector.disconnect (); }
+public bool unpark    (object data) { return  parkingConnector   .disconnect (); }
+public bool unparkBack(object data) { return !parkingConnector   .connectable(); }
+public bool unmerge   (object data) { return  activeShipMerger   .disconnect (); }
 
-public bool toolsInit()
+public bool toolsInit(object data)
 {
   tools = new CShipTool(new CBlocks<IMyShipToolBase>());
   // toolLcd = new CDisplay();
   // toolLcd.addDisplay("[Универсал] Дисплей Статус 0", 0, 0);
-  toolConnector    = new CConnector(new CBlocks<IMyShipConnector >("Инструментальный"));
-  parkingConnector = new CConnector(new CBlocks<IMyShipConnector >("Парковка"));
-  toolMerger       = new CMerger   (new CBlocks<IMyShipMergeBlock>("Инструментальный"));
-  safetySensor     = new CSensor   (new CBlocks<IMySensorBlock   >("Безопасность"));
-  safetyLamp       = new CLamp     (new CBlocks<IMyLightingBlock >("Безопасность"));
-  toolExtender     = new CPiston   (new CBlocks<IMyPistonBase    >("Удлиннитель"));
+  toolConnector    = new CConnector(new CBlocksNamed<IMyShipConnector >("Инструментальный"));
+  parkingConnector = new CConnector(new CBlocksNamed<IMyShipConnector >("Парковка"));
+  toolMerger       = new CMerger   (new CBlocksNamed<IMyShipMergeBlock>("Инструментальный"));
+  safetySensor     = new CSensor   (new CBlocksNamed<IMySensorBlock   >("Безопасность"));
+  safetyLamp       = new CLamp     (new CBlocksNamed<IMyLightingBlock >("Безопасность"));
+  toolExtender     = new CPiston   (new CBlocksNamed<IMyPistonBase    >("Удлиннитель"));
   toolsConnected =  toolMerger       != null && !toolMerger.empty() &&
                     parkingConnector != null && !parkingConnector.empty() &&
                     toolConnector    != null && !toolConnector.empty() &&
@@ -210,7 +213,7 @@ public void showStatus()
   }
 }
 
-public bool toolsOn()
+public bool toolsOn(object data)
 {
   safetyLamp.enable();
   safetySensor.enable();
@@ -219,7 +222,7 @@ public bool toolsOn()
   return toolsActive;
 }
 
-public bool toolsOff()
+public bool toolsOff(object data)
 {
   safetyLamp.disable();
   safetySensor.disable();

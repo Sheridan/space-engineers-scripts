@@ -27,7 +27,7 @@ public enum EItemType
 
 public class CComponentItem
 {
-  public CComponentItem(string    itemType)                 { m_itemType = fromString(itemType); m_amount =      0; }
+  public CComponentItem(string    itemType, int amount = 0) { m_itemType = fromString(itemType); m_amount = amount; }
   public CComponentItem(EItemType itemType, int amount = 0) { m_itemType = itemType            ; m_amount = amount; }
 
   public static EItemType fromString(string itemType)

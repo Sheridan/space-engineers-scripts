@@ -44,15 +44,8 @@ public class CAngle
     return a.angle() == m_angle;
   }
 
-  public override int GetHashCode()
-  {
-    return (int)m_angle *100000;
-  }
-
-  public override string ToString()
-  {
-    return $"{m_angle:f4}°";
-  }
+  public override int GetHashCode() { return (int)(m_angle*100000f); }
+  public override string ToString() { return $"{m_angle:f2}°"      ; }
 
   private float m_angle;
 }

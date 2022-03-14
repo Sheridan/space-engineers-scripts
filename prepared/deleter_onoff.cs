@@ -1,17 +1,17 @@
-static string structureName;
+static string sN;
 static string scriptName;
-static Program self;
+static Program _;
 static float blockSize;
 static CBO prbOptions;
 public void applyDefaultMeDisplayTexsts() {
 Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
-Me.GetSurface(1).WriteText(structureName); }
+Me.GetSurface(1).WriteText(sN); }
 public void echoMe(string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
 public void echoMeBig(string text) { echoMe(text, 0); }
 public void echoMeSmall(string text) { echoMe(text, 1); }
 public void sMe(string i_scriptName) {
 scriptName = i_scriptName;
-Me.CustomName = $"[{structureName}] ПрБ {scriptName}";
+Me.CustomName = $"[{sN}] ПрБ {scriptName}";
 sMeSurface(0, 2f);
 sMeSurface(1, 5f);
 applyDefaultMeDisplayTexsts(); }
@@ -23,15 +23,15 @@ surface.FontColor = new Color(255, 255, 255);
 surface.BackgroundColor = new Color(0, 0, 0);
 surface.FontSize = fontSize;
 surface.Alignment = TextAlignment.CENTER; }
-public static void debug(string text) { self.Echo(text); }
+public static void debug(string text) { _.Echo(text); }
 public void init() {
-structureName = Me.CubeGrid.CustomName;
+sN = Me.CubeGrid.CustomName;
 blockSize = Me.CubeGrid.GridSize;
 prbOptions = new CBO(Me);
 sMe(program());
 debug($"{Me.CustomName}: init done"); }
 public Program() {
-self = this;
+_ = this;
 init(); }
 public void Main(string argument, UpdateType updateSource) {
 if(argument == "init") {
@@ -48,9 +48,9 @@ read(); }
 private void read() {
 if(m_block.CustomData.Length > 0) {
 m_ini = new MyIni();
-MyIniParseResult result;
-m_available = m_ini.TryParse(m_block.CustomData, out result);
-if(!m_available) { debug(result.ToString()); } } }
+MyIniParseResult r;
+m_available = m_ini.TryParse(m_block.CustomData, out r);
+if(!m_available) { debug(r.ToString()); } } }
 private void write() { m_block.CustomData = m_ini.ToString(); }
 private bool exists(string section, string name) { return m_available && m_ini.ContainsKey(section, name); }
 public string g(string section, string name, string defaultValue = "") {
@@ -73,112 +73,20 @@ return defaultValue; }
 IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
-public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CB(string purpose = "", bool loadOnlySameGrid = true) : base(purpose) {
-refresh(loadOnlySameGrid); }
-public void refresh(bool loadOnlySameGrid = true) {
-clear();
-if(loadOnlySameGrid) { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(self.Me)); }
-else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks) ; } } }
-public class CBB<T> where T : class, IMyTerminalBlock {
-public CBB(string purpose = "") {
-m_blocks = new List<T>();
-m_purpose = purpose; }
-public void s(string name,
-bool visibleInTerminal = false,
-bool visibleInInventory = false,
-bool visibleInToolBar = false) {
-Dictionary<string, int> counetrs = new Dictionary<string, int>();
-string zeros = new string('0', count().ToString().Length);
-foreach(T block in m_blocks) {
-string blockPurpose = "";
-CBO o = new CBO(block);
-if(isAssignable<IMyShipConnector>()) {
-IMyShipConnector blk = block as IMyShipConnector;
-blk.PullStrength = 1f;
-blk.CollectAll = o.g("connector", "collectAll", false);
-blk.ThrowOut = o.g("connector", "throwOut", false); }
-else if(isAssignable<IMyInteriorLight>()) {
-IMyInteriorLight blk = block as IMyInteriorLight;
-blk.Radius = 10f;
-blk.Intensity = 10f;
-blk.Falloff = 3f;
-blk.Color = o.g("lamp", "color", Color.White); }
-else if(isAssignable<IMyConveyorSorter>()) {
-IMyConveyorSorter blk = block as IMyConveyorSorter;
-blk.DrainAll = o.g("sorter", "drainAll", false); }
-else if(isAssignable<IMyLargeTurretBase>()) {
-IMyLargeTurretBase blk = block as IMyLargeTurretBase;
-blk.EnableIdleRotation = true;
-blk.Elevation = 0f;
-blk.Azimuth = 0f; }
-else if(isAssignable<IMyAssembler>()) {
-blockPurpose = "Master";
-if(o.g("assembler", "is_slave", false)) {
-IMyAssembler blk = block as IMyAssembler;
-blk.CooperativeMode = true;
-blockPurpose = "Slave"; } }
-string realPurpose = $"{getPurpose(o).Trim()} {blockPurpose}";
-if(!counetrs.ContainsKey(realPurpose)) { counetrs.Add(realPurpose, 0); }
-string sZeros = count() > 1 ? counetrs[realPurpose].ToString(zeros).Trim() : "";
-block.CustomName = TrimAllSpaces($"[{structureName}] {name} {realPurpose} {sZeros}");
-counetrs[realPurpose]++;
-sBlocksVisibility(block,
-o.g("generic", "visibleInTerminal", visibleInTerminal),
-o.g("generic", "visibleInInventory", visibleInInventory),
-o.g("generic", "visibleInToolBar", visibleInToolBar)); } }
-private string getPurpose(CBO o) {
-string result = o.g("generic", "purpose", m_purpose);
-return result != "" ? $" {result} " : " "; }
-private void sBlocksVisibility(T block,
-bool vTerminal,
-bool vInventory,
-bool vToolBar) {
-IMySlimBlock sBlock = block.CubeGrid.GetCubeBlock(block.Position);
-block.ShowInTerminal = vTerminal && sBlock.IsFullIntegrity && sBlock.BuildIntegrity < 1f;
-block.ShowInToolbarConfig = vToolBar;
-if(block.HasInventory) { block.ShowInInventory = vInventory; } }
-public bool empty() { return m_blocks.Count == 0; }
-public int count() { return m_blocks.Count; }
-public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
-public bool isAssignable<U>() where U : class, IMyTerminalBlock {
-if(empty()) { return false; }
-return m_blocks[0] is U; }
-public List<T> blocks() { return m_blocks; }
-public string purpose() { return m_purpose; }
-protected void clear() { m_blocks.Clear(); }
-protected List<T> m_blocks;
-private string m_purpose; }
-public static string TrimAllSpaces(string value) {
-var newString = new StringBuilder();
-bool pIW = false;
-for(int i = 0; i < value.Length; i++) {
-if(Char.IsWhiteSpace(value[i])) {
-if(pIW) {
-continue; }
-pIW = true; }
-else {
-pIW = false; }
-newString.Append(value[i]); }
-return newString.ToString(); }
-public class CBT<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CBT(string subTypeName,
-string purpose = "",
-bool loadOnlySameGrid = true) : base(purpose) {
-m_subTypeName = subTypeName;
-refresh(loadOnlySameGrid); }
-public void refresh(bool loadOnlySameGrid = true) {
-clear();
-if(loadOnlySameGrid) {
-self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => (x.IsSameConstructAs(self.Me) &&
-x.BlockDefinition.ToString().Contains(m_subTypeName))); }
-else { self.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.BlockDefinition.ToString().Contains(m_subTypeName)); } }
-public string subTypeName() { return m_subTypeName; }
-private string m_subTypeName; }
+public class CCollector : CF<IMyCollector> {
+public CCollector(CBB<IMyCollector> blocks) : base(blocks) { } }
 public class CF<T> : CT<T> where T : class, IMyTerminalBlock {
 public CF(CBB<T> blocks) : base(blocks) {}
-public void enable(bool enabled = true) { foreach(IMyFunctionalBlock block in m_blocks.blocks()) { if(block.Enabled != enabled) { block.Enabled = enabled; }}}
-public void disable() { enable(false); } }
+public bool enable(bool target = true) {
+foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+if(b.Enabled != target) { b.Enabled = target; } }
+return enabled() == target; }
+public bool disable() { return enable(false); }
+public bool enabled() {
+bool r = true;
+foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+r = r && b.Enabled; }
+return r; } }
 public class CT<T> where T : class, IMyTerminalBlock {
 public CT(CBB<T> blocks) { m_blocks = blocks; }
 public void listProperties(CTS lcd) {
@@ -193,15 +101,46 @@ List<ITerminalAction> actions = new List<ITerminalAction>();
 m_blocks.blocks()[0].GetActions(actions);
 foreach(var action in actions) {
 lcd.echo($"id: {action.Id}, name: {action.Name}"); } }
-void showInTerminal(bool show = true) { foreach(T block in m_blocks.blocks()) { if(block.ShowInTerminal != show) { block.ShowInTerminal = show; }}}
+void showInTerminal(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
 void hideInTerminal() { showInTerminal(false); }
-void showInToolbarConfig(bool show = true) { foreach(T block in m_blocks.blocks()) { if(block.ShowInToolbarConfig != show) { block.ShowInToolbarConfig = show; }}}
+void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
 void hideInToolbarConfig() { showInToolbarConfig(false); }
-void showInInventory(bool show = true) { foreach(T block in m_blocks.blocks()) { if(block.ShowInInventory != show) { block.ShowInInventory = show; }}}
+void showInInventory(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
 void hideInInventory() { showInInventory(false); }
-void showOnHUD(bool show = true) { foreach(T block in m_blocks.blocks()) { if(block.ShowOnHUD != show) { block.ShowOnHUD = show; }}}
+void showOnHUD(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
 void hideOnHUD() { showOnHUD(false); }
+public bool empty() { return m_blocks.empty(); }
+public int count() { return m_blocks.count(); }
 protected CBB<T> m_blocks; }
+public class CBB<T> where T : class, IMyTerminalBlock {
+public CBB(bool loadOnlySameGrid = true) { m_blocks = new List<T>(); m_loadOnlySameGrid = loadOnlySameGrid; }
+public bool empty() { return count() == 0; }
+public int count() { return m_blocks.Count; }
+public List<T> blocks() { return m_blocks; }
+protected void clear() { m_blocks.Clear(); }
+public void removeBlock(T b) { m_blocks.Remove(b); }
+public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
+public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
+public CBO o(T b) { return new CBO(b); }
+public bool iA<U>() where U : class, IMyTerminalBlock {
+if(empty()) { return false; }
+return m_blocks[0] is U; }
+protected virtual void load() { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => checkBlock(x)); }
+protected virtual bool checkBlock(T b) { return m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true; }
+protected List<T> m_blocks;
+protected bool m_loadOnlySameGrid; }
+public static string TrimAllSpaces(string value) {
+var newString = new StringBuilder();
+bool pIW = false;
+for(int i = 0; i < value.Length; i++) {
+if(Char.IsWhiteSpace(value[i])) {
+if(pIW) {
+continue; }
+pIW = true; }
+else {
+pIW = false; }
+newString.Append(value[i]); }
+return newString.ToString(); }
 public class CTS {
 public CTS() {
 m_text = new List<string>();
@@ -281,16 +220,38 @@ private float m_fontSize;
 private float m_padding;
 private List<string> m_text;
 private List<List<IMyTextSurface>> m_s; }
-public CF<IMyPowerProducer> h2Engines;
-bool generationOn;
+public class CLamp : CF<IMyLightingBlock> {
+public CLamp(CBB<IMyLightingBlock> blocks) : base(blocks) { } }
+public class CShipTool : CF<IMyShipToolBase> {
+public CShipTool(CBB<IMyShipToolBase> blocks) : base(blocks) { }
+public bool on(bool target = true) {
+return enable(target) && activated(target); }
+public bool off() { return on(false); }
+public bool active() { return activated(true); }
+private bool activated(bool target) {
+bool r = true;
+foreach(IMyShipToolBase b in m_blocks.blocks()) {
+r = r && b.IsActivated == target; }
+return r; } }
+public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
+public CB(bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { load(); } }
+CLamp lamps;
+CShipTool tools;
+CCollector collectors;
 public string program() {
-h2Engines = new CF<IMyPowerProducer>(new CBT<IMyPowerProducer>("HydrogenEngine"));
-generationOn = false;
-switchGenerate();
-return "Управление водородными генераторами"; }
-public void switchGenerate() {
-h2Engines.enable(generationOn);
-generationOn = !generationOn; }
+lamps = new CLamp(new CB<IMyLightingBlock>());
+tools = new CShipTool(new CB<IMyShipToolBase>());
+collectors = new CCollector(new CB<IMyCollector>());
+return "Управление статусом стирателя"; }
 public void main(string argument, UpdateType updateSource) {
-if(argument == "generate") {
-switchGenerate(); } }
+switch(argument) {
+case "on" : { on(); } break;
+case "off": { off(); } break; } }
+public void on() {
+lamps.enable();
+tools.enable();
+collectors.enable(); }
+public void off() {
+lamps.disable();
+tools.disable();
+collectors.disable(); }

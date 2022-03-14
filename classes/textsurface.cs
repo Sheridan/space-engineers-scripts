@@ -1,12 +1,11 @@
+// #include classes/xycollection.cs
+
 public class CTextSurface
 {
   public CTextSurface()
   {
-    // m_surface = surface;
     m_text = new List<string>();
-    m_surfaces = new List<List<IMyTextSurface>>();
-    // addSurface(surface, 0, 0);
-    // clear();
+    m_surfaces = new CXYCollection<IMyTextSurface>();
   }
 
   public void setSurface(IMyTextSurface surface, float fontSize, int maxLines, int maxColumns, float padding = 0)
@@ -17,70 +16,51 @@ public class CTextSurface
 
   public void addSurface(IMyTextSurface surface, int x, int y)
   {
-    if (countSurfacesX() <= x) { m_surfaces.Add(new List<IMyTextSurface>()); }
-    if (countSurfacesY(x) <= y) { m_surfaces[x].Add(surface); }
-    else { m_surfaces[x][y] = surface; }
-    setup();
+    m_surfaces.set(x, y, setup(surface));
   }
 
-  public void setup(float fontSize, int maxLines, int maxColumns, float padding)
+  protected void setup(float fontSize, int maxLines, int maxColumns, float padding)
   {
-    m_fontSize = fontSize;
-    m_maxLines = maxLines;
+    m_fontSize   = fontSize;
+    m_maxLines   = maxLines;
     m_maxColumns = maxColumns;
-    m_padding = padding;
-    setup();
+    m_padding    = padding;
   }
 
-  private void setup()
+  private IMyTextSurface setup(IMyTextSurface surface)
   {
-    foreach (List<IMyTextSurface> sfList in m_surfaces)
-    {
-      foreach (IMyTextSurface surface in sfList)
-      {
-        surface.ContentType = ContentType.TEXT_AND_IMAGE;
-        surface.Font = "Monospace";
-        surface.FontColor = new Color(255, 255, 255);
-        surface.BackgroundColor = new Color(0, 0, 0);
-        surface.FontSize = m_fontSize;
-        surface.Alignment = TextAlignment.LEFT;
-        surface.TextPadding = m_padding;
-      }
-    }
-    clear();
+    surface.ContentType = ContentType.TEXT_AND_IMAGE;
+    surface.Font = "Monospace";
+    surface.FontColor = new Color(255, 255, 255);
+    surface.BackgroundColor = new Color(0, 0, 0);
+    surface.FontSize = m_fontSize;
+    surface.Alignment = TextAlignment.LEFT;
+    surface.TextPadding = m_padding;
+    return surface;
   }
 
   public void clear()
   {
-    foreach (List<IMyTextSurface> sfList in m_surfaces)
-    {
-      foreach (IMyTextSurface surface in sfList)
-      {
-        surface.WriteText("", false);
-      }
-    }
+    clearSurfaces();
+    m_text.Clear();
   }
 
-  private bool surfaceExists(int x, int y)
+  private void clearSurfaces()
   {
-    return y < countSurfacesY(x);
-    // return x < m_surfaces.Count && y < m_surfaces[x].Count;
+    foreach (IMyTextSurface surface in m_surfaces) { surface.WriteText("", false); }
   }
 
   private bool unknownTypeEcho(string text)
   {
-    if (m_maxLines == 0 && surfaceExists(0, 0)) { m_surfaces[0][0].WriteText(text + '\n', true); return true; }
+    if (m_maxLines == 0 && m_surfaces.exists(0, 0)) { m_surfaces.get(0,0).WriteText(text + '\n', true); return true; }
     return false;
   }
-
-  private int countSurfacesX() { return m_surfaces.Count; }
-  private int countSurfacesY(int x) { return x < countSurfacesX() ? m_surfaces[x].Count : 0; }
 
   public void echo(string text)
   {
     if (!unknownTypeEcho(text))
     {
-      if (m_text.Count > m_maxLines * countSurfacesY(0)) { m_text.RemoveAt(0); }
+      if (m_text.Count > m_maxLines * m_surfaces.countY()) { m_text.RemoveAt(0); }
       m_text.Add(text);
     }
     echoText();
@@ -125,21 +105,21 @@ public class CTextSurface
       // debug($"substring: {line.Length} -> {minColumn}:{substringLength}");
       if (substringLength > 0)
       {
-        m_surfaces[x][y].WriteText(line.Substring(minColumn, substringLength) + '\n', true);
+        m_surfaces.get(x,y).WriteText(line.Substring(minColumn, substringLength) + '\n', true);
       }
       else
       {
-        m_surfaces[x][y].WriteText("\n", true);
+        m_surfaces.get(x,y).WriteText("\n", true);
       }
     }
   }
 
   private void echoText()
   {
-    clear();
-    for (int x = 0; x < countSurfacesX(); x++)
+    clearSurfaces();
+    for (int x = 0; x < m_surfaces.countX(); x++)
     {
-      for (int y = 0; y < countSurfacesY(x); y++)
+      for (int y = 0; y < m_surfaces.countY(); y++)
       {
         updateSurface(x, y);
       }
@@ -161,5 +141,5 @@ public class CTextSurface
   private float m_fontSize;
   private float m_padding;
   private List<string> m_text;
-  private List<List<IMyTextSurface>> m_surfaces;
+  CXYCollection<IMyTextSurface> m_surfaces;
 }

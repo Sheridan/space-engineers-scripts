@@ -1,4 +1,4 @@
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/functional.cs
 
 public class CConnector : CFunctional<IMyShipConnector>
 {
@@ -6,9 +6,9 @@ public class CConnector : CFunctional<IMyShipConnector>
 
   public bool connect(bool target = true)
   {
-    foreach (IMyShipConnector connector in m_blocks.blocks())
+    foreach (IMyShipConnector b in m_blocks.blocks())
     {
-      if(target) { connector.Connect(); } else { connector.Disconnect(); }
+      if(target) { b.Connect(); } else { b.Disconnect(); }
     }
     return checkConnected(target);
   }
@@ -18,12 +18,12 @@ public class CConnector : CFunctional<IMyShipConnector>
   private bool checkConnected(bool target)
   {
     bool result = true;
-    foreach (IMyShipConnector connector in m_blocks.blocks())
+    foreach (IMyShipConnector b in m_blocks.blocks())
     {
       result = result &&
               (
-                target ?  connector.Status == MyShipConnectorStatus.Connected
-                        : connector.Status == MyShipConnectorStatus.Unconnected || connector.Status == MyShipConnectorStatus.Connectable
+                target ?  b.Status == MyShipConnectorStatus.Connected
+                        : b.Status == MyShipConnectorStatus.Unconnected || b.Status == MyShipConnectorStatus.Connectable
               );
     }
     return result;
@@ -32,9 +32,9 @@ public class CConnector : CFunctional<IMyShipConnector>
   public bool connectable()
   {
     bool result = true;
-    foreach (IMyShipConnector connector in m_blocks.blocks())
+    foreach (IMyShipConnector b in m_blocks.blocks())
     {
-      result = result && connector.Status == MyShipConnectorStatus.Connectable;
+      result = result && b.Status == MyShipConnectorStatus.Connectable;
     }
     return result;
   }

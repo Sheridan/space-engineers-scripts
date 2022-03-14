@@ -1,5 +1,5 @@
 // #include classes/display.cs
-// #include classes/blocks_base.cs
+// #include classes/blocks/base/blocks_base.cs
 // #include classes/block_power_info.cs
 // #include helpers/human.cs
 
@@ -279,7 +279,7 @@ public class CBlockStatusDisplay : CDisplay
 
   public void showStatus<T>(CBlocksBase<T> group, int position) where T : class, IMyTerminalBlock
   {
-    string result = $"[{group.subtypeName()}] {group.purpose()} ";
+    string result = $"[{group.subtypeName()}] ";
     if(!group.empty())
     {
       result += $"({group.count()}) "

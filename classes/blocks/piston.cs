@@ -1,4 +1,4 @@
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/functional.cs
 
 public class CPiston : CFunctional<IMyPistonBase>
 {
@@ -15,9 +15,9 @@ public class CPiston : CFunctional<IMyPistonBase>
   public float currentLength()
   {
     float l = 0;
-    foreach (IMyPistonBase piston in m_blocks.blocks())
+    foreach (IMyPistonBase b in m_blocks.blocks())
     {
-      l += piston.CurrentPosition;
+      l += b.CurrentPosition;
     }
     return l/m_blocks.count()/m_stackSize;
   }
@@ -29,29 +29,29 @@ public class CPiston : CFunctional<IMyPistonBase>
     // realLength = realLength < 0f ? 0f : realLength;
     float realLength = length / m_stackSize;
     float realVelocity = velocity / m_stackSize;
-    foreach (IMyPistonBase piston in m_blocks.blocks())
+    foreach (IMyPistonBase b in m_blocks.blocks())
     {
-      switch (piston.Status)
+      switch (b.Status)
       {
         case PistonStatus.Stopped:
         case PistonStatus.Extended:
         case PistonStatus.Extending:
         case PistonStatus.Retracted:
         {
-          if (piston.CurrentPosition > realLength)
+          if (b.CurrentPosition > realLength)
           {
-            piston.Velocity = realVelocity;
-            piston.MinLimit = realLength;
-            piston.MaxLimit = 10f;
-            piston.Retract();
+            b.Velocity = realVelocity;
+            b.MinLimit = realLength;
+            b.MaxLimit = 10f;
+            b.Retract();
           }
         }
         break;
       }
-      result = result && (piston.Status == PistonStatus.Retracted ||
+      result = result && (b.Status == PistonStatus.Retracted ||
                         (
-                          piston.Status == PistonStatus.Retracting &&
-                          checkLength(piston.CurrentPosition, realLength)
+                          b.Status == PistonStatus.Retracting &&
+                          checkLength(b.CurrentPosition, realLength)
                         ));
     }
     return result;
@@ -63,29 +63,29 @@ public class CPiston : CFunctional<IMyPistonBase>
     // float realLength = (length - pistonHeadLength * m_stackSize) / m_stackSize;
     float realLength = length / m_stackSize;
     float realVelocity = velocity / m_stackSize;
-    foreach (IMyPistonBase piston in m_blocks.blocks())
+    foreach (IMyPistonBase b in m_blocks.blocks())
     {
-      switch (piston.Status)
+      switch (b.Status)
       {
         case PistonStatus.Stopped:
         case PistonStatus.Retracted:
         case PistonStatus.Retracting:
         case PistonStatus.Extended:
         {
-          if (piston.CurrentPosition < realLength)
+          if (b.CurrentPosition < realLength)
           {
-            piston.Velocity = realVelocity;
-            piston.MinLimit = 0f;
-            piston.MaxLimit = realLength;
-            piston.Extend();
+            b.Velocity = realVelocity;
+            b.MinLimit = 0f;
+            b.MaxLimit = realLength;
+            b.Extend();
           }
         }
         break;
       }
-      result = result && (piston.Status == PistonStatus.Extended ||
+      result = result && (b.Status == PistonStatus.Extended ||
                          (
-                           piston.Status == PistonStatus.Extending &&
-                           checkLength(piston.CurrentPosition, realLength)
+                           b.Status == PistonStatus.Extending &&
+                           checkLength(b.CurrentPosition, realLength)
                          ));
     }
     return result;

@@ -1,7 +1,7 @@
 // #include classes/main.cs
 // #include classes/blockstatus_display.cs
-// #include classes/blocks.cs
-// #include classes/blocks_typed.cs
+// #include classes/blocks/base/blocks.cs
+// #include classes/blocks/base/blocks_typed.cs
 
 CBlockStatusDisplay lcd;
 public CBlocks<IMyShipDrill> drills;
@@ -25,13 +25,7 @@ public string program()
 {
   Runtime.UpdateFrequency = UpdateFrequency.Update100;
   lcd = new CBlockStatusDisplay();
-  lcd.addDisplay("[Бур] Дисплей Статус 5", 0, 0);
-  lcd.addDisplay("[Бур] Дисплей Статус 4", 1, 0);
-  lcd.addDisplay("[Бур] Дисплей Статус 0", 2, 0);
-  lcd.addDisplay("[Бур] Дисплей Статус 1", 3, 0);
-  lcd.addDisplay("[Бур] Дисплей Статус 2", 4, 0);
-  lcd.addDisplay("[Бур] Дисплей Статус 3", 5, 0);
-  lcd.addDisplay("[Бур] Дисплей Статус 6", 6, 0);
+  lcd.addDisplays("Статус");
   initGroups();
   return "Отображение статуса";
 }

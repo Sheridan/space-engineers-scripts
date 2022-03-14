@@ -16,30 +16,33 @@ public class FRecipe
   {
     switch (itemString)
     {
-      case "MyObjectBuilder_CubeBlock/LargeBlockArmorBlock"         : return LargeBlockArmorBlock       (amount);
+      case "MyObjectBuilder_CubeBlock/LargeBlockArmorBlock"         : return LargeArmorBlock            (amount);
       case "MyObjectBuilder_InteriorLight/SmallLight"               : return SmallLight                 (amount);
       case "MyObjectBuilder_ConveyorConnector/ConveyorTube"         : return ConveyorTube               (amount);
       case "MyObjectBuilder_MergeBlock/LargeShipMergeBlock"         : return LargeShipMergeBlock        (amount);
       case "MyObjectBuilder_ShipConnector/Connector"                : return Connector                  (amount);
-      case "MyObjectBuilder_Conveyor/LargeBlockConveyor"            : return LargeBlockConveyor         (amount);
+      case "MyObjectBuilder_Conveyor/LargeBlockConveyor"            : return LargeConveyor              (amount);
       case "MyObjectBuilder_CubeBlock/ArmorCorner"                  : return ArmorCorner                (amount);
       case "MyObjectBuilder_CubeBlock/ArmorInvCorner"               : return ArmorInvCorner             (amount);
       case "MyObjectBuilder_CubeBlock/ArmorSide"                    : return ArmorSide                  (amount);
       case "MyObjectBuilder_CubeBlock/ArmorCenter"                  : return ArmorCenter                (amount);
-      case "MyObjectBuilder_CargoContainer/LargeBlockLargeContainer": return LargeBlockLargeContainer   (amount);
-      case "MyObjectBuilder_CargoContainer/LargeBlockSmallContainer": return LargeBlockSmallContainer   (amount);
-      case "MyObjectBuilder_RadioAntenna/LargeBlockRadioAntenna"    : return LargeBlockRadioAntenna     (amount);
-      case "MyObjectBuilder_BatteryBlock/LargeBlockBatteryBlock"    : return LargeBlockBatteryBlock     (amount);
-      case "MyObjectBuilder_WindTurbine/LargeBlockWindTurbine"      : return LargeBlockWindTurbine      (amount);
-      case "MyObjectBuilder_Gyro/LargeBlockGyro"                    : return LargeBlockGyro             (amount);
+      case "MyObjectBuilder_CargoContainer/LargeBlockLargeContainer": return LargeLargeContainer        (amount);
+      case "MyObjectBuilder_CargoContainer/LargeBlockSmallContainer": return LargeSmallContainer        (amount);
+      case "MyObjectBuilder_RadioAntenna/LargeBlockRadioAntenna"    : return LargeRadioAntenna          (amount);
+      case "MyObjectBuilder_BatteryBlock/LargeBlockBatteryBlock"    : return LargeBattery               (amount);
+      case "MyObjectBuilder_WindTurbine/LargeBlockWindTurbine"      : return LargeWindTurbine           (amount);
+      case "MyObjectBuilder_Gyro/LargeBlockGyro"                    : return LargeGyro                  (amount);
       case "MyObjectBuilder_CubeBlock/Window3x3Flat"                : return Window3x3Flat              (amount);
       case "MyObjectBuilder_Wheel/Wheel5x5"                         : return Wheel5x5                   (amount);
       case "MyObjectBuilder_MotorSuspension/Suspension5x5"          : return Suspension5x5              (amount);
       case "MyObjectBuilder_ExtendedPistonBase/LargePistonBase"     : return LargePistonBase            (amount);
-      case "MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner"   : return LargeBlockArmorRoundCorner (amount);
+      case "MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner"   : return LargeArmorRoundCorner      (amount);
       case "MyObjectBuilder_MedicalRoom/LargeMedicalRoom"           : return MedicalRoom                (amount);
       case "MyObjectBuilder_SolarPanel/LargeBlockSolarPanel"        : return SolarPanel                 (amount);
       case "MyObjectBuilder_Thrust/LargeBlockLargeAtmosphericThrust": return AtmosphericThrust          (amount);
+      case "MyObjectBuilder_ShipWelder/LargeShipWelder"             : return LargeWelder                     (amount);
+      case "MyObjectBuilder_ShipGrinder/LargeShipGrinder"           : return LargeGrinder                    (amount);
+      case "MyObjectBuilder_Drill/LargeBlockDrill"                  : return LargeDrill                      (amount);
     }
     throw new System.ArgumentException("Не знаю такой строки", itemString);
   }
@@ -78,7 +81,7 @@ public class FRecipe
     recipe.addItem(FComponentItem.Girder(40 * amount));
     return recipe;
   }
-  static public CRecipe LargeBlockGyro(int amount = 1)
+  static public CRecipe LargeGyro(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_Gyro/LargeBlockGyro");
     recipe.addItem(FComponentItem.Computer(5 * amount));
@@ -89,7 +92,7 @@ public class FRecipe
     recipe.addItem(FComponentItem.SteelPlate(600 * amount));
     return recipe;
   }
-  static public CRecipe LargeBlockWindTurbine(int amount = 1)
+  static public CRecipe LargeWindTurbine(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_WindTurbine/LargeBlockWindTurbine");
     recipe.addItem(FComponentItem.Computer(2 * amount));
@@ -99,7 +102,7 @@ public class FRecipe
     recipe.addItem(FComponentItem.InteriorPlate(40 * amount));
     return recipe;
   }
-  static public CRecipe LargeBlockBatteryBlock(int amount = 1)
+  static public CRecipe LargeBattery(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_BatteryBlock/LargeBlockBatteryBlock");
     recipe.addItem(FComponentItem.Computer(25 * amount));
@@ -108,7 +111,7 @@ public class FRecipe
     recipe.addItem(FComponentItem.SteelPlate(80 * amount));
     return recipe;
   }
-  static public CRecipe LargeBlockRadioAntenna(int amount = 1)
+  static public CRecipe LargeRadioAntenna(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_RadioAntenna/LargeBlockRadioAntenna");
     recipe.addItem(FComponentItem.RadioCommunication(40 * amount));
@@ -119,7 +122,7 @@ public class FRecipe
     recipe.addItem(FComponentItem.SteelPlate(80 * amount));
     return recipe;
   }
-  static public CRecipe LargeBlockLargeContainer(int amount = 1)
+  static public CRecipe LargeLargeContainer(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_CargoContainer/LargeBlockLargeContainer");
     recipe.addItem(FComponentItem.Computer(8 * amount));
@@ -131,7 +134,7 @@ public class FRecipe
     recipe.addItem(FComponentItem.InteriorPlate(360 * amount));
     return recipe;
   }
-  static public CRecipe LargeBlockSmallContainer(int amount = 1)
+  static public CRecipe LargeSmallContainer(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_CargoContainer/LargeBlockSmallContainer");
     recipe.addItem(FComponentItem.Computer(2 * amount));
@@ -167,13 +170,13 @@ public class FRecipe
     recipe.addItem(FComponentItem.SteelPlate(140 * amount));
     return recipe;
   }
-  static public CRecipe LargeBlockArmorBlock(int amount = 1)
+  static public CRecipe LargeArmorBlock(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/LargeBlockArmorBlock");
     recipe.addItem(FComponentItem.SteelPlate(25 * amount));
     return recipe;
   }
-  static public CRecipe LargeBlockArmorRoundCorner(int amount = 1)
+  static public CRecipe LargeArmorRoundCorner(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner");
     recipe.addItem(FComponentItem.SteelPlate(13 * amount));
@@ -214,7 +217,7 @@ public class FRecipe
     recipe.addItem(FComponentItem.SteelPlate(150 * amount));
     return recipe;
   }
-  static public CRecipe LargeBlockConveyor(int amount = 1)
+  static public CRecipe LargeConveyor(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_Conveyor/LargeBlockConveyor");
     recipe.addItem(FComponentItem.Motor(6 * amount));
@@ -255,6 +258,37 @@ public class FRecipe
     recipe.addItem(FComponentItem.LargeTube(50 * amount));
     recipe.addItem(FComponentItem.Construction(60 * amount));
     recipe.addItem(FComponentItem.SteelPlate(230 * amount));
+    return recipe;
+  }
+
+  static public CRecipe LargeWelder(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_ShipWelder/LargeShipWelder");
+    recipe.addItem(FComponentItem.Computer(2 * amount));
+    recipe.addItem(FComponentItem.Motor(2 * amount));
+    recipe.addItem(FComponentItem.LargeTube(1 * amount));
+    recipe.addItem(FComponentItem.Construction(30 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(20 * amount));
+    return recipe;
+  }
+  static public CRecipe LargeGrinder(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_ShipGrinder/LargeShipGrinder");
+    recipe.addItem(FComponentItem.Computer(2 * amount));
+    recipe.addItem(FComponentItem.Motor(4 * amount));
+    recipe.addItem(FComponentItem.LargeTube(1 * amount));
+    recipe.addItem(FComponentItem.Construction(30 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(20 * amount));
+    return recipe;
+  }
+  static public CRecipe LargeDrill(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Drill/LargeBlockDrill");
+    recipe.addItem(FComponentItem.Computer(5 * amount));
+    recipe.addItem(FComponentItem.Motor(5 * amount));
+    recipe.addItem(FComponentItem.LargeTube(12 * amount));
+    recipe.addItem(FComponentItem.Construction(40 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(300 * amount));
     return recipe;
   }
 }

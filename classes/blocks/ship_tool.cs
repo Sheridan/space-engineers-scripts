@@ -1,4 +1,4 @@
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/functional.cs
 
 public class CShipTool : CFunctional<IMyShipToolBase>
 {
@@ -6,18 +6,18 @@ public class CShipTool : CFunctional<IMyShipToolBase>
 
   public bool on(bool target = true)
   {
-    return enable(target) && checkActive(target);
+    return enable(target) && activated(target);
   }
 
   public bool off() { return on(false); }
-  public bool active() { return checkActive(true); }
+  public bool active() { return activated(true); }
 
-  private bool checkActive(bool target)
+  private bool activated(bool target)
   {
     bool result = true;
-    foreach (IMyShipToolBase tool in m_blocks.blocks())
+    foreach (IMyShipToolBase b in m_blocks.blocks())
     {
-      result = result && tool.IsActivated == target;
+      result = result && b.IsActivated == target;
     }
     return result;
   }

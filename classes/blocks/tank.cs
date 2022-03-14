@@ -1,4 +1,4 @@
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/functional.cs
 
 public class CTank : CFunctional<IMyGasTank>
 {
@@ -7,10 +7,10 @@ public class CTank : CFunctional<IMyGasTank>
   public bool enableStockpile(bool enabled = true)
   {
     bool result = true;
-    foreach (IMyGasTank tank in m_blocks.blocks())
+    foreach (IMyGasTank b in m_blocks.blocks())
     {
-      if(tank.Stockpile != enabled) { tank.Stockpile = enabled; }
-      result = result && tank.Stockpile == enabled;
+      if(b.Stockpile != enabled) { b.Stockpile = enabled; }
+      result = result && b.Stockpile == enabled;
     }
     return result;
   }

@@ -1,8 +1,8 @@
 // #include classes/main.cs
 // #include classes/blockstatus_display.cs
-// #include classes/blocks_typed.cs
-// #include classes/blocks.cs
-// #include classes/blocks_group.cs
+// #include classes/blocks/base/blocks_typed.cs
+// #include classes/blocks/base/blocks.cs
+// #include classes/blocks/base/blocks_named.cs
 
 CBlockStatusDisplay lcd;
 
@@ -14,11 +14,11 @@ public CBlocks<IMyShipConnector> connectors;
 public CBlocks<IMyRefinery> refineryes;
 public CBlocks<IMyAssembler> assemblers;
 public CBlocks<IMyGasGenerator> gasGenerators;
-public CBlockGroup<IMyCargoContainer> storageOre;
-public CBlockGroup<IMyCargoContainer> storageIce;
-public CBlockGroup<IMyCargoContainer> storageIngots;
-public CBlockGroup<IMyCargoContainer> storageComponents;
-public CBlocks<IMyOxygenTank> o2tanks;
+public CBlocksNamed<IMyCargoContainer> storageOre;
+public CBlocksNamed<IMyCargoContainer> storageIce;
+public CBlocksNamed<IMyCargoContainer> storageIngots;
+public CBlocksNamed<IMyCargoContainer> storageComponents;
+public CBlocksNamed<IMyGasTank> o2tanks;
 public CBlocksTyped<IMyGasTank> h2tanks;
 // public CBlockGroup<IMyPistonBase> weldersMergersPistons;
 // public CBlockGroup<IMyShipMergeBlock> supportMergers;
@@ -33,23 +33,23 @@ public CBlocksTyped<IMyGasTank> h2tanks;
 
 public void initGroups()
 {
-  h2Engines = new CBlocksTyped<IMyPowerProducer>("HydrogenEngine");
+  h2Engines    = new CBlocksTyped<IMyPowerProducer>("HydrogenEngine");
   windTurbines = new CBlocksTyped<IMyPowerProducer>("WindTurbine");
-  solarPanels = new CBlocks<IMySolarPanel>();
-  battaryes = new CBlocks<IMyBatteryBlock>();
+  solarPanels  = new CBlocks<IMySolarPanel>();
+  battaryes    = new CBlocks<IMyBatteryBlock>();
 
-  connectors = new CBlocks<IMyShipConnector>();
-  refineryes = new CBlocks<IMyRefinery>();
-  assemblers = new CBlocks<IMyAssembler>();
+  connectors    = new CBlocks<IMyShipConnector>();
+  refineryes    = new CBlocks<IMyRefinery>();
+  assemblers    = new CBlocks<IMyAssembler>();
   gasGenerators = new CBlocks<IMyGasGenerator>();
 
-  storageOre = new CBlockGroup<IMyCargoContainer>("[Земля] Руда", "Руда");
-  storageIngots = new CBlockGroup<IMyCargoContainer>("[Земля] Слитки", "Слитки");
-  storageIce = new CBlockGroup<IMyCargoContainer>("[Земля] Лёд", "Лёд");
-  storageComponents = new CBlockGroup<IMyCargoContainer>("[Земля] Компоненты", "Компоненты");
+  storageOre        = new CBlocksNamed<IMyCargoContainer>("К Руда");
+  storageIngots     = new CBlocksNamed<IMyCargoContainer>("К Слитки");
+  storageIce        = new CBlocksNamed<IMyCargoContainer>("К Лёд");
+  storageComponents = new CBlocksNamed<IMyCargoContainer>("К Компоненты");
 
-  o2tanks = new CBlocks<IMyOxygenTank>("O2");
-  h2tanks = new CBlocksTyped<IMyGasTank>("HydrogenTank", "H2");
+  o2tanks = new CBlocksNamed<IMyGasTank>("O2");
+  h2tanks = new CBlocksTyped<IMyGasTank>("HydrogenTank");
   // weldersMergers = new CBlockGroup<IMyShipMergeBlock>("[Крот] Соединители нижних коннекторов", "НС");
   // weldersMergersPistons = new CBlockGroup<IMyPistonBase>("[Крот] Поршни нижних коннекторов", "Поршни НС");
   // supportMergers = new CBlockGroup<IMyShipMergeBlock>("[Крот] Соединители верхних коннекторов", "ВС");
@@ -69,8 +69,7 @@ public string program()
 {
   Runtime.UpdateFrequency = UpdateFrequency.Update100;
   lcd = new CBlockStatusDisplay();
-  lcd.addDisplay("[Земля] Дисплей Статус 0", 0, 0);
-  lcd.addDisplay("[Земля] Дисплей Статус 1", 1, 0);
+  lcd.addDisplays("Статус");
   debug("Done displays");
   initGroups();
   return "Отображение статуса базы";
@@ -93,7 +92,7 @@ public void main(string argument, UpdateType updateSource)
   lcd.showStatus<IMyCargoContainer>(storageIce, i++);
   lcd.showStatus<IMyCargoContainer>(storageIngots, i++);
   lcd.showStatus<IMyCargoContainer>(storageComponents, i++);
-  lcd.showStatus<IMyOxygenTank>(o2tanks, i++);
+  lcd.showStatus<IMyGasTank>(o2tanks, i++);
   lcd.showStatus<IMyGasTank>(h2tanks, i++);
   // lcd.showStatus<IMyShipMergeBlock>(supportMergers, 2);
   // lcd.showStatus<IMyPistonBase>(supportMergersPistons, 3);

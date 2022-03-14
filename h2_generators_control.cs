@@ -1,7 +1,7 @@
 // #include classes/main.cs
-// #include classes/blocks.cs
-// #include classes/blocks_typed.cs
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/blocks.cs
+// #include classes/blocks/base/blocks_typed.cs
+// #include classes/blocks/base/functional.cs
 
 // public CBlocksTyped<IMyGasTank> h2tanks;
 // public CBlocksTyped<IMyPowerProducer> h2Engines;

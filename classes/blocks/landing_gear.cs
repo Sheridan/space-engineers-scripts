@@ -1,4 +1,4 @@
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/functional.cs
 
 public class CLandingGear : CFunctional<IMyLandingGear>
 {
@@ -6,14 +6,23 @@ public class CLandingGear : CFunctional<IMyLandingGear>
 
   public bool lockGear(bool enabled = true)
   {
-    bool result = true;
-    foreach (IMyLandingGear lg in m_blocks.blocks())
+    foreach (IMyLandingGear b in m_blocks.blocks())
     {
-      if (enabled) { lg.Lock(); } else { lg.Unlock(); }
-      result = result && lg.IsLocked;
+      if (enabled) { b.Lock(); } else { b.Unlock(); }
     }
-    return result;
+    return checkLocked(enabled);
   }
   public bool unlockGear() { return lockGear(false); }
 
+  public bool locked() { return checkLocked(); }
+
+  private bool checkLocked(bool target = true)
+  {
+    bool result = true;
+    foreach (IMyLandingGear b in m_blocks.blocks())
+    {
+      result = result && b.IsLocked;
+    }
+    return result == target;
+  }
 }

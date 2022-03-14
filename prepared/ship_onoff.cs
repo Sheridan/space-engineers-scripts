@@ -1,17 +1,17 @@
-static string structureName;
+static string sN;
 static string scriptName;
 static Program _;
 static float blockSize;
 static CBO prbOptions;
 public void applyDefaultMeDisplayTexsts() {
 Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
-Me.GetSurface(1).WriteText(structureName); }
+Me.GetSurface(1).WriteText(sN); }
 public void echoMe(string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
 public void echoMeBig(string text) { echoMe(text, 0); }
 public void echoMeSmall(string text) { echoMe(text, 1); }
 public void sMe(string i_scriptName) {
 scriptName = i_scriptName;
-Me.CustomName = $"[{structureName}] ПрБ {scriptName}";
+Me.CustomName = $"[{sN}] ПрБ {scriptName}";
 sMeSurface(0, 2f);
 sMeSurface(1, 5f);
 applyDefaultMeDisplayTexsts(); }
@@ -25,7 +25,7 @@ surface.FontSize = fontSize;
 surface.Alignment = TextAlignment.CENTER; }
 public static void debug(string text) { _.Echo(text); }
 public void init() {
-structureName = Me.CubeGrid.CustomName;
+sN = Me.CubeGrid.CustomName;
 blockSize = Me.CubeGrid.GridSize;
 prbOptions = new CBO(Me);
 sMe(program());
@@ -74,85 +74,24 @@ IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
 public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CB(string name = "", string purpose = "", bool loadOnlySameGrid = true) : base(purpose) {
-refresh(name, loadOnlySameGrid); }
-public void refresh(string name = "", bool loadOnlySameGrid = true) {
-clear();
-if(loadOnlySameGrid) { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => x.IsSameConstructAs(_.Me)); }
-else { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks) ; }
-if(name != string.Empty) {
-for(int i = count() - 1; i >= 0; i--) {
-if(!m_blocks[i].CustomName.Contains(name)) { removeBlockAt(i); } } } } }
+public CB(bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { load(); } }
 public class CBB<T> where T : class, IMyTerminalBlock {
-public CBB(string purpose = "") {
-m_blocks = new List<T>();
-m_purpose = purpose; }
-public void s(string name,
-bool visibleInTerminal = false,
-bool visibleInInventory = false,
-bool visibleInToolBar = false) {
-Dictionary<string, int> counetrs = new Dictionary<string, int>();
-string zeros = new string('0', count().ToString().Length);
-foreach(T block in m_blocks) {
-string blockPurpose = "";
-CBO o = new CBO(block);
-if(iA<IMyShipConnector>()) {
-IMyShipConnector blk = block as IMyShipConnector;
-blk.PullStrength = 1f;
-blk.CollectAll = o.g("connector", "collectAll", false);
-blk.ThrowOut = o.g("connector", "throwOut", false); }
-else if(iA<IMyInteriorLight>()) {
-IMyInteriorLight blk = block as IMyInteriorLight;
-blk.Radius = 10f;
-blk.Intensity = 10f;
-blk.Falloff = 3f;
-blk.Color = o.g("lamp", "color", Color.White); }
-else if(iA<IMyConveyorSorter>()) {
-IMyConveyorSorter blk = block as IMyConveyorSorter;
-blk.DrainAll = o.g("sorter", "drainAll", false); }
-else if(iA<IMyLargeTurretBase>()) {
-IMyLargeTurretBase blk = block as IMyLargeTurretBase;
-blk.EnableIdleRotation = true;
-blk.Elevation = 0f;
-blk.Azimuth = 0f; }
-else if(iA<IMyAssembler>()) {
-blockPurpose = "Master";
-if(o.g("assembler", "is_slave", false)) {
-IMyAssembler blk = block as IMyAssembler;
-blk.CooperativeMode = true;
-blockPurpose = "Slave"; } }
-string realPurpose = $"{getPurpose(o).Trim()} {blockPurpose}";
-if(!counetrs.ContainsKey(realPurpose)) { counetrs.Add(realPurpose, 0); }
-string sZeros = count() > 1 ? counetrs[realPurpose].ToString(zeros).Trim() : "";
-block.CustomName = TrimAllSpaces($"[{structureName}] {name} {realPurpose} {sZeros}");
-counetrs[realPurpose]++;
-sBlocksVisibility(block,
-o.g("generic", "visibleInTerminal", visibleInTerminal),
-o.g("generic", "visibleInInventory", visibleInInventory),
-o.g("generic", "visibleInToolBar", visibleInToolBar)); } }
-private string getPurpose(CBO o) {
-return o.g("generic", "purpose", m_purpose); }
-private void sBlocksVisibility(T block,
-bool vTerminal,
-bool vInventory,
-bool vToolBar) {
-IMySlimBlock sBlock = block.CubeGrid.GetCubeBlock(block.Position);
-block.ShowInTerminal = vTerminal && sBlock.IsFullIntegrity && sBlock.BuildIntegrity < 1f;
-block.ShowInToolbarConfig = vToolBar;
-if(block.HasInventory) { block.ShowInInventory = vInventory; } }
+public CBB(bool loadOnlySameGrid = true) { m_blocks = new List<T>(); m_loadOnlySameGrid = loadOnlySameGrid; }
 public bool empty() { return count() == 0; }
 public int count() { return m_blocks.Count; }
-public void removeBlock(T blk) { m_blocks.Remove(blk); }
+public List<T> blocks() { return m_blocks; }
+protected void clear() { m_blocks.Clear(); }
+public void removeBlock(T b) { m_blocks.Remove(b); }
 public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
 public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
+public CBO o(T b) { return new CBO(b); }
 public bool iA<U>() where U : class, IMyTerminalBlock {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
-public List<T> blocks() { return m_blocks; }
-public string purpose() { return m_purpose; }
-protected void clear() { m_blocks.Clear(); }
+protected virtual void load() { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => checkBlock(x)); }
+protected virtual bool checkBlock(T b) { return m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true; }
 protected List<T> m_blocks;
-private string m_purpose; }
+protected bool m_loadOnlySameGrid; }
 public static string TrimAllSpaces(string value) {
 var newString = new StringBuilder();
 bool pIW = false;
@@ -165,17 +104,23 @@ else {
 pIW = false; }
 newString.Append(value[i]); }
 return newString.ToString(); }
+public class CBNamed<T> : CBB<T> where T : class, IMyTerminalBlock {
+public CBNamed(string name, bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { m_name = name; load(); }
+protected override bool checkBlock(T b) {
+return (m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
+public string name() { return m_name; }
+private string m_name; }
 public class CF<T> : CT<T> where T : class, IMyTerminalBlock {
 public CF(CBB<T> blocks) : base(blocks) {}
 public bool enable(bool target = true) {
-foreach(IMyFunctionalBlock block in m_blocks.blocks()) {
-if(block.Enabled != target) { block.Enabled = target; } }
+foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+if(b.Enabled != target) { b.Enabled = target; } }
 return enabled() == target; }
 public bool disable() { return enable(false); }
 public bool enabled() {
 bool r = true;
-foreach(IMyFunctionalBlock block in m_blocks.blocks()) {
-r = r && block.Enabled; }
+foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+r = r && b.Enabled; }
 return r; } }
 public class CT<T> where T : class, IMyTerminalBlock {
 public CT(CBB<T> blocks) { m_blocks = blocks; }
@@ -191,13 +136,13 @@ List<ITerminalAction> actions = new List<ITerminalAction>();
 m_blocks.blocks()[0].GetActions(actions);
 foreach(var action in actions) {
 lcd.echo($"id: {action.Id}, name: {action.Name}"); } }
-void showInTerminal(bool show = true) { foreach(T block in m_blocks.blocks()) { if(block.ShowInTerminal != show) { block.ShowInTerminal = show; }}}
+void showInTerminal(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
 void hideInTerminal() { showInTerminal(false); }
-void showInToolbarConfig(bool show = true) { foreach(T block in m_blocks.blocks()) { if(block.ShowInToolbarConfig != show) { block.ShowInToolbarConfig = show; }}}
+void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
 void hideInToolbarConfig() { showInToolbarConfig(false); }
-void showInInventory(bool show = true) { foreach(T block in m_blocks.blocks()) { if(block.ShowInInventory != show) { block.ShowInInventory = show; }}}
+void showInInventory(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
 void hideInInventory() { showInInventory(false); }
-void showOnHUD(bool show = true) { foreach(T block in m_blocks.blocks()) { if(block.ShowOnHUD != show) { block.ShowOnHUD = show; }}}
+void showOnHUD(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
 void hideOnHUD() { showOnHUD(false); }
 public bool empty() { return m_blocks.empty(); }
 public int count() { return m_blocks.count(); }
@@ -205,46 +150,37 @@ protected CBB<T> m_blocks; }
 public class CTS {
 public CTS() {
 m_text = new List<string>();
-m_s = new List<List<IMyTextSurface>>(); }
+m_s = new CXYCollection<IMyTextSurface>(); }
 public void setSurface(IMyTextSurface surface, float fontSize, int maxLines, int maxColumns, float padding = 0) {
 s(fontSize, maxLines, maxColumns, padding);
 addSurface(surface, 0, 0); }
 public void addSurface(IMyTextSurface surface, int x, int y) {
-if(csX() <= x) { m_s.Add(new List<IMyTextSurface>()); }
-if(csY(x) <= y) { m_s[x].Add(surface); }
-else { m_s[x][y] = surface; }
-s(); }
-public void s(float fontSize, int maxLines, int maxColumns, float padding) {
+m_s.set(x, y, s(surface)); }
+protected void s(float fontSize, int maxLines, int maxColumns, float padding) {
 m_fontSize = fontSize;
 m_maxLines = maxLines;
 m_maxColumns = maxColumns;
-m_padding = padding;
-s(); }
-private void s() {
-foreach(List<IMyTextSurface> sfList in m_s) {
-foreach(IMyTextSurface surface in sfList) {
+m_padding = padding; }
+private IMyTextSurface s(IMyTextSurface surface) {
 surface.ContentType = ContentType.TEXT_AND_IMAGE;
 surface.Font = "Monospace";
 surface.FontColor = new Color(255, 255, 255);
 surface.BackgroundColor = new Color(0, 0, 0);
 surface.FontSize = m_fontSize;
 surface.Alignment = TextAlignment.LEFT;
-surface.TextPadding = m_padding; } }
-clear(); }
+surface.TextPadding = m_padding;
+return surface; }
 public void clear() {
-foreach(List<IMyTextSurface> sfList in m_s) {
-foreach(IMyTextSurface surface in sfList) {
-surface.WriteText("", false); } } }
-private bool surfaceExists(int x, int y) {
-return y < csY(x); }
+clearSurfaces();
+m_text.Clear(); }
+private void clearSurfaces() {
+foreach(IMyTextSurface surface in m_s) { surface.WriteText("", false); } }
 private bool unknownTypeEcho(string text) {
-if(m_maxLines == 0 && surfaceExists(0, 0)) { m_s[0][0].WriteText(text + '\n', true); return true; }
+if(m_maxLines == 0 && m_s.exists(0, 0)) { m_s.get(0, 0).WriteText(text + '\n', true); return true; }
 return false; }
-private int csX() { return m_s.Count; }
-private int csY(int x) { return x < csX() ? m_s[x].Count : 0; }
 public void echo(string text) {
 if(!unknownTypeEcho(text)) {
-if(m_text.Count > m_maxLines * csY(0)) { m_text.RemoveAt(0); }
+if(m_text.Count > m_maxLines * m_s.countY()) { m_text.RemoveAt(0); }
 m_text.Add(text); }
 echoText(); }
 public void echo_last(string text) {
@@ -267,27 +203,53 @@ if(m_text.Count <= lineNum) { break; }
 string line = m_text[lineNum];
 int substringLength = line.Length > maxColumn ? m_maxColumns : line.Length - minColumn;
 if(substringLength > 0) {
-m_s[x][y].WriteText(line.Substring(minColumn, substringLength) + '\n', true); }
+m_s.get(x, y).WriteText(line.Substring(minColumn, substringLength) + '\n', true); }
 else {
-m_s[x][y].WriteText("\n", true); } } }
+m_s.get(x, y).WriteText("\n", true); } } }
 private void echoText() {
-clear();
-for(int x = 0; x < csX(); x++) {
-for(int y = 0; y < csY(x); y++) {
+clearSurfaces();
+for(int x = 0; x < m_s.countX(); x++) {
+for(int y = 0; y < m_s.countY(); y++) {
 updateSurface(x, y); } } }
 private int m_maxLines;
 private int m_maxColumns;
 private float m_fontSize;
 private float m_padding;
 private List<string> m_text;
-private List<List<IMyTextSurface>> m_s; }
+CXYCollection<IMyTextSurface> m_s; }
+public class CXYCollection<T> : IEnumerable {
+public CXYCollection() {
+m_data = new Dictionary<int, Dictionary<int, T>>(); }
+public T get(int x, int y) {
+if(exists(x, y)) {
+return m_data[x][y]; }
+return default(T); }
+public void set(int x, int y, T data) {
+debug($"set {x}:{y}");
+if(!m_data.ContainsKey(x)) { m_data[x] = new Dictionary<int, T>(); }
+m_data[x][y] = data; }
+public bool exists(int x, int y) {
+return m_data.ContainsKey(x) && m_data[x].ContainsKey(y); }
+public int count() {
+int r = 0;
+foreach(KeyValuePair<int, Dictionary<int, T>> i in m_data) {
+r += i.Value.Count; }
+return r; }
+public int countX() { return m_data.Count; }
+public int countY() { return empty() ? 0 : m_data[0].Count; }
+public bool empty() { return countX() == 0; }
+public IEnumerator GetEnumerator() {
+foreach(KeyValuePair<int, Dictionary<int, T>> i in m_data) {
+foreach(KeyValuePair<int, T> j in i.Value) {
+yield return j.Value; } } }
+private Dictionary<int, Dictionary<int, T>> m_data; }
 public class CBt : CF<IMyBatteryBlock> {
 public CBt(CBB<IMyBatteryBlock> blocks) : base(blocks) { }
 public bool setChargeMode(ChargeMode mode) {
 bool r = true;
-foreach(IMyBatteryBlock battery in m_blocks.blocks()) {
-if(battery.ChargeMode != mode) { battery.ChargeMode = mode; }
-r = r && battery.ChargeMode == mode; }
+foreach(IMyBatteryBlock b in m_blocks.blocks()) {
+if(b.ChargeMode != mode) { b.ChargeMode = mode; }
+r = r && b.ChargeMode == mode; }
 return r; }
 public bool recharge() { return setChargeMode(ChargeMode.Recharge); }
 public bool discharge() { return setChargeMode(ChargeMode.Discharge); }
@@ -295,43 +257,47 @@ public bool autocharge() { return setChargeMode(ChargeMode.Auto); } }
 public class CC : CF<IMyShipConnector> {
 public CC(CBB<IMyShipConnector> blocks) : base(blocks) { }
 public bool connect(bool target = true) {
-foreach(IMyShipConnector connector in m_blocks.blocks()) {
-if(target) { connector.Connect(); }
-else { connector.Disconnect(); } }
+foreach(IMyShipConnector b in m_blocks.blocks()) {
+if(target) { b.Connect(); }
+else { b.Disconnect(); } }
 return checkConnected(target); }
 public bool disconnect() { return connect(false); }
 public bool connected() { return checkConnected(true); }
 private bool checkConnected(bool target) {
 bool r = true;
-foreach(IMyShipConnector connector in m_blocks.blocks()) {
+foreach(IMyShipConnector b in m_blocks.blocks()) {
 r = r &&
 (
-target ? connector.Status == MyShipConnectorStatus.Connected
-: connector.Status == MyShipConnectorStatus.Unconnected || connector.Status == MyShipConnectorStatus.Connectable
+target ? b.Status == MyShipConnectorStatus.Connected
+: b.Status == MyShipConnectorStatus.Unconnected || b.Status == MyShipConnectorStatus.Connectable
 ); }
 return r; }
 public bool connectable() {
 bool r = true;
-foreach(IMyShipConnector connector in m_blocks.blocks()) {
-r = r && connector.Status == MyShipConnectorStatus.Connectable; }
+foreach(IMyShipConnector b in m_blocks.blocks()) {
+r = r && b.Status == MyShipConnectorStatus.Connectable; }
 return r; } }
 public class CLG : CF<IMyLandingGear> {
 public CLG(CBB<IMyLandingGear> blocks) : base(blocks) { }
 public bool lockGear(bool enabled = true) {
+foreach(IMyLandingGear b in m_blocks.blocks()) {
+if(enabled) { b.Lock(); }
+else { b.Unlock(); } }
+return checkLocked(enabled); }
+public bool unlockGear() { return lockGear(false); }
+public bool locked() { return checkLocked(); }
+private bool checkLocked(bool target = true) {
 bool r = true;
-foreach(IMyLandingGear lg in m_blocks.blocks()) {
-if(enabled) { lg.Lock(); }
-else { lg.Unlock(); }
-r = r && lg.IsLocked; }
-return r; }
-public bool unlockGear() { return lockGear(false); } }
+foreach(IMyLandingGear b in m_blocks.blocks()) {
+r = r && b.IsLocked; }
+return r == target; } }
 public class CTank : CF<IMyGasTank> {
 public CTank(CBB<IMyGasTank> blocks) : base(blocks) { }
 public bool enableStockpile(bool enabled = true) {
 bool r = true;
-foreach(IMyGasTank tank in m_blocks.blocks()) {
-if(tank.Stockpile != enabled) { tank.Stockpile = enabled; }
-r = r && tank.Stockpile == enabled; }
+foreach(IMyGasTank b in m_blocks.blocks()) {
+if(b.Stockpile != enabled) { b.Stockpile = enabled; }
+r = r && b.Stockpile == enabled; }
 return r; }
 public bool disableStockpile() { return enableStockpile(false); } }
 public CF<IMyGyro> gyroscopes;
@@ -344,24 +310,26 @@ public CC connectors;
 public CLG landGears;
 public CTank tanks;
 IMyProgrammableBlock pbAutoHorizont;
-bool connected;
+IMyProgrammableBlock pbShipTools;
 public string program() {
-pbAutoHorizont = _.GridTerminalSystem.GetBlockWithName($"[{structureName}] ПрБ Атоматический горизонт") as IMyProgrammableBlock;
+pbAutoHorizont = _.GridTerminalSystem.GetBlockWithName($"[{sN}] ПрБ Атоматический горизонт") as IMyProgrammableBlock;
+pbShipTools = _.GridTerminalSystem.GetBlockWithName($"[{sN}] ПрБ Управление инструментом") as IMyProgrammableBlock;
 gyroscopes = new CF<IMyGyro>(new CB<IMyGyro>());
 thrusters = new CF<IMyThrust>(new CB<IMyThrust>());
 battaryes = new CBt(new CB<IMyBatteryBlock>());
-connectors = new CC(new CB<IMyShipConnector>("Главный"));
+connectors = new CC(new CBNamed<IMyShipConnector>("Главный"));
 landGears = new CLG(new CB<IMyLandingGear>());
 lamps = new CF<IMyLightingBlock>(new CB<IMyLightingBlock>());
 antennas = new CF<IMyRadioAntenna>(new CB<IMyRadioAntenna>());
 oreDetectors = new CF<IMyOreDetector>(new CB<IMyOreDetector>());
 tanks = new CTank(new CB<IMyGasTank>());
-connected = true;
+debug($"{connected()}:{connectors.count()}:{landGears.count()}");
 return "Управление стыковкой корабля"; }
 public void main(string argument, UpdateType updateSource) {
 if(argument == "start") {
-if(connected) { turnOff(); }
-else { turnOn(); } } }
+if(connected()) { turnOn(); }
+else { turnOff(); } } }
+public bool connected() { return connectors.connected(); }
 public void turnOn() {
 debug("On");
 battaryes.autocharge();
@@ -370,21 +338,22 @@ thrusters.enable();
 gyroscopes.enable();
 antennas.enable();
 oreDetectors.enable();
-if(pbAutoHorizont != null) { pbAutoHorizont.TryRun("start"); }
+if(pbAutoHorizont != null) { pbAutoHorizont.TryRun("init_restart"); }
 lamps.enable();
 connectors.disconnect();
 landGears.unlockGear();
-connected = true; }
+if(pbShipTools != null) { pbShipTools.TryRun("stop"); } }
 public void turnOff() {
 debug("Off");
-if(connectors.connect()) {
+if(connectors.connectable()) {
+connectors.connect();
 landGears.lockGear();
 lamps.disable();
 if(pbAutoHorizont != null) { pbAutoHorizont.TryRun("stop"); }
+if(pbShipTools != null) { pbShipTools .TryRun("stop"); }
 gyroscopes.disable();
 thrusters.disable();
 oreDetectors.disable();
 antennas.disable();
 tanks.enableStockpile();
-battaryes.recharge();
-connected = false; } }
+battaryes.recharge(); } }

@@ -1,4 +1,4 @@
-// #include classes/blocks/functional.cs
+// #include classes/blocks/base/functional.cs
 
 public class CBattery : CFunctional<IMyBatteryBlock>
 {
@@ -7,10 +7,10 @@ public class CBattery : CFunctional<IMyBatteryBlock>
   public bool setChargeMode(ChargeMode mode)
   {
     bool result = true;
-    foreach (IMyBatteryBlock battery in m_blocks.blocks())
+    foreach (IMyBatteryBlock b in m_blocks.blocks())
     {
-      if(battery.ChargeMode != mode) { battery.ChargeMode = mode; }
-      result = result && battery.ChargeMode == mode;
+      if(b.ChargeMode != mode) { b.ChargeMode = mode; }
+      result = result && b.ChargeMode == mode;
     }
     return result;
   }
