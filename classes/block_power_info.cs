@@ -49,13 +49,13 @@ public class CBlockPowerInfo
 
   public float currentProduce()
   {
-    if(canProduce()) { return (m_block as IMyPowerProducer).CurrentOutput*1000000; }
+    if(canProduce()) { return (m_block as IMyPowerProducer).CurrentOutput*1000000f; }
     return 0f;
   }
 
   public float maxProduce()
   {
-    if (canProduce()) { return (m_block as IMyPowerProducer).MaxOutput*1000000; }
+    if (canProduce()) { return (m_block as IMyPowerProducer).MaxOutput*1000000f; }
     return 0f;
   }
 
@@ -69,7 +69,7 @@ public class CBlockPowerInfo
       //   CBlockUpgrades upgrades = new CBlockUpgrades(m_block as IMyUpgradableBlock);
       //   upgrades.calcPowerUse(result);
       // }
-      return result * 1000000;
+      return result * 1000000f;
     }
     return 0f;
   }
@@ -84,7 +84,7 @@ public class CBlockPowerInfo
         CBlockUpgrades upgrades = new CBlockUpgrades(m_block as IMyUpgradableBlock);
         upgrades.calcPowerUse(result);
       }
-      return result * 1000000;
+      return result * 1000000f;
     }
     return 0f;
   }

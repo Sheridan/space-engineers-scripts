@@ -14,7 +14,7 @@ public class CMerger : CFunctional<IMyShipMergeBlock>
   {
     if(!enabled()) { return false; }
     bool result = true;
-    foreach (IMyShipMergeBlock b in m_blocks.blocks())
+    foreach (IMyShipMergeBlock b in m_blocks)
     {
       result = result && b.IsConnected;
     }

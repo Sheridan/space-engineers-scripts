@@ -7,7 +7,7 @@ public class CBattery : CFunctional<IMyBatteryBlock>
   public bool setChargeMode(ChargeMode mode)
   {
     bool result = true;
-    foreach (IMyBatteryBlock b in m_blocks.blocks())
+    foreach (IMyBatteryBlock b in m_blocks)
     {
       if(b.ChargeMode != mode) { b.ChargeMode = mode; }
       result = result && b.ChargeMode == mode;

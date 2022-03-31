@@ -9,7 +9,7 @@ public class CContainer : CTerminal<IMyCargoContainer>
   {
     CComponentItem result = new CComponentItem(itemType);
     MyItemType miType = result.asMyItemType();
-    foreach (IMyCargoContainer b in m_blocks.blocks())
+    foreach (IMyCargoContainer b in m_blocks)
     {
       result.appendAmount(b.GetInventory().GetItemAmount(miType).ToIntSafe());
     }
@@ -19,7 +19,7 @@ public class CContainer : CTerminal<IMyCargoContainer>
   public Dictionary<MyItemType, float> items()
   {
     Dictionary<MyItemType, float> result = new Dictionary<MyItemType, float>();
-    foreach (IMyCargoContainer b in m_blocks.blocks())
+    foreach (IMyCargoContainer b in m_blocks)
     {
       List<MyInventoryItem> ci = new List<MyInventoryItem>();
       b.GetInventory().GetItems(ci, x => true);
@@ -35,7 +35,7 @@ public class CContainer : CTerminal<IMyCargoContainer>
   public float maxVolume()
   {
     float result = 0;
-    foreach (IMyCargoContainer b in m_blocks.blocks())
+    foreach (IMyCargoContainer b in m_blocks)
     {
       result += (float)b.GetInventory().MaxVolume;
     }
@@ -45,7 +45,7 @@ public class CContainer : CTerminal<IMyCargoContainer>
   public float volume()
   {
     float result = 0;
-    foreach (IMyCargoContainer b in m_blocks.blocks())
+    foreach (IMyCargoContainer b in m_blocks)
     {
       result += (float)b.GetInventory().CurrentVolume;
     }
@@ -55,7 +55,7 @@ public class CContainer : CTerminal<IMyCargoContainer>
   public float mass()
   {
     float result = 0;
-    foreach (IMyCargoContainer b in m_blocks.blocks())
+    foreach (IMyCargoContainer b in m_blocks)
     {
       result += (float)b.GetInventory().CurrentMass;
     }

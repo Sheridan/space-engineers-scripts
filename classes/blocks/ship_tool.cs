@@ -15,7 +15,7 @@ public class CShipTool : CFunctional<IMyShipToolBase>
   private bool activated(bool target)
   {
     bool result = true;
-    foreach (IMyShipToolBase b in m_blocks.blocks())
+    foreach (IMyShipToolBase b in m_blocks)
     {
       result = result && b.IsActivated == target;
     }

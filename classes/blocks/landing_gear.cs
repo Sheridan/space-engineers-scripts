@@ -6,7 +6,7 @@ public class CLandingGear : CFunctional<IMyLandingGear>
 
   public bool lockGear(bool enabled = true)
   {
-    foreach (IMyLandingGear b in m_blocks.blocks())
+    foreach (IMyLandingGear b in m_blocks)
     {
       if (enabled) { b.Lock(); } else { b.Unlock(); }
     }
@@ -19,7 +19,7 @@ public class CLandingGear : CFunctional<IMyLandingGear>
   private bool checkLocked(bool target = true)
   {
     bool result = true;
-    foreach (IMyLandingGear b in m_blocks.blocks())
+    foreach (IMyLandingGear b in m_blocks)
     {
       result = result && b.IsLocked;
     }

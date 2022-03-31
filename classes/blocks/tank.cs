@@ -7,7 +7,7 @@ public class CTank : CFunctional<IMyGasTank>
   public bool enableStockpile(bool enabled = true)
   {
     bool result = true;
-    foreach (IMyGasTank b in m_blocks.blocks())
+    foreach (IMyGasTank b in m_blocks)
     {
       if(b.Stockpile != enabled) { b.Stockpile = enabled; }
       result = result && b.Stockpile == enabled;

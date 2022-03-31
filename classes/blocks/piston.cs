@@ -15,7 +15,7 @@ public class CPiston : CFunctional<IMyPistonBase>
   public float currentLength()
   {
     float l = 0;
-    foreach (IMyPistonBase b in m_blocks.blocks())
+    foreach (IMyPistonBase b in m_blocks)
     {
       l += b.CurrentPosition;
     }
@@ -29,7 +29,7 @@ public class CPiston : CFunctional<IMyPistonBase>
     // realLength = realLength < 0f ? 0f : realLength;
     float realLength = length / m_stackSize;
     float realVelocity = velocity / m_stackSize;
-    foreach (IMyPistonBase b in m_blocks.blocks())
+    foreach (IMyPistonBase b in m_blocks)
     {
       switch (b.Status)
       {
@@ -63,7 +63,7 @@ public class CPiston : CFunctional<IMyPistonBase>
     // float realLength = (length - pistonHeadLength * m_stackSize) / m_stackSize;
     float realLength = length / m_stackSize;
     float realVelocity = velocity / m_stackSize;
-    foreach (IMyPistonBase b in m_blocks.blocks())
+    foreach (IMyPistonBase b in m_blocks)
     {
       switch (b.Status)
       {

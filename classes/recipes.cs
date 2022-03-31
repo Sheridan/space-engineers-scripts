@@ -40,12 +40,22 @@ public class FRecipe
       case "MyObjectBuilder_MedicalRoom/LargeMedicalRoom"           : return MedicalRoom                (amount);
       case "MyObjectBuilder_SolarPanel/LargeBlockSolarPanel"        : return SolarPanel                 (amount);
       case "MyObjectBuilder_Thrust/LargeBlockLargeAtmosphericThrust": return AtmosphericThrust          (amount);
-      case "MyObjectBuilder_ShipWelder/LargeShipWelder"             : return LargeWelder                     (amount);
-      case "MyObjectBuilder_ShipGrinder/LargeShipGrinder"           : return LargeGrinder                    (amount);
-      case "MyObjectBuilder_Drill/LargeBlockDrill"                  : return LargeDrill                      (amount);
+      case "MyObjectBuilder_ShipWelder/LargeShipWelder"             : return LargeWelder                (amount);
+      case "MyObjectBuilder_ShipGrinder/LargeShipGrinder"           : return LargeGrinder               (amount);
+      case "MyObjectBuilder_Drill/LargeBlockDrill"                  : return LargeDrill                 (amount);
+      case "MyObjectBuilder_Thrust/LargeBlockLargeThrust"           : return IonThrust                  (amount);
+      case "MyObjectBuilder_Thrust/LargeBlockLargeHydrogenThrust"   : return HydrogenThrust             (amount);
+      case "MyObjectBuilder_OreDetector/LargeOreDetector"           : return LargeOreDetector           (amount);
     }
     throw new System.ArgumentException("Не знаю такой строки", itemString);
   }
+  static public CRecipe SingleItem(CComponentItem item, int amount = 1)
+  {
+    CRecipe recipe = new CRecipe(item.asBlueprintDefinition());
+    recipe.addItem(item);
+    return recipe;
+  }
+
   static public CRecipe LargePistonBase(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_ExtendedPistonBase/LargePistonBase");
@@ -260,7 +270,24 @@ public class FRecipe
     recipe.addItem(FComponentItem.SteelPlate(230 * amount));
     return recipe;
   }
-
+  static public CRecipe IonThrust(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Thrust/LargeBlockLargeThrust");
+    recipe.addItem(FComponentItem.Thrust(960 * amount));
+    recipe.addItem(FComponentItem.LargeTube(40 * amount));
+    recipe.addItem(FComponentItem.Construction(100 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(150 * amount));
+    return recipe;
+  }
+  static public CRecipe HydrogenThrust(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Thrust/LargeBlockLargeHydrogenThrust");
+    recipe.addItem(FComponentItem.LargeTube(40 * amount));
+    recipe.addItem(FComponentItem.MetalGrid(250 * amount));
+    recipe.addItem(FComponentItem.Construction(180 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(150 * amount));
+    return recipe;
+  }
   static public CRecipe LargeWelder(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_ShipWelder/LargeShipWelder");
@@ -291,12 +318,23 @@ public class FRecipe
     recipe.addItem(FComponentItem.SteelPlate(300 * amount));
     return recipe;
   }
+  static public CRecipe LargeOreDetector(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_OreDetector/LargeOreDetector");
+    recipe.addItem(FComponentItem.Detector(20 * amount));
+    recipe.addItem(FComponentItem.Computer(25 * amount));
+    recipe.addItem(FComponentItem.Motor(5 * amount));
+    recipe.addItem(FComponentItem.Construction(40 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(50 * amount));
+    return recipe;
+  }
 }
 
 public class CRecipes
 {
   public CRecipes() { m_recipes = new List<CRecipe>(); }
   public void add(CRecipe recipe) { m_recipes.Add(recipe); }
+  public void add(CComponentItem item) { m_recipes.Add(FRecipe.SingleItem(item)); }
   public List<CRecipe> recipes() { return m_recipes; }
   public List<CComponentItem> sourceItems()
   {

@@ -6,9 +6,9 @@ static CBO prbOptions;
 public void applyDefaultMeDisplayTexsts() {
 Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
 Me.GetSurface(1).WriteText(sN); }
-public void echoMe(string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
-public void echoMeBig(string text) { echoMe(text, 0); }
-public void echoMeSmall(string text) { echoMe(text, 1); }
+public static void echoMe(string text, int surface) { _.Me.GetSurface(surface).WriteText(text, false); }
+public static void echoMeBig(string text) { echoMe(text, 0); }
+public static void echoMeSmall(string text) { echoMe(text, 1); }
 public void sMe(string i_scriptName) {
 scriptName = i_scriptName;
 Me.CustomName = $"[{sN}] ПрБ {scriptName}";
@@ -73,181 +73,48 @@ return defaultValue; }
 IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
-public class CBSD : CD {
-public CBSD() : base() {}
-private string gFBS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.iA<IMyFunctionalBlock>()) { return ""; }
-string r = "[Функциональные] ";
-int pOn = 0;
-int fOn = 0;
-int wOn = 0;
-float powerConsumed = 0f;
-float powerMaxConsumed = 0f;
-foreach(IMyFunctionalBlock block in group) {
-if(block.Enabled) {
-pOn++;
-CBPI pInfo = new CBPI(block);
-powerConsumed += pInfo.currentConsume();
-powerMaxConsumed += pInfo.maxConsume(); }
-if(block.IsFunctional) { fOn++; }
-if(block.IsWorking) { wOn++; } }
-r += $"PFW: {pOn}:{fOn}:{wOn} ";
-if(powerMaxConsumed > 0) {
-r += $"Consuming (now,max): {tHR(powerConsumed, EHRU.Power)}:{tHR(powerMaxConsumed, EHRU.Power)} "; }
-return r; }
-private string gRS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.iA<IMyMotorStator>()) { return ""; }
-string r = "[Роторы] ";
-List<string> rpm = new List<string>();
-List<string> angle = new List<string>();
-foreach(IMyMotorStator block in group) {
-float angleGrad = block.Angle * 180 / (float)Math.PI;
-rpm.Add($"{block.TargetVelocityRPM:f2}");
-angle.Add($"{angleGrad:f2}°"); }
-r += $"Angle: {string.Join(":", angle)} "
-+ $"RPM: {string.Join(":", rpm)} ";
-return r; }
-private string gGTS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.iA<IMyGasTank>()) { return ""; }
-string r = "[Баки] ";
-float capacity = 0;
-double filledRatio = 0;
-foreach(IMyGasTank block in group) {
-capacity += block.Capacity;
-filledRatio += block.FilledRatio; }
-r += $"Capacity: {tHR(capacity, EHRU.Volume)} "
-+ $"Filled: {filledRatio/group.count()*100:f2}% ";
-return r; }
-private string gBS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.iA<IMyBatteryBlock>()) { return ""; }
-string r = "[Батареи] ";
-float currentStored = 0;
-float maxStored = 0;
-foreach(IMyBatteryBlock block in group) {
-currentStored += block.CurrentStoredPower;
-maxStored += block.MaxStoredPower; }
-currentStored *= 1000000;
-maxStored *= 1000000;
-r += $"Capacity: {tHR(currentStored, EHRU.PowerCapacity)}:{tHR(maxStored, EHRU.PowerCapacity)} ";
-return r; }
-private string gIS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-long volume = 0;
-long volumeMax = 0;
-int mass = 0;
-int items = 0;
-int inventoryes = 0;
-foreach(IMyTerminalBlock block in group) {
-if(block.HasInventory) {
-IMyInventory inventory;
-inventoryes = block.InventoryCount;
-for(int i = 0; i < inventoryes; i++) {
-inventory = block.GetInventory(i);
-volume += inventory.CurrentVolume.ToIntSafe();
-volumeMax += inventory.MaxVolume.ToIntSafe();
-mass += inventory.CurrentMass.ToIntSafe();
-items += inventory.ItemCount; } } }
-if(inventoryes > 0) {
-mass *= 1000;
-return $"[Контейнеры] VMI: ({tHR(volume, EHRU.Volume)}:{tHR(volumeMax, EHRU.Volume)}):{tHR(mass, EHRU.Mass)}:{tHR(items)} from {inventoryes} "; }
-return ""; }
-private string gPsS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.iA<IMyPistonBase>()) { return ""; }
-string r = "[Поршни] ";
-List<string> positions = new List<string>();
-int statusStopped = 0;
-int statusExtending = 0;
-int statusExtended = 0;
-int statusRetracting = 0;
-int statusRetracted = 0;
-foreach(IMyPistonBase block in group) {
-switch(block.Status) {
-case PistonStatus.Stopped: statusStopped++; break;
-case PistonStatus.Extending: statusExtending++; break;
-case PistonStatus.Extended: statusExtended++; break;
-case PistonStatus.Retracting: statusRetracting++; break;
-case PistonStatus.Retracted: statusRetracted++; break; }
-positions.Add($"{block.CurrentPosition:f2}"); }
-r += $"SeErR: {statusStopped}:{statusExtending}:{statusExtended}:{statusRetracting}:{statusRetracted} "
-+ $"Pos: {string.Join(":", positions)} ";
-return r; }
-private string gGS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.iA<IMyGyro>()) { return ""; }
-string r = "[Гироскопы] ";
-float yaw = 0;
-float pitch = 0;
-float roll = 0;
-foreach(IMyGyro block in group) {
-yaw += Math.Abs(block.Yaw);
-pitch += Math.Abs(block.Pitch);
-roll += Math.Abs(block.Roll); }
-r += $"YPR: {yaw/group.count():f4}:{pitch/group.count():f4}:{roll/group.count():f4} ";
-return r; }
-private string gMS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.iA<IMyShipMergeBlock>()) { return ""; }
-string r = "[Соединители] ";
-int connected = 0;
-foreach(IMyShipMergeBlock block in group) {
-if(block.IsConnected) { connected++; } }
-r += $"Connected: {connected} ";
-return r; }
-private string gCS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.iA<IMyShipConnector>()) { return ""; }
-string r = "[Коннекторы] ";
-int statusUnconnected = 0;
-int statusConnectable = 0;
-int statusConnected = 0;
-foreach(IMyShipConnector block in group) {
-switch(block.Status) {
-case MyShipConnectorStatus.Unconnected: statusUnconnected++; break;
-case MyShipConnectorStatus.Connectable: statusConnectable++; break;
-case MyShipConnectorStatus.Connected: statusConnected++; break; } }
-r += $"UcC: {statusUnconnected}:{statusConnectable}:{statusConnected} ";
-return r; }
-private string gPS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.iA<IMyProjector>()) { return ""; }
-string r = "[Проекторы] ";
-int projecting = 0;
-List<string> blocksTotal = new List<string>();
-List<string> blocksRemaining = new List<string>();
-List<string> blocksBuildable = new List<string>();
-foreach(IMyProjector block in group) {
-if(block.IsProjecting) { projecting++; }
-blocksTotal.Add($"{block.TotalBlocks}");
-blocksRemaining.Add($"{block.RemainingBlocks}");
-blocksBuildable.Add($"{block.BuildableBlocksCount}"); }
-r += $"Pr: {projecting} "
-+ $"B: {string.Join(":", blocksBuildable)} "
-+ $"R: {string.Join(":", blocksRemaining)} "
-+ $"T: {string.Join(":", blocksTotal)} "
-;
-return r; }
-private string gPPS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
-if(!group.iA<IMyPowerProducer>()) { return ""; }
-string r = "[Генераторы] ";
-float currentOutput = 0f;
-float maxOutput = 0f;
-foreach(IMyPowerProducer block in group) {
-CBPI pInfo = new CBPI(block);
-currentOutput += pInfo.currentProduce();
-maxOutput += pInfo.maxProduce(); }
-r += $"Ген. энергии (now:max): {tHR(currentOutput, EHRU.Power)}:{tHR(maxOutput, EHRU.Power)} ";
-return r; }
-public void sS<T>(CBB<T> group, int position) where T : class, IMyTerminalBlock {
-if(!group.empty()) {
-string r = $"[{group.count()}] "
-+ gPsS<T>(group)
-+ gCS<T>(group)
-+ gMS<T>(group)
-+ gPS<T>(group)
-+ gRS<T>(group)
-+ gGS<T>(group)
-+ gBS<T>(group)
-+ gGTS<T>(group)
-+ gPPS<T>(group)
-+ gIS<T>(group)
-+ gFBS<T>(group)
-;
-echo_at(r, position); } } }
+public class CPowerInfo {
+public CPowerInfo(string lcdNameProducing, string lcdNameConsuming) {
+m_blocks = new CT<IMyTerminalBlock>(new CB<IMyTerminalBlock>());
+m_lcdProducers = new CD();
+m_lcdProducers.aDs(lcdNameProducing);
+m_lcdConsumers = new CD();
+m_lcdConsumers.aDs(lcdNameConsuming); }
+private void updateBlocksInfo() {
+reset();
+foreach(IMyTerminalBlock b in m_blocks) {
+string name = b.DefinitionDisplayNameText;
+CBPI pi = new CBPI(b);
+if(pi.canProduce()) { addPowerBlock(m_producers, name, pi.currentProduce(), pi.maxProduce()); }
+if(pi.canConsume()) { addPowerBlock(m_consumers, name, pi.currentConsume(), pi.maxConsume()); } }
+if(m_producers.Count < m_lastProdCout) { m_lcdProducers.clear(); } m_lastProdCout = m_producers.Count;
+if(m_consumers.Count < m_lastConsCout) { m_lcdConsumers.clear(); } m_lastConsCout = m_consumers.Count; }
+public void update() {
+updateBlocksInfo();
+drawInfo(m_lcdProducers, m_producers, "Генерация");
+drawInfo(m_lcdConsumers, m_consumers, "Потребление"); }
+private void drawInfo(CD to, Dictionary<string, SMinCurrentMax<float>> from, string title) {
+int j = 0;
+to.echo_at(title, j++);
+foreach(KeyValuePair<string, SMinCurrentMax<float>> i in from) {
+to.echo_at($"[{i.Key}:{i.Value.count}] {tHR(i.Value.current, EHRU.Power)} of {tHR(i.Value.max, EHRU.Power)}", j++); } }
+private void addPowerBlock(Dictionary<string, SMinCurrentMax<float>> to, string name, float cr, float mx) {
+if(!to.ContainsKey(name)) { to[name] = new SMinCurrentMax<float>(0f, cr, mx); to[name].count++; }
+else {
+SMinCurrentMax<float> mcm = to[name];
+mcm.current += cr;
+mcm.max += mx;
+mcm.count ++; } }
+private void reset() {
+m_producers = new Dictionary<string, SMinCurrentMax<float>>();
+m_consumers = new Dictionary<string, SMinCurrentMax<float>>(); }
+private CT<IMyTerminalBlock> m_blocks;
+private Dictionary<string, SMinCurrentMax<float>> m_producers;
+private Dictionary<string, SMinCurrentMax<float>> m_consumers;
+private CD m_lcdConsumers;
+private CD m_lcdProducers;
+private int m_lastConsCout;
+private int m_lastProdCout; }
 public class CD : CTS {
 public CD() : base()
 {}
@@ -258,6 +125,7 @@ case "LargeLCDPanelWide" : s(0.602f, 28, 87, 0.35f); break;
 case "LargeLCDPanel" : s(0.602f, 28, 44, 0.35f); break;
 case "TransparentLCDLarge": s(0.602f, 28, 44, 0.35f); break;
 case "TransparentLCDSmall": s(0.602f, 26, 40, 4f); break;
+case "SmallTextPanel" : s(0.602f, 48, 48, 0.35f); break;
 default: s(1f, 1, 1, 1f); break; } }
 public void aDs(string name) {
 CBNamed<IMyTextPanel> displays = new CBNamed<IMyTextPanel>(name);
@@ -380,6 +248,7 @@ public List<T> blocks() { return m_blocks; }
 protected void clear() { m_blocks.Clear(); }
 public void removeBlock(T b) { m_blocks.Remove(b); }
 public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
+public T first() { return m_blocks[0]; }
 public bool iA<U>() where U : class, IMyEntity {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
@@ -403,47 +272,6 @@ else {
 pIW = false; }
 newString.Append(value[i]); }
 return newString.ToString(); }
-class CBU {
-public CBU(IMyUpgradableBlock upBlock) {
-Dictionary<string, float> upgrades = new Dictionary<string, float>();
-upBlock.GetUpgrades(out upgrades);
-Effectiveness = upgrades.ContainsKey("Effectiveness") ? upgrades["Effectiveness" ] : 0;
-Productivity = upgrades.ContainsKey("Productivity") ? upgrades["Productivity" ] : 0;
-PowerEfficiency = upgrades.ContainsKey("PowerEfficiency") ? upgrades["PowerEfficiency"] : 0; }
-public float calcPowerUse(float power) {
-return (power+((power/2)*(Productivity*2)))/(PowerEfficiency > 1 ? (float)Math.Pow(1.2228445f, PowerEfficiency) : 1); }
-private float Effectiveness;
-private float Productivity;
-private float PowerEfficiency; }
-public class CBPI {
-public CBPI(IMyTerminalBlock block) {
-m_block = block;
-m_blockSinkComponent = m_block.Components.Get<MyResourceSinkComponent>(); }
-public bool canProduce() { return m_block is IMyPowerProducer; }
-public bool canConsume() {
-return m_blockSinkComponent != null && m_blockSinkComponent.IsPoweredByType(Electricity); }
-public float currentProduce() {
-if(canProduce()) { return (m_block as IMyPowerProducer).CurrentOutput*1000000; }
-return 0f; }
-public float maxProduce() {
-if(canProduce()) { return (m_block as IMyPowerProducer).MaxOutput*1000000; }
-return 0f; }
-public float currentConsume() {
-if(canConsume()) {
-float r = m_blockSinkComponent.CurrentInputByType(Electricity);
-return r * 1000000; }
-return 0f; }
-public float maxConsume() {
-if(canConsume()) {
-float r = m_blockSinkComponent.MaxRequiredInputByType(Electricity);
-if(m_block is IMyAssembler || m_block is IMyRefinery) {
-CBU upgrades = new CBU(m_block as IMyUpgradableBlock);
-upgrades.calcPowerUse(r); }
-return r * 1000000; }
-return 0f; }
-MyResourceSinkComponent m_blockSinkComponent;
-IMyTerminalBlock m_block;
-private static readonly MyDefinitionId Electricity = MyDefinitionId.Parse("MyObjectBuilder_GasProperties/Electricity"); }
 public enum EHRU {
 None,
 Mass,
@@ -468,39 +296,98 @@ value = value/1000; } }
 if(value < divider) { return $"{value}{suffix}"; }
 int exp = (int)(Math.Log(value) / Math.Log(divider));
 return $"{value / Math.Pow(divider, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; }
+public class CT<T> : CCube<T> where T : class, IMyTerminalBlock {
+public CT(CBB<T> blocks) : base(blocks) {}
+public void listProperties(CTS lcd) {
+if(empty()) { return; }
+List<ITerminalProperty> properties = new List<ITerminalProperty>();
+first().GetProperties(properties);
+foreach(var property in properties) {
+lcd.echo($"id: {property.Id}, type: {property.TypeName}"); } }
+public void listActions(CTS lcd) {
+if(empty()) { return; }
+List<ITerminalAction> actions = new List<ITerminalAction>();
+first().GetActions(actions);
+foreach(var action in actions) {
+lcd.echo($"id: {action.Id}, name: {action.Name}"); } }
+void showInTerminal(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
+void hideInTerminal() { showInTerminal(false); }
+void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
+void hideInToolbarConfig() { showInToolbarConfig(false); }
+void showInInventory(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
+void hideInInventory() { showInInventory(false); }
+void showOnHUD(bool show = true) { foreach(T b in m_blocks) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
+void hideOnHUD() { showOnHUD(false); } }
+public class CCube<T> : CEntity<T> where T : class, IMyCubeBlock {
+public CCube(CBB<T> blocks) : base(blocks) {} }
+public class CEntity<T> where T : class, IMyEntity {
+public CEntity(CBB<T> blocks) { m_blocks = blocks; }
+public bool empty() { return m_blocks.empty(); }
+public int count() { return m_blocks.count(); }
+public T first() { return m_blocks.first(); }
+public IEnumerator GetEnumerator() {
+foreach(T i in m_blocks) {
+yield return i; } }
+public List<IMyInventory> invertoryes() {
+List<IMyInventory> r = new List<IMyInventory>();
+foreach(T i in m_blocks) {
+for(int j = 0; j < i.InventoryCount; j++) {
+r.Add(i.GetInventory(j)); } }
+return r; }
+protected CBB<T> m_blocks; }
 public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
 public CB(bool lSG = true) : base(lSG) { load(); } }
-public class CBT<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CBT(string subTypeName, bool lSG = true) : base(lSG) { m_subTypeName = subTypeName; load(); }
-protected override bool checkBlock(T b) {
-return (m_lSG ? b.IsSameConstructAs(_.Me) : true) && b.BlockDefinition.ToString().Contains(m_subTypeName); }
-public string subTypeName() { return m_subTypeName; }
-private string m_subTypeName; }
-CBSD lcd;
-public CB<IMyShipDrill> drills;
-public CB<IMyShipConnector> connectors;
-public CB<IMyCargoContainer> storage;
-public CB<IMyThrust> thrusters;
-public CB<IMyGyro> gyroscopes;
-public CB<IMyBatteryBlock> battaryes;
-public void initGroups() {
-drills = new CB<IMyShipDrill>();
-connectors = new CB<IMyShipConnector>();
-storage = new CB<IMyCargoContainer>();
-thrusters = new CB<IMyThrust>();
-gyroscopes = new CB<IMyGyro>();
-battaryes = new CB<IMyBatteryBlock>(); }
+class CBU {
+public CBU(IMyUpgradableBlock upBlock) {
+Dictionary<string, float> upgrades = new Dictionary<string, float>();
+upBlock.GetUpgrades(out upgrades);
+Effectiveness = upgrades.ContainsKey("Effectiveness") ? upgrades["Effectiveness" ] : 0;
+Productivity = upgrades.ContainsKey("Productivity") ? upgrades["Productivity" ] : 0;
+PowerEfficiency = upgrades.ContainsKey("PowerEfficiency") ? upgrades["PowerEfficiency"] : 0; }
+public float calcPowerUse(float power) {
+return (power+((power/2)*(Productivity*2)))/(PowerEfficiency > 1 ? (float)Math.Pow(1.2228445f, PowerEfficiency) : 1); }
+private float Effectiveness;
+private float Productivity;
+private float PowerEfficiency; }
+public class CBPI {
+public CBPI(IMyTerminalBlock block) {
+m_block = block;
+m_blockSinkComponent = m_block.Components.Get<MyResourceSinkComponent>(); }
+public bool canProduce() { return m_block is IMyPowerProducer; }
+public bool canConsume() {
+return m_blockSinkComponent != null && m_blockSinkComponent.IsPoweredByType(Electricity); }
+public float currentProduce() {
+if(canProduce()) { return (m_block as IMyPowerProducer).CurrentOutput*1000000f; }
+return 0f; }
+public float maxProduce() {
+if(canProduce()) { return (m_block as IMyPowerProducer).MaxOutput*1000000f; }
+return 0f; }
+public float currentConsume() {
+if(canConsume()) {
+float r = m_blockSinkComponent.CurrentInputByType(Electricity);
+return r * 1000000f; }
+return 0f; }
+public float maxConsume() {
+if(canConsume()) {
+float r = m_blockSinkComponent.MaxRequiredInputByType(Electricity);
+if(m_block is IMyAssembler || m_block is IMyRefinery) {
+CBU upgrades = new CBU(m_block as IMyUpgradableBlock);
+upgrades.calcPowerUse(r); }
+return r * 1000000f; }
+return 0f; }
+MyResourceSinkComponent m_blockSinkComponent;
+IMyTerminalBlock m_block;
+private static readonly MyDefinitionId Electricity = MyDefinitionId.Parse("MyObjectBuilder_GasProperties/Electricity"); }
+public class SMinCurrentMax<T> {
+public SMinCurrentMax(T mn, T cr, T mx) { min = mn; current = cr; max = mx; count = 0; }
+public T min;
+public T current;
+public T max;
+public int count; }
+CPowerInfo pi;
 public string program() {
 Runtime.UpdateFrequency = UpdateFrequency.Update100;
-lcd = new CBSD();
-lcd.aDs("Статус");
-initGroups();
-return "Отображение статуса"; }
+pi = new CPowerInfo("Генерация", "Потребление");
+return "Статус энергосети"; }
 public void main(string argument, UpdateType updateSource) {
-int i = 0;
-lcd.sS<IMyShipDrill>(drills, i++);
-lcd.sS<IMyCargoContainer>(storage, i++);
-lcd.sS<IMyShipConnector>(connectors, i++);
-lcd.sS<IMyThrust>(thrusters, i++);
-lcd.sS<IMyGyro>(gyroscopes, i++);
-lcd.sS<IMyBatteryBlock>(battaryes, i++); }
+pi.update(); }

@@ -74,64 +74,61 @@ IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
 public class CD : CTS {
-public CD() : base() {
-m_initialized = false; }
-private void initSize(IMyTextPanel display) {
-if(!m_initialized) {
+public CD() : base()
+{}
+private void mineDimensions(IMyTextPanel display) {
 debug($"{display.BlockDefinition.SubtypeName}");
 switch(display.BlockDefinition.SubtypeName) {
 case "LargeLCDPanelWide" : s(0.602f, 28, 87, 0.35f); break;
 case "LargeLCDPanel" : s(0.602f, 28, 44, 0.35f); break;
 case "TransparentLCDLarge": s(0.602f, 28, 44, 0.35f); break;
-default: s(1f, 1, 1, 1f); break; } } }
-public void aD(string name, int x, int y) {
-IMyTextPanel display = _.GridTerminalSystem.GetBlockWithName(name) as IMyTextPanel;
-initSize(display);
+case "TransparentLCDSmall": s(0.602f, 26, 40, 4f); break;
+default: s(1f, 1, 1, 1f); break; } }
+public void aDs(string name) {
+CBNamed<IMyTextPanel> displays = new CBNamed<IMyTextPanel>(name);
+if(displays.empty()) { throw new System.ArgumentException("Не найдены дисплеи", name); }
+mineDimensions(displays.blocks()[0]);
+foreach(IMyTextPanel display in displays) {
+CBO o = new CBO(display);
+int x = o.g("display", "x", -1);
+int y = o.g("display", "y", -1);
+if(x<0 || y<0) { throw new System.ArgumentException("Не указаны координаты дисплея", display.CustomName); }
 addSurface(display as IMyTextSurface, x, y); }
-private bool m_initialized; }
+clear(); } }
 public class CTS {
 public CTS() {
 m_text = new List<string>();
-m_s = new List<List<IMyTextSurface>>(); }
+m_s = new CXYCollection<IMyTextSurface>(); }
 public void setSurface(IMyTextSurface surface, float fontSize, int maxLines, int maxColumns, float padding = 0) {
 s(fontSize, maxLines, maxColumns, padding);
 addSurface(surface, 0, 0); }
 public void addSurface(IMyTextSurface surface, int x, int y) {
-if(csX() <= x) { m_s.Add(new List<IMyTextSurface>()); }
-if(csY(x) <= y) { m_s[x].Add(surface); }
-else { m_s[x][y] = surface; }
-s(); }
-public void s(float fontSize, int maxLines, int maxColumns, float padding) {
+m_s.set(x, y, s(surface)); }
+protected void s(float fontSize, int maxLines, int maxColumns, float padding) {
 m_fontSize = fontSize;
 m_maxLines = maxLines;
 m_maxColumns = maxColumns;
-m_padding = padding;
-s(); }
-private void s() {
-foreach(List<IMyTextSurface> sfList in m_s) {
-foreach(IMyTextSurface surface in sfList) {
+m_padding = padding; }
+private IMyTextSurface s(IMyTextSurface surface) {
 surface.ContentType = ContentType.TEXT_AND_IMAGE;
 surface.Font = "Monospace";
 surface.FontColor = new Color(255, 255, 255);
 surface.BackgroundColor = new Color(0, 0, 0);
 surface.FontSize = m_fontSize;
 surface.Alignment = TextAlignment.LEFT;
-surface.TextPadding = m_padding; } }
-clear(); }
+surface.TextPadding = m_padding;
+return surface; }
 public void clear() {
-foreach(List<IMyTextSurface> sfList in m_s) {
-foreach(IMyTextSurface surface in sfList) {
-surface.WriteText("", false); } } }
-private bool surfaceExists(int x, int y) {
-return y < csY(x); }
+clearSurfaces();
+m_text.Clear(); }
+private void clearSurfaces() {
+foreach(IMyTextSurface surface in m_s) { surface.WriteText("", false); } }
 private bool unknownTypeEcho(string text) {
-if(m_maxLines == 0 && surfaceExists(0, 0)) { m_s[0][0].WriteText(text + '\n', true); return true; }
+if(m_maxLines == 0 && m_s.exists(0, 0)) { m_s.get(0, 0).WriteText(text + '\n', true); return true; }
 return false; }
-private int csX() { return m_s.Count; }
-private int csY(int x) { return x < csX() ? m_s[x].Count : 0; }
 public void echo(string text) {
 if(!unknownTypeEcho(text)) {
-if(m_text.Count > m_maxLines * csY(0)) { m_text.RemoveAt(0); }
+if(m_text.Count > m_maxLines * m_s.countY()) { m_text.RemoveAt(0); }
 m_text.Add(text); }
 echoText(); }
 public void echo_last(string text) {
@@ -154,20 +151,83 @@ if(m_text.Count <= lineNum) { break; }
 string line = m_text[lineNum];
 int substringLength = line.Length > maxColumn ? m_maxColumns : line.Length - minColumn;
 if(substringLength > 0) {
-m_s[x][y].WriteText(line.Substring(minColumn, substringLength) + '\n', true); }
+m_s.get(x, y).WriteText(line.Substring(minColumn, substringLength) + '\n', true); }
 else {
-m_s[x][y].WriteText("\n", true); } } }
+m_s.get(x, y).WriteText("\n", true); } } }
 private void echoText() {
-clear();
-for(int x = 0; x < csX(); x++) {
-for(int y = 0; y < csY(x); y++) {
+clearSurfaces();
+for(int x = 0; x < m_s.countX(); x++) {
+for(int y = 0; y < m_s.countY(); y++) {
 updateSurface(x, y); } } }
 private int m_maxLines;
 private int m_maxColumns;
 private float m_fontSize;
 private float m_padding;
 private List<string> m_text;
-private List<List<IMyTextSurface>> m_s; }
+CXYCollection<IMyTextSurface> m_s; }
+public class CXYCollection<T> : IEnumerable {
+public CXYCollection() {
+m_data = new Dictionary<int, Dictionary<int, T>>(); }
+public T get(int x, int y) {
+if(exists(x, y)) {
+return m_data[x][y]; }
+return default(T); }
+public void set(int x, int y, T data) {
+debug($"set {x}:{y}");
+if(!m_data.ContainsKey(x)) { m_data[x] = new Dictionary<int, T>(); }
+m_data[x][y] = data; }
+public bool exists(int x, int y) {
+return m_data.ContainsKey(x) && m_data[x].ContainsKey(y); }
+public int count() {
+int r = 0;
+foreach(KeyValuePair<int, Dictionary<int, T>> i in m_data) {
+r += i.Value.Count; }
+return r; }
+public int countX() { return m_data.Count; }
+public int countY() { return empty() ? 0 : m_data[0].Count; }
+public bool empty() { return countX() == 0; }
+public IEnumerator GetEnumerator() {
+foreach(KeyValuePair<int, Dictionary<int, T>> i in m_data) {
+foreach(KeyValuePair<int, T> j in i.Value) {
+yield return j.Value; } } }
+private Dictionary<int, Dictionary<int, T>> m_data; }
+public class CBNamed<T> : CBB<T> where T : class, IMyTerminalBlock {
+public CBNamed(string name, bool lSG = true) : base(lSG) { m_name = name; load(); }
+protected override bool checkBlock(T b) {
+return (m_lSG ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
+public string name() { return m_name; }
+private string m_name; }
+public class CBB<T> where T : class, IMyEntity {
+public CBB(bool lSG = true) { m_blocks = new List<T>(); m_lSG = lSG; }
+public bool empty() { return count() == 0; }
+public int count() { return m_blocks.Count; }
+public List<T> blocks() { return m_blocks; }
+protected void clear() { m_blocks.Clear(); }
+public void removeBlock(T b) { m_blocks.Remove(b); }
+public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
+public bool iA<U>() where U : class, IMyEntity {
+if(empty()) { return false; }
+return m_blocks[0] is U; }
+public IEnumerator GetEnumerator() {
+foreach(T i in m_blocks) {
+yield return i; } }
+protected virtual void load() { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => checkBlock(x)); }
+protected virtual bool checkBlock(T b) {
+return m_lSG ? _.Me.IsSameConstructAs(b as IMyTerminalBlock) : true; }
+protected List<T> m_blocks;
+protected bool m_lSG; }
+public static string TrimAllSpaces(string value) {
+var newString = new StringBuilder();
+bool pIW = false;
+for(int i = 0; i < value.Length; i++) {
+if(Char.IsWhiteSpace(value[i])) {
+if(pIW) {
+continue; }
+pIW = true; }
+else {
+pIW = false; }
+newString.Append(value[i]); }
+return newString.ToString(); }
 public class CStateMachineState {
 public CStateMachineState(string name, Func<object, bool> method, object data) {
 m_name = name;
@@ -195,7 +255,7 @@ m_waitCount = 0;
 m_currentStateIndex++;
 TimeSpan ts = m_startDT - System.DateTime.Now;
 TimeSpan tts = m_taskStartDT - System.DateTime.Now;
-m_lcd.echo($"[{currentTime()}] [{formatTimeSpan(ts)}] Задача {state(m_currentStateIndex-1).name()} завершена за время {formatTimeSpan(ts)}");
+m_lcd.echo($"[{currentTime()}] [{formatTimeSpan(ts)}] Задача {state(m_currentStateIndex-1).name()} завершена за время {formatTimeSpan(tts)}");
 if(active()) {
 m_lcd.echo($"[{currentTime()}] [{formatTimeSpan(ts)}] Старт задачи '{state(m_currentStateIndex).name()}'"); }
 else {
@@ -234,22 +294,22 @@ public static string formatTimeSpan(TimeSpan ts) {
 return ts.ToString(@"hh\:mm\:ss"); }
 public class CSpeaker : CF<IMySoundBlock> {
 public CSpeaker(CBB<IMySoundBlock> blocks) : base(blocks) { }
-public void play() { foreach(IMySoundBlock b in m_blocks.blocks()) { b.Play(); } }
-public void stop() { foreach(IMySoundBlock b in m_blocks.blocks()) { b.Stop(); } } }
-public class CF<T> : CT<T> where T : class, IMyTerminalBlock {
+public void play() { foreach(IMySoundBlock b in m_blocks) { b.Play(); } }
+public void stop() { foreach(IMySoundBlock b in m_blocks) { b.Stop(); } } }
+public class CF<T> : CT<T> where T : class, IMyFunctionalBlock {
 public CF(CBB<T> blocks) : base(blocks) {}
 public bool enable(bool target = true) {
-foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+foreach(IMyFunctionalBlock b in m_blocks) {
 if(b.Enabled != target) { b.Enabled = target; } }
 return enabled() == target; }
 public bool disable() { return enable(false); }
 public bool enabled() {
 bool r = true;
-foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+foreach(IMyFunctionalBlock b in m_blocks) {
 r = r && b.Enabled; }
 return r; } }
-public class CT<T> where T : class, IMyTerminalBlock {
-public CT(CBB<T> blocks) { m_blocks = blocks; }
+public class CT<T> : CCube<T> where T : class, IMyTerminalBlock {
+public CT(CBB<T> blocks) : base(blocks) {}
 public void listProperties(CTS lcd) {
 if(m_blocks.count() == 0) { return; }
 List<ITerminalProperty> properties = new List<ITerminalProperty>();
@@ -262,53 +322,32 @@ List<ITerminalAction> actions = new List<ITerminalAction>();
 m_blocks.blocks()[0].GetActions(actions);
 foreach(var action in actions) {
 lcd.echo($"id: {action.Id}, name: {action.Name}"); } }
-void showInTerminal(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
+void showInTerminal(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
 void hideInTerminal() { showInTerminal(false); }
-void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
+void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
 void hideInToolbarConfig() { showInToolbarConfig(false); }
-void showInInventory(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
+void showInInventory(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
 void hideInInventory() { showInInventory(false); }
-void showOnHUD(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
-void hideOnHUD() { showOnHUD(false); }
+void showOnHUD(bool show = true) { foreach(T b in m_blocks) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
+void hideOnHUD() { showOnHUD(false); } }
+public class CCube<T> : CEntity<T> where T : class, IMyCubeBlock {
+public CCube(CBB<T> blocks) : base(blocks) {} }
+public class CEntity<T> where T : class, IMyEntity {
+public CEntity(CBB<T> blocks) { m_blocks = blocks; }
 public bool empty() { return m_blocks.empty(); }
 public int count() { return m_blocks.count(); }
+public IEnumerator GetEnumerator() {
+foreach(T i in m_blocks) {
+yield return i; } }
+public List<IMyInventory> invertoryes() {
+List<IMyInventory> r = new List<IMyInventory>();
+foreach(T i in m_blocks) {
+for(int j = 0; j < i.InventoryCount; j++) {
+r.Add(i.GetInventory(j)); } }
+return r; }
 protected CBB<T> m_blocks; }
-public class CBB<T> where T : class, IMyTerminalBlock {
-public CBB(bool loadOnlySameGrid = true) { m_blocks = new List<T>(); m_loadOnlySameGrid = loadOnlySameGrid; }
-public bool empty() { return count() == 0; }
-public int count() { return m_blocks.Count; }
-public List<T> blocks() { return m_blocks; }
-protected void clear() { m_blocks.Clear(); }
-public void removeBlock(T blk) { m_blocks.Remove(blk); }
-public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
-public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
-public bool iA<U>() where U : class, IMyTerminalBlock {
-if(empty()) { return false; }
-return m_blocks[0] is U; }
-protected virtual void load() { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => checkBlock(x)); }
-protected virtual bool checkBlock(T b) { return m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true; }
-protected List<T> m_blocks;
-protected bool m_loadOnlySameGrid; }
-public static string TrimAllSpaces(string value) {
-var newString = new StringBuilder();
-bool pIW = false;
-for(int i = 0; i < value.Length; i++) {
-if(Char.IsWhiteSpace(value[i])) {
-if(pIW) {
-continue; }
-pIW = true; }
-else {
-pIW = false; }
-newString.Append(value[i]); }
-return newString.ToString(); }
-public class CBNamed<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CBNamed(string name, bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { m_name = name; load(); }
-protected override bool checkBlock(T b) {
-return (m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
-public string name() { return m_name; }
-private string m_name; }
 public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CB(bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { load(); } }
+public CB(bool lSG = true) : base(lSG) { load(); } }
 public class CPiston : CF<IMyPistonBase> {
 public CPiston(CBB<IMyPistonBase> blocks, int pistonsInStack = 1) : base(blocks) {
 m_stackSize = pistonsInStack; }
@@ -316,14 +355,14 @@ private bool checkLength(float currentPos, float targetPos, float sensetivity = 
 return currentPos <= targetPos + sensetivity && currentPos >= targetPos - sensetivity; }
 public float currentLength() {
 float l = 0;
-foreach(IMyPistonBase b in m_blocks.blocks()) {
+foreach(IMyPistonBase b in m_blocks) {
 l += b.CurrentPosition; }
 return l/m_blocks.count()/m_stackSize; }
 public bool retract(float length, float velocity) {
 bool r = true;
 float realLength = length / m_stackSize;
 float realVelocity = velocity / m_stackSize;
-foreach(IMyPistonBase b in m_blocks.blocks()) {
+foreach(IMyPistonBase b in m_blocks) {
 switch(b.Status) {
 case PistonStatus.Stopped:
 case PistonStatus.Extended:
@@ -345,7 +384,7 @@ public bool expand(float length, float velocity) {
 bool r = true;
 float realLength = length / m_stackSize;
 float realVelocity = velocity / m_stackSize;
-foreach(IMyPistonBase b in m_blocks.blocks()) {
+foreach(IMyPistonBase b in m_blocks) {
 switch(b.Status) {
 case PistonStatus.Stopped:
 case PistonStatus.Retracted:
@@ -375,13 +414,13 @@ public bool disconnect() { return connect(false); }
 public bool connected() {
 if(!enabled()) { return false; }
 bool r = true;
-foreach(IMyShipMergeBlock b in m_blocks.blocks()) {
+foreach(IMyShipMergeBlock b in m_blocks) {
 r = r && b.IsConnected; }
 return r; } }
 public class CC : CF<IMyShipConnector> {
 public CC(CBB<IMyShipConnector> blocks) : base(blocks) { }
 public bool connect(bool target = true) {
-foreach(IMyShipConnector b in m_blocks.blocks()) {
+foreach(IMyShipConnector b in m_blocks) {
 if(target) { b.Connect(); }
 else { b.Disconnect(); } }
 return checkConnected(target); }
@@ -389,7 +428,7 @@ public bool disconnect() { return connect(false); }
 public bool connected() { return checkConnected(true); }
 private bool checkConnected(bool target) {
 bool r = true;
-foreach(IMyShipConnector b in m_blocks.blocks()) {
+foreach(IMyShipConnector b in m_blocks) {
 r = r &&
 (
 target ? b.Status == MyShipConnectorStatus.Connected
@@ -398,7 +437,7 @@ target ? b.Status == MyShipConnectorStatus.Connected
 return r; }
 public bool connectable() {
 bool r = true;
-foreach(IMyShipConnector b in m_blocks.blocks()) {
+foreach(IMyShipConnector b in m_blocks) {
 r = r && b.Status == MyShipConnectorStatus.Connectable; }
 return r; } }
 public class CShipTool : CF<IMyShipToolBase> {
@@ -409,7 +448,7 @@ public bool off() { return on(false); }
 public bool active() { return activated(true); }
 private bool activated(bool target) {
 bool r = true;
-foreach(IMyShipToolBase b in m_blocks.blocks()) {
+foreach(IMyShipToolBase b in m_blocks) {
 r = r && b.IsActivated == target; }
 return r; } }
 public class CSensor : CF<IMySensorBlock> {
@@ -446,9 +485,7 @@ bottomShipMerger = new CMerger(new CBNamed<IMyShipMergeBlock>("Нижний"));
 frontShipConnector = new CC(new CBNamed<IMyShipConnector>("Фронтальный"));
 bottomShipConnector = new CC(new CBNamed<IMyShipConnector>("Нижний"));
 statusLcd = new CD();
-statusLcd.aD("[Универсал] Дисплей Лог 1", 0, 0);
-statusLcd.aD("[Универсал] Дисплей Лог 0", 1, 0);
-statusLcd.aD("[Универсал] Дисплей Лог 2", 2, 0);
+statusLcd.aDs("Лог");
 connectStates = new CStateMachine(statusLcd);
 connectStates.addState("Слияние структур", merge);
 connectStates.addState("Соединение коннекторов", connect);
@@ -483,6 +520,8 @@ statusLcd.echo("Запрос расстыковки с инструментом"
 if(parkingConnector.connectable()) {
 parkStates.start(true); }
 else { statusLcd.echo($"Парковочный коннектор не в состоянии ожидания ({boolToString(parkingConnector.connectable())})"); } } }
+else if(argument == "on") { if(toolsConnected) { toolsOn(null); } }
+else if(argument == "off") { if(toolsConnected) { toolsOff(null); } }
 else if(argument == "onoff") {
 if(toolsConnected) { if(!toolsActive) { toolsOn(null); } else { toolsOff(null); } } }
 else if(argument == "expand") { if(toolsConnected) { toolExtender.expandRelative(1f, 2f); } }

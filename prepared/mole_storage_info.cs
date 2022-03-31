@@ -6,9 +6,9 @@ static CBO prbOptions;
 public void applyDefaultMeDisplayTexsts() {
 Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
 Me.GetSurface(1).WriteText(sN); }
-public void echoMe(string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
-public void echoMeBig(string text) { echoMe(text, 0); }
-public void echoMeSmall(string text) { echoMe(text, 1); }
+public static void echoMe(string text, int surface) { _.Me.GetSurface(surface).WriteText(text, false); }
+public static void echoMeBig(string text) { echoMe(text, 0); }
+public static void echoMeSmall(string text) { echoMe(text, 1); }
 public void sMe(string i_scriptName) {
 scriptName = i_scriptName;
 Me.CustomName = $"[{sN}] ПрБ {scriptName}";
@@ -75,32 +75,37 @@ private bool m_available;
 private MyIni m_ini; }
 public class StorageInfo {
 public StorageInfo(string storageName, string lcdName) {
+m_lastItemsTypes = 0;
 m_lcd = new CD();
-m_lcd.aD($"[{sN}] Дисплей {lcdName} 0", 0, 0);
+m_lcd.aDs(lcdName);
 m_storage = new CContainer(new CBNamed<IMyCargoContainer>(storageName)); }
 public void update() {
+Dictionary<MyItemType, float> data = m_storage.items();
+if(m_lastItemsTypes > data.Count) { m_lcd.clear(); }
+m_lastItemsTypes = data.Count;
 int idx = 0;
 float maxVolume = m_storage.maxVolume();
 float volume = m_storage.volume();
 m_lcd.echo_at($"Использовано {tHR(volume, EHRU.Volume)} из {tHR(maxVolume, EHRU.Volume)}: {volume/(maxVolume/100):f2}%", idx++);
 m_lcd.echo_at($"Общая масса: {tHR(m_storage.mass(), EHRU.Mass)}", idx++);
-foreach(KeyValuePair<MyItemType, float> i in m_storage.items()) {
+foreach(KeyValuePair<MyItemType, float> i in data) {
 MyItemInfo inf = i.Key.GetItemInfo();
 string cnt = inf.UsesFractions ? tHR(i.Value, EHRU.Mass) : $"{i.Value:f0} шт.";
 m_lcd.echo_at($"{MyDefinitionId.Parse(i.Key.ToString()).SubtypeName}: {cnt}", idx++); } }
 private CD m_lcd;
-private CContainer m_storage; }
+private CContainer m_storage;
+private int m_lastItemsTypes; }
 public class CContainer : CT<IMyCargoContainer> {
 public CContainer(CBB<IMyCargoContainer> blocks) : base(blocks) { }
 public int items(EIT itemType) {
 CCI r = new CCI(itemType);
 MyItemType miType = r.asMyItemType();
-foreach(IMyCargoContainer b in m_blocks.blocks()) {
+foreach(IMyCargoContainer b in m_blocks) {
 r.appendAmount(b.GetInventory().GetItemAmount(miType).ToIntSafe()); }
 return r.a(); }
 public Dictionary<MyItemType, float> items() {
 Dictionary<MyItemType, float> r = new Dictionary<MyItemType, float>();
-foreach(IMyCargoContainer b in m_blocks.blocks()) {
+foreach(IMyCargoContainer b in m_blocks) {
 List<MyInventoryItem> ci = new List<MyInventoryItem>();
 b.GetInventory().GetItems(ci, x => true);
 foreach(MyInventoryItem i in ci) {
@@ -109,116 +114,75 @@ else { r[i.Type] += (float)i.Amount; } } }
 return r; }
 public float maxVolume() {
 float r = 0;
-foreach(IMyCargoContainer b in m_blocks.blocks()) {
+foreach(IMyCargoContainer b in m_blocks) {
 r += (float)b.GetInventory().MaxVolume; }
 return r; }
 public float volume() {
 float r = 0;
-foreach(IMyCargoContainer b in m_blocks.blocks()) {
+foreach(IMyCargoContainer b in m_blocks) {
 r += (float)b.GetInventory().CurrentVolume; }
 return r; }
 public float mass() {
 float r = 0;
-foreach(IMyCargoContainer b in m_blocks.blocks()) {
+foreach(IMyCargoContainer b in m_blocks) {
 r += (float)b.GetInventory().CurrentMass; }
 return r; } }
-public class CT<T> where T : class, IMyTerminalBlock {
-public CT(CBB<T> blocks) { m_blocks = blocks; }
+public class CT<T> : CCube<T> where T : class, IMyTerminalBlock {
+public CT(CBB<T> blocks) : base(blocks) {}
 public void listProperties(CTS lcd) {
-if(m_blocks.count() == 0) { return; }
+if(empty()) { return; }
 List<ITerminalProperty> properties = new List<ITerminalProperty>();
-m_blocks.blocks()[0].GetProperties(properties);
+first().GetProperties(properties);
 foreach(var property in properties) {
 lcd.echo($"id: {property.Id}, type: {property.TypeName}"); } }
 public void listActions(CTS lcd) {
-if(m_blocks.count() == 0) { return; }
+if(empty()) { return; }
 List<ITerminalAction> actions = new List<ITerminalAction>();
-m_blocks.blocks()[0].GetActions(actions);
+first().GetActions(actions);
 foreach(var action in actions) {
 lcd.echo($"id: {action.Id}, name: {action.Name}"); } }
-void showInTerminal(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
+void showInTerminal(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
 void hideInTerminal() { showInTerminal(false); }
-void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
+void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
 void hideInToolbarConfig() { showInToolbarConfig(false); }
-void showInInventory(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
+void showInInventory(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
 void hideInInventory() { showInInventory(false); }
-void showOnHUD(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
-void hideOnHUD() { showOnHUD(false); }
-public bool empty() { return m_blocks.empty(); }
-public int count() { return m_blocks.count(); }
-protected CBB<T> m_blocks; }
-public class CBB<T> where T : class, IMyTerminalBlock {
-public CBB(bool loadOnlySameGrid = true) { m_blocks = new List<T>(); m_loadOnlySameGrid = loadOnlySameGrid; }
-public bool empty() { return count() == 0; }
-public int count() { return m_blocks.Count; }
-public List<T> blocks() { return m_blocks; }
-protected void clear() { m_blocks.Clear(); }
-public void removeBlock(T b) { m_blocks.Remove(b); }
-public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
-public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
-public CBO o(T b) { return new CBO(b); }
-public bool iA<U>() where U : class, IMyTerminalBlock {
-if(empty()) { return false; }
-return m_blocks[0] is U; }
-protected virtual void load() { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => checkBlock(x)); }
-protected virtual bool checkBlock(T b) { return m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true; }
-protected List<T> m_blocks;
-protected bool m_loadOnlySameGrid; }
-public static string TrimAllSpaces(string value) {
-var newString = new StringBuilder();
-bool pIW = false;
-for(int i = 0; i < value.Length; i++) {
-if(Char.IsWhiteSpace(value[i])) {
-if(pIW) {
-continue; }
-pIW = true; }
-else {
-pIW = false; }
-newString.Append(value[i]); }
-return newString.ToString(); }
+void showOnHUD(bool show = true) { foreach(T b in m_blocks) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
+void hideOnHUD() { showOnHUD(false); } }
 public class CTS {
 public CTS() {
 m_text = new List<string>();
-m_s = new List<List<IMyTextSurface>>(); }
+m_s = new CXYCollection<IMyTextSurface>(); }
 public void setSurface(IMyTextSurface surface, float fontSize, int maxLines, int maxColumns, float padding = 0) {
 s(fontSize, maxLines, maxColumns, padding);
 addSurface(surface, 0, 0); }
 public void addSurface(IMyTextSurface surface, int x, int y) {
-if(csX() <= x) { m_s.Add(new List<IMyTextSurface>()); }
-if(csY(x) <= y) { m_s[x].Add(surface); }
-else { m_s[x][y] = surface; }
-s(); }
-public void s(float fontSize, int maxLines, int maxColumns, float padding) {
+m_s.set(x, y, s(surface)); }
+protected void s(float fontSize, int maxLines, int maxColumns, float padding) {
 m_fontSize = fontSize;
 m_maxLines = maxLines;
 m_maxColumns = maxColumns;
-m_padding = padding;
-s(); }
-private void s() {
-foreach(List<IMyTextSurface> sfList in m_s) {
-foreach(IMyTextSurface surface in sfList) {
+m_padding = padding; }
+private IMyTextSurface s(IMyTextSurface surface) {
 surface.ContentType = ContentType.TEXT_AND_IMAGE;
 surface.Font = "Monospace";
 surface.FontColor = new Color(255, 255, 255);
 surface.BackgroundColor = new Color(0, 0, 0);
 surface.FontSize = m_fontSize;
 surface.Alignment = TextAlignment.LEFT;
-surface.TextPadding = m_padding; } }
-clear(); }
+surface.TextPadding = m_padding;
+return surface; }
 public void clear() {
-foreach(List<IMyTextSurface> sfList in m_s) {
-foreach(IMyTextSurface surface in sfList) {
-surface.WriteText("", false); } } }
-private bool surfaceExists(int x, int y) {
-return y < csY(x); }
+clearSurfaces();
+m_text.Clear(); }
+private void clearSurfaces() {
+foreach(IMyTextSurface surface in m_s) { surface.WriteText("", false); } }
 private bool unknownTypeEcho(string text) {
-if(m_maxLines == 0 && surfaceExists(0, 0)) { m_s[0][0].WriteText(text + '\n', true); return true; }
+if(m_maxLines == 0 && m_s.exists(0, 0)) { m_s.get(0, 0).WriteText(text + '\n', true); return true; }
 return false; }
-private int csX() { return m_s.Count; }
-private int csY(int x) { return x < csX() ? m_s[x].Count : 0; }
 public void echo(string text) {
 if(!unknownTypeEcho(text)) {
-if(m_text.Count > m_maxLines * csY(0)) { m_text.RemoveAt(0); }
+if(m_text.Count > m_maxLines * m_s.countY()) { m_text.RemoveAt(0); }
 m_text.Add(text); }
 echoText(); }
 public void echo_last(string text) {
@@ -241,20 +205,95 @@ if(m_text.Count <= lineNum) { break; }
 string line = m_text[lineNum];
 int substringLength = line.Length > maxColumn ? m_maxColumns : line.Length - minColumn;
 if(substringLength > 0) {
-m_s[x][y].WriteText(line.Substring(minColumn, substringLength) + '\n', true); }
+m_s.get(x, y).WriteText(line.Substring(minColumn, substringLength) + '\n', true); }
 else {
-m_s[x][y].WriteText("\n", true); } } }
+m_s.get(x, y).WriteText("\n", true); } } }
 private void echoText() {
-clear();
-for(int x = 0; x < csX(); x++) {
-for(int y = 0; y < csY(x); y++) {
+clearSurfaces();
+for(int x = 0; x < m_s.countX(); x++) {
+for(int y = 0; y < m_s.countY(); y++) {
 updateSurface(x, y); } } }
 private int m_maxLines;
 private int m_maxColumns;
 private float m_fontSize;
 private float m_padding;
 private List<string> m_text;
-private List<List<IMyTextSurface>> m_s; }
+CXYCollection<IMyTextSurface> m_s; }
+public class CXYCollection<T> : IEnumerable {
+public CXYCollection() {
+m_data = new Dictionary<int, Dictionary<int, T>>(); }
+public T get(int x, int y) {
+if(exists(x, y)) {
+return m_data[x][y]; }
+return default(T); }
+public void set(int x, int y, T data) {
+debug($"set {x}:{y}");
+if(!m_data.ContainsKey(x)) { m_data[x] = new Dictionary<int, T>(); }
+m_data[x][y] = data; }
+public bool exists(int x, int y) {
+return m_data.ContainsKey(x) && m_data[x].ContainsKey(y); }
+public int count() {
+int r = 0;
+foreach(KeyValuePair<int, Dictionary<int, T>> i in m_data) {
+r += i.Value.Count; }
+return r; }
+public int countX() { return m_data.Count; }
+public int countY() { return empty() ? 0 : m_data[0].Count; }
+public bool empty() { return countX() == 0; }
+public IEnumerator GetEnumerator() {
+foreach(KeyValuePair<int, Dictionary<int, T>> i in m_data) {
+foreach(KeyValuePair<int, T> j in i.Value) {
+yield return j.Value; } } }
+private Dictionary<int, Dictionary<int, T>> m_data; }
+public class CCube<T> : CEntity<T> where T : class, IMyCubeBlock {
+public CCube(CBB<T> blocks) : base(blocks) {} }
+public class CEntity<T> where T : class, IMyEntity {
+public CEntity(CBB<T> blocks) { m_blocks = blocks; }
+public bool empty() { return m_blocks.empty(); }
+public int count() { return m_blocks.count(); }
+public T first() { return m_blocks.first(); }
+public IEnumerator GetEnumerator() {
+foreach(T i in m_blocks) {
+yield return i; } }
+public List<IMyInventory> invertoryes() {
+List<IMyInventory> r = new List<IMyInventory>();
+foreach(T i in m_blocks) {
+for(int j = 0; j < i.InventoryCount; j++) {
+r.Add(i.GetInventory(j)); } }
+return r; }
+protected CBB<T> m_blocks; }
+public class CBB<T> where T : class, IMyEntity {
+public CBB(bool lSG = true) { m_blocks = new List<T>(); m_lSG = lSG; }
+public bool empty() { return count() == 0; }
+public int count() { return m_blocks.Count; }
+public List<T> blocks() { return m_blocks; }
+protected void clear() { m_blocks.Clear(); }
+public void removeBlock(T b) { m_blocks.Remove(b); }
+public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
+public T first() { return m_blocks[0]; }
+public bool iA<U>() where U : class, IMyEntity {
+if(empty()) { return false; }
+return m_blocks[0] is U; }
+public IEnumerator GetEnumerator() {
+foreach(T i in m_blocks) {
+yield return i; } }
+protected virtual void load() { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => checkBlock(x)); }
+protected virtual bool checkBlock(T b) {
+return m_lSG ? _.Me.IsSameConstructAs(b as IMyTerminalBlock) : true; }
+protected List<T> m_blocks;
+protected bool m_lSG; }
+public static string TrimAllSpaces(string value) {
+var newString = new StringBuilder();
+bool pIW = false;
+for(int i = 0; i < value.Length; i++) {
+if(Char.IsWhiteSpace(value[i])) {
+if(pIW) {
+continue; }
+pIW = true; }
+else {
+pIW = false; }
+newString.Append(value[i]); }
+return newString.ToString(); }
 public enum EIT {
 BulletproofGlass,
 Canvas,
@@ -392,27 +431,34 @@ static public CCI Superconductor(int a = 0) { return new CCI(EIT.Superconductor,
 static public CCI Thrust(int a = 0) { return new CCI(EIT.Thrust, a); }
 static public CCI ZoneChip(int a = 0) { return new CCI(EIT.ZoneChip, a); } }
 public class CBNamed<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CBNamed(string name, bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { m_name = name; load(); }
+public CBNamed(string name, bool lSG = true) : base(lSG) { m_name = name; load(); }
 protected override bool checkBlock(T b) {
-return (m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
+return (m_lSG ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
 public string name() { return m_name; }
 private string m_name; }
 public class CD : CTS {
-public CD() : base() {
-m_initialized = false; }
-private void initSize(IMyTextPanel display) {
-if(!m_initialized) {
+public CD() : base()
+{}
+private void mineDimensions(IMyTextPanel display) {
 debug($"{display.BlockDefinition.SubtypeName}");
 switch(display.BlockDefinition.SubtypeName) {
 case "LargeLCDPanelWide" : s(0.602f, 28, 87, 0.35f); break;
 case "LargeLCDPanel" : s(0.602f, 28, 44, 0.35f); break;
 case "TransparentLCDLarge": s(0.602f, 28, 44, 0.35f); break;
-default: s(1f, 1, 1, 1f); break; } } }
-public void aD(string name, int x, int y) {
-IMyTextPanel display = _.GridTerminalSystem.GetBlockWithName(name) as IMyTextPanel;
-initSize(display);
+case "TransparentLCDSmall": s(0.602f, 26, 40, 4f); break;
+case "SmallTextPanel" : s(0.602f, 48, 48, 0.35f); break;
+default: s(1f, 1, 1, 1f); break; } }
+public void aDs(string name) {
+CBNamed<IMyTextPanel> displays = new CBNamed<IMyTextPanel>(name);
+if(displays.empty()) { throw new System.ArgumentException("Не найдены дисплеи", name); }
+mineDimensions(displays.blocks()[0]);
+foreach(IMyTextPanel display in displays) {
+CBO o = new CBO(display);
+int x = o.g("display", "x", -1);
+int y = o.g("display", "y", -1);
+if(x<0 || y<0) { throw new System.ArgumentException("Не указаны координаты дисплея", display.CustomName); }
 addSurface(display as IMyTextSurface, x, y); }
-private bool m_initialized; }
+clear(); } }
 public enum EHRU {
 None,
 Mass,
@@ -428,10 +474,15 @@ case EHRU.Power : return "Вт.";
 case EHRU.PowerCapacity : return "ВтЧ."; }
 return ""; }
 public static string tHR(float value, EHRU unit = EHRU.None) {
+int divider = unit == EHRU.Volume ? 1000000000 : 1000;
 string suffix = hrSuffix(unit);
-if(value < 1000) { return $"{value}{suffix}"; }
-int exp = (int)(Math.Log(value) / Math.Log(1000));
-return $"{value / Math.Pow(1000, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; }
+if(unit == EHRU.Mass) {
+if(value >= 1000) {
+suffix = "Т.";
+value = value/1000; } }
+if(value < divider) { return $"{value}{suffix}"; }
+int exp = (int)(Math.Log(value) / Math.Log(divider));
+return $"{value / Math.Pow(divider, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; }
 StorageInfo storage;
 public string program() {
 Runtime.UpdateFrequency = UpdateFrequency.Update100;

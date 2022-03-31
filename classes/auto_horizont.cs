@@ -31,7 +31,7 @@ public class CAutoHorizont
   public void disable()
   {
     if (!enabled()) { return; }
-    foreach (IMyGyro gyroscope in m_gyroscopes.blocks())
+    foreach (IMyGyro gyroscope in m_gyroscopes)
     {
       gyroscope.Yaw = 0;
       gyroscope.Roll = 0;
@@ -43,7 +43,7 @@ public class CAutoHorizont
   public void enable()
   {
     if (enabled() || !inGravity()) { return; }
-    foreach (IMyGyro gyroscope in m_gyroscopes.blocks())
+    foreach (IMyGyro gyroscope in m_gyroscopes)
     {
       gyroscope.Yaw = 0;
       gyroscope.Roll = 0;
@@ -56,7 +56,7 @@ public class CAutoHorizont
   {
     Vector3D relRotVector = Vector3D.TransformNormal(new Vector3D(-pitch, yaw, roll),
                                                             m_controller.WorldMatrix);
-    foreach (IMyGyro gyroscope in m_gyroscopes.blocks())
+    foreach (IMyGyro gyroscope in m_gyroscopes)
     {
       Vector3D transRotVector = Vector3D.TransformNormal(relRotVector, Matrix.Transpose(gyroscope.WorldMatrix));
       gyroscope.Yaw = (float)transRotVector.Y;

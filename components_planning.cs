@@ -21,7 +21,7 @@ public string program()
   // Runtime.UpdateFrequency = UpdateFrequency.Update100;
 
   recipes = new CRecipes();
-  recipes.add(FRecipe.LargeArmorBlock(4*32+32*32));
+  recipes.add(FRecipe.LargeArmorBlock(4*32+32*32*4));
   recipes.add(FRecipe.Window3x3Flat(8));
   recipes.add(FRecipe.ArmorSide(32));
   recipes.add(FRecipe.ArmorCenter(32));
@@ -46,19 +46,34 @@ public string program()
   recipes.add(FRecipe.Wheel5x5(4));
   recipes.add(FRecipe.Suspension5x5(4));
   recipes.add(FRecipe.AtmosphericThrust(8));
+  recipes.add(FRecipe.HydrogenThrust(8));
+  // recipes.add(FRecipe.IonThrust(8));
 
   recipes.add(FRecipe.LargeWelder(16));
   recipes.add(FRecipe.LargeGrinder(16));
   recipes.add(FRecipe.LargeDrill(16));
+  recipes.add(FRecipe.LargeOreDetector(4));
 
   recipes.add(FRecipe.MedicalRoom(2));
+
+  recipes.add(FComponentItem.NATO_25x184mm(1000));
+  // recipes.add(FComponentItem.NATO_5p56x45mm(200));
+  recipes.add(FComponentItem.AutomaticRifleGun_Mag_20rd(200));
+  recipes.add(FComponentItem.UltimateAutomaticRifleGun_Mag_30rd(200));
+  recipes.add(FComponentItem.RapidFireAutomaticRifleGun_Mag_50rd(200));
+  recipes.add(FComponentItem.PreciseAutomaticRifleGun_Mag_5rd(200));
+  recipes.add(FComponentItem.SemiAutoPistolMagazine(200));
+  recipes.add(FComponentItem.ElitePistolMagazine(200));
+  recipes.add(FComponentItem.FullAutoPistolMagazine(200));
+
 
   return "Планирование производства";
 }
 
 public void main(string argument, UpdateType updateSource)
 {
-  if(argument == "start") { process(); }
+       if(argument == "start") { process(); }
+  else if(argument == "clear") { clear(); }
 }
 
 public void process()
@@ -68,15 +83,25 @@ public void process()
   string state = assemblerProducing ? "Producing" : "Stopped";
   lcdAssembling.echo_at($"Assemblesr state: {state}", i++);
   lcdAssembling.echo_at("---", i++);
-  foreach(CComponentItem component in recipes.sourceItems())
+  foreach(CComponentItem c in recipes.sourceItems())
   {
-    int inStorageAmount = storage.items(component.itemType());
-    int needAmount = component.amount();
+    debug(c.asBlueprintDefinition());
+    int inStorageAmount = storage.items(c.itemType());
+    int needAmount = c.amount();
     int amount = needAmount - inStorageAmount;
-    lcdAssembling.echo_at($"{component.itemType().ToString()}: {inStorageAmount} of {needAmount} - {inStorageAmount/(needAmount/100f):f2}%", i++);
+    lcdAssembling.echo_at($"{c.itemType().ToString()}: {inStorageAmount} of {needAmount} - {inStorageAmount/(needAmount/100f):f2}%", i++);
     if(amount > 0 && !assemblerProducing)
     {
-      assembler.produce(component.asBlueprintDefinition(), amount);
+      assembler.produce(c.asBlueprintDefinition(), amount);
     }
   }
+  // foreach(KeyValuePair<string, SMinCurrentMax<float>> i in ammo)
+  // {
+
+  // }
+}
+
+public void clear()
+{
+  assembler.clear();
 }

@@ -12,9 +12,9 @@ public void applyDefaultMeDisplayTexsts()
   Me.GetSurface(1).WriteText(structureName);
 }
 
-public void echoMe     (string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
-public void echoMeBig  (string text) { echoMe(text, 0); }
-public void echoMeSmall(string text) { echoMe(text, 1); }
+public static void echoMe     (string text, int surface) { self.Me.GetSurface(surface).WriteText(text, false); }
+public static void echoMeBig  (string text) { echoMe(text, 0); }
+public static void echoMeSmall(string text) { echoMe(text, 1); }
 
 public void setupMe(string i_scriptName)
 {

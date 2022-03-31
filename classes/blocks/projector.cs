@@ -6,7 +6,7 @@ public class CProjector : CFunctional<IMyProjector>
   public bool projecting()
   {
     bool result = true;
-    foreach (IMyProjector b in m_blocks.blocks())
+    foreach (IMyProjector b in m_blocks)
     {
       result = result && b.IsProjecting;
     }
@@ -16,7 +16,7 @@ public class CProjector : CFunctional<IMyProjector>
   public int totalBlocks()
   {
     int result = 0;
-    foreach (IMyProjector b in m_blocks.blocks())
+    foreach (IMyProjector b in m_blocks)
     {
       result = result + b.TotalBlocks;
     }
@@ -26,7 +26,7 @@ public class CProjector : CFunctional<IMyProjector>
   public int remainingBlocks()
   {
     int result = 0;
-    foreach (IMyProjector b in m_blocks.blocks())
+    foreach (IMyProjector b in m_blocks)
     {
       result = result + b.RemainingBlocks;
     }
@@ -36,7 +36,7 @@ public class CProjector : CFunctional<IMyProjector>
   public int buildableBlocks()
   {
     int result = 0;
-    foreach (IMyProjector b in m_blocks.blocks())
+    foreach (IMyProjector b in m_blocks)
     {
       result = result + b.BuildableBlocksCount;
     }

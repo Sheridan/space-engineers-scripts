@@ -1,7 +1,7 @@
 #!/bin/bash
 
 project=$1
-outfolder=$2
+outfolder=./prepared
 filelist=()
 
 function collect_includes()
@@ -77,6 +77,7 @@ function sed_preproc()
    replace "FRecipe"                  "FR"   | \
    replace "recipe"                   "R"    | \
    replace "amount"                   "a"    | \
+   replace "loadOnlySameGrid"         "lSG"  | \
    replace "//.*$"                ""     | \
    egrep -v "^ +?(//|$)" | \
    astyle --mode=cs --style=lisp --indent=spaces --max-code-length=200 --unpad-paren --pad-comma \
@@ -99,11 +100,17 @@ function calc_chars()
   wc -c ${outfolder}/${project}.cs
 }
 
+function to_clipboard()
+{
+  cat ${outfolder}/${project}.cs | xclip -selection clipboard -i
+}
+
 calc_chars
 collect_includes "${project}.cs"
 sed_preproc
 #reduce_preproc
 calc_chars
+to_clipboard
 
 # clang-format --style=file --verbose
 #  astyle --mode=cs --style=lisp --indent=spaces --max-code-length=200 --unpad-paren --pad-comma \

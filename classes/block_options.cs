@@ -54,6 +54,7 @@ public class CBlockOptions
       string[] color = m_ini.Get(section, name).ToString().Split(';');
       return new Color(float.Parse(color[0]), float.Parse(color[1]), float.Parse(color[2]), float.Parse(color[3]));
     }
+    // m_ini.Set(section, name, defaultValue.ToString());
     return defaultValue;
   }
 

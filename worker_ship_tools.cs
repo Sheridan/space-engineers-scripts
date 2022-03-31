@@ -48,9 +48,7 @@ public string program()
   bottomShipConnector = new CConnector(new CBlocksNamed<IMyShipConnector>("Нижний"));
 
   statusLcd = new CDisplay();
-  statusLcd.addDisplay("[Универсал] Дисплей Лог 1", 0, 0);
-  statusLcd.addDisplay("[Универсал] Дисплей Лог 0", 1, 0);
-  statusLcd.addDisplay("[Универсал] Дисплей Лог 2", 2, 0);
+  statusLcd.addDisplays("Лог");
 
   connectStates = new CStateMachine(statusLcd);
   connectStates.addState("Слияние структур", merge);

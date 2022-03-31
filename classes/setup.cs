@@ -1,3 +1,4 @@
+// #include classes/block_options.cs
 // #include classes/blocks/base/terminal.cs
 // #include helpers/string.cs
 
@@ -14,16 +15,18 @@ public class CSetup<T> : CTerminal<T> where T : class, IMyTerminalBlock
                     bool visibleInInventory = false,
                     bool visibleInToolBar   = false)
   {
-    foreach (T b in m_blocks.blocks())
+    echoMeBig(String.Join(Environment.NewLine, name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)));
+    foreach (T b in m_blocks)
     {
       string suffix = "";
-      CBlockOptions options = m_blocks.options(b);
+      CBlockOptions options = new CBlockOptions(b);
       // per b type
            if(m_blocks.isAssignable<IMyShipConnector  >()) { suffix = setup(options, b as IMyShipConnector  ); }
       else if(m_blocks.isAssignable<IMyInteriorLight  >()) { suffix = setup(options, b as IMyInteriorLight  ); }
       else if(m_blocks.isAssignable<IMyConveyorSorter >()) { suffix = setup(options, b as IMyConveyorSorter ); }
       else if(m_blocks.isAssignable<IMyLargeTurretBase>()) { suffix = setup(options, b as IMyLargeTurretBase); }
       else if(m_blocks.isAssignable<IMyAssembler      >()) { suffix = setup(options, b as IMyAssembler      ); }
+      else if(m_blocks.isAssignable<IMyReflectorLight >()) { suffix = setup(options, b as IMyReflectorLight ); }
 
       // name
       b.CustomName = generateName(name, suffix, loadPurpose(options));
@@ -39,10 +42,14 @@ public class CSetup<T> : CTerminal<T> where T : class, IMyTerminalBlock
   private string generateName(string name, string suffix, string purpose)
   {
     string baseName = TrimAllSpaces($"{name} {purpose} {suffix}");
-    if (!m_counetrs.ContainsKey(baseName)) { m_counetrs.Add(baseName, 0); }
-    string order = count() > 1 ? m_counetrs[baseName].ToString(m_zeros).Trim() : "";
-    m_counetrs[baseName]++;
-    return TrimAllSpaces($"[{structureName}] {baseName} {order}");
+    if(count() > 0)
+    {
+      if (!m_counetrs.ContainsKey(baseName)) { m_counetrs.Add(baseName, 0); }
+      string order = m_counetrs[baseName].ToString(m_zeros).Trim();
+      m_counetrs[baseName]++;
+      return $"[{structureName}] {baseName} {order}";
+    }
+    return $"[{structureName}] {baseName}";
   }
 
   private string setup(CBlockOptions options, IMyShipConnector b)
@@ -55,8 +62,17 @@ public class CSetup<T> : CTerminal<T> where T : class, IMyTerminalBlock
 
   private string setup(CBlockOptions options, IMyInteriorLight b)
   {
-    b.Radius = 10f;
+    b.Radius = 100f;
     b.Intensity = 10f;
+    b.Falloff = 3f;
+    b.Color = options.getValue("lamp", "color", Color.White);
+    return string.Empty;
+  }
+
+  private string setup(CBlockOptions options, IMyReflectorLight b)
+  {
+    b.Radius = 160f;
+    b.Intensity = 100f;
     b.Falloff = 3f;
     b.Color = options.getValue("lamp", "color", Color.White);
     return string.Empty;

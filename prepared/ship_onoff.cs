@@ -6,9 +6,9 @@ static CBO prbOptions;
 public void applyDefaultMeDisplayTexsts() {
 Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
 Me.GetSurface(1).WriteText(sN); }
-public void echoMe(string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
-public void echoMeBig(string text) { echoMe(text, 0); }
-public void echoMeSmall(string text) { echoMe(text, 1); }
+public static void echoMe(string text, int surface) { _.Me.GetSurface(surface).WriteText(text, false); }
+public static void echoMeBig(string text) { echoMe(text, 0); }
+public static void echoMeSmall(string text) { echoMe(text, 1); }
 public void sMe(string i_scriptName) {
 scriptName = i_scriptName;
 Me.CustomName = $"[{sN}] ПрБ {scriptName}";
@@ -74,24 +74,27 @@ IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
 public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CB(bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { load(); } }
-public class CBB<T> where T : class, IMyTerminalBlock {
-public CBB(bool loadOnlySameGrid = true) { m_blocks = new List<T>(); m_loadOnlySameGrid = loadOnlySameGrid; }
+public CB(bool lSG = true) : base(lSG) { load(); } }
+public class CBB<T> where T : class, IMyEntity {
+public CBB(bool lSG = true) { m_blocks = new List<T>(); m_lSG = lSG; }
 public bool empty() { return count() == 0; }
 public int count() { return m_blocks.Count; }
 public List<T> blocks() { return m_blocks; }
 protected void clear() { m_blocks.Clear(); }
 public void removeBlock(T b) { m_blocks.Remove(b); }
 public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
-public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
-public CBO o(T b) { return new CBO(b); }
-public bool iA<U>() where U : class, IMyTerminalBlock {
+public T first() { return m_blocks[0]; }
+public bool iA<U>() where U : class, IMyEntity {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
+public IEnumerator GetEnumerator() {
+foreach(T i in m_blocks) {
+yield return i; } }
 protected virtual void load() { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => checkBlock(x)); }
-protected virtual bool checkBlock(T b) { return m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true; }
+protected virtual bool checkBlock(T b) {
+return m_lSG ? _.Me.IsSameConstructAs(b as IMyTerminalBlock) : true; }
 protected List<T> m_blocks;
-protected bool m_loadOnlySameGrid; }
+protected bool m_lSG; }
 public static string TrimAllSpaces(string value) {
 var newString = new StringBuilder();
 bool pIW = false;
@@ -105,48 +108,45 @@ pIW = false; }
 newString.Append(value[i]); }
 return newString.ToString(); }
 public class CBNamed<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CBNamed(string name, bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { m_name = name; load(); }
+public CBNamed(string name, bool lSG = true) : base(lSG) { m_name = name; load(); }
 protected override bool checkBlock(T b) {
-return (m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
+return (m_lSG ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
 public string name() { return m_name; }
 private string m_name; }
-public class CF<T> : CT<T> where T : class, IMyTerminalBlock {
+public class CF<T> : CT<T> where T : class, IMyFunctionalBlock {
 public CF(CBB<T> blocks) : base(blocks) {}
 public bool enable(bool target = true) {
-foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+foreach(IMyFunctionalBlock b in m_blocks) {
 if(b.Enabled != target) { b.Enabled = target; } }
 return enabled() == target; }
 public bool disable() { return enable(false); }
 public bool enabled() {
 bool r = true;
-foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+foreach(IMyFunctionalBlock b in m_blocks) {
 r = r && b.Enabled; }
 return r; } }
-public class CT<T> where T : class, IMyTerminalBlock {
-public CT(CBB<T> blocks) { m_blocks = blocks; }
+public class CT<T> : CCube<T> where T : class, IMyTerminalBlock {
+public CT(CBB<T> blocks) : base(blocks) {}
 public void listProperties(CTS lcd) {
-if(m_blocks.count() == 0) { return; }
+if(empty()) { return; }
 List<ITerminalProperty> properties = new List<ITerminalProperty>();
-m_blocks.blocks()[0].GetProperties(properties);
+first().GetProperties(properties);
 foreach(var property in properties) {
 lcd.echo($"id: {property.Id}, type: {property.TypeName}"); } }
 public void listActions(CTS lcd) {
-if(m_blocks.count() == 0) { return; }
+if(empty()) { return; }
 List<ITerminalAction> actions = new List<ITerminalAction>();
-m_blocks.blocks()[0].GetActions(actions);
+first().GetActions(actions);
 foreach(var action in actions) {
 lcd.echo($"id: {action.Id}, name: {action.Name}"); } }
-void showInTerminal(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
+void showInTerminal(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
 void hideInTerminal() { showInTerminal(false); }
-void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
+void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
 void hideInToolbarConfig() { showInToolbarConfig(false); }
-void showInInventory(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
+void showInInventory(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
 void hideInInventory() { showInInventory(false); }
-void showOnHUD(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
-void hideOnHUD() { showOnHUD(false); }
-public bool empty() { return m_blocks.empty(); }
-public int count() { return m_blocks.count(); }
-protected CBB<T> m_blocks; }
+void showOnHUD(bool show = true) { foreach(T b in m_blocks) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
+void hideOnHUD() { showOnHUD(false); } }
 public class CTS {
 public CTS() {
 m_text = new List<string>();
@@ -243,11 +243,28 @@ foreach(KeyValuePair<int, Dictionary<int, T>> i in m_data) {
 foreach(KeyValuePair<int, T> j in i.Value) {
 yield return j.Value; } } }
 private Dictionary<int, Dictionary<int, T>> m_data; }
+public class CCube<T> : CEntity<T> where T : class, IMyCubeBlock {
+public CCube(CBB<T> blocks) : base(blocks) {} }
+public class CEntity<T> where T : class, IMyEntity {
+public CEntity(CBB<T> blocks) { m_blocks = blocks; }
+public bool empty() { return m_blocks.empty(); }
+public int count() { return m_blocks.count(); }
+public T first() { return m_blocks.first(); }
+public IEnumerator GetEnumerator() {
+foreach(T i in m_blocks) {
+yield return i; } }
+public List<IMyInventory> invertoryes() {
+List<IMyInventory> r = new List<IMyInventory>();
+foreach(T i in m_blocks) {
+for(int j = 0; j < i.InventoryCount; j++) {
+r.Add(i.GetInventory(j)); } }
+return r; }
+protected CBB<T> m_blocks; }
 public class CBt : CF<IMyBatteryBlock> {
 public CBt(CBB<IMyBatteryBlock> blocks) : base(blocks) { }
 public bool setChargeMode(ChargeMode mode) {
 bool r = true;
-foreach(IMyBatteryBlock b in m_blocks.blocks()) {
+foreach(IMyBatteryBlock b in m_blocks) {
 if(b.ChargeMode != mode) { b.ChargeMode = mode; }
 r = r && b.ChargeMode == mode; }
 return r; }
@@ -257,7 +274,7 @@ public bool autocharge() { return setChargeMode(ChargeMode.Auto); } }
 public class CC : CF<IMyShipConnector> {
 public CC(CBB<IMyShipConnector> blocks) : base(blocks) { }
 public bool connect(bool target = true) {
-foreach(IMyShipConnector b in m_blocks.blocks()) {
+foreach(IMyShipConnector b in m_blocks) {
 if(target) { b.Connect(); }
 else { b.Disconnect(); } }
 return checkConnected(target); }
@@ -265,7 +282,7 @@ public bool disconnect() { return connect(false); }
 public bool connected() { return checkConnected(true); }
 private bool checkConnected(bool target) {
 bool r = true;
-foreach(IMyShipConnector b in m_blocks.blocks()) {
+foreach(IMyShipConnector b in m_blocks) {
 r = r &&
 (
 target ? b.Status == MyShipConnectorStatus.Connected
@@ -274,13 +291,13 @@ target ? b.Status == MyShipConnectorStatus.Connected
 return r; }
 public bool connectable() {
 bool r = true;
-foreach(IMyShipConnector b in m_blocks.blocks()) {
+foreach(IMyShipConnector b in m_blocks) {
 r = r && b.Status == MyShipConnectorStatus.Connectable; }
 return r; } }
 public class CLG : CF<IMyLandingGear> {
 public CLG(CBB<IMyLandingGear> blocks) : base(blocks) { }
 public bool lockGear(bool enabled = true) {
-foreach(IMyLandingGear b in m_blocks.blocks()) {
+foreach(IMyLandingGear b in m_blocks) {
 if(enabled) { b.Lock(); }
 else { b.Unlock(); } }
 return checkLocked(enabled); }
@@ -288,14 +305,14 @@ public bool unlockGear() { return lockGear(false); }
 public bool locked() { return checkLocked(); }
 private bool checkLocked(bool target = true) {
 bool r = true;
-foreach(IMyLandingGear b in m_blocks.blocks()) {
+foreach(IMyLandingGear b in m_blocks) {
 r = r && b.IsLocked; }
 return r == target; } }
 public class CTank : CF<IMyGasTank> {
 public CTank(CBB<IMyGasTank> blocks) : base(blocks) { }
 public bool enableStockpile(bool enabled = true) {
 bool r = true;
-foreach(IMyGasTank b in m_blocks.blocks()) {
+foreach(IMyGasTank b in m_blocks) {
 if(b.Stockpile != enabled) { b.Stockpile = enabled; }
 r = r && b.Stockpile == enabled; }
 return r; }

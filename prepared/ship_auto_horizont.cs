@@ -6,9 +6,9 @@ static CBO prbOptions;
 public void applyDefaultMeDisplayTexsts() {
 Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
 Me.GetSurface(1).WriteText(sN); }
-public void echoMe(string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
-public void echoMeBig(string text) { echoMe(text, 0); }
-public void echoMeSmall(string text) { echoMe(text, 1); }
+public static void echoMe(string text, int surface) { _.Me.GetSurface(surface).WriteText(text, false); }
+public static void echoMeBig(string text) { echoMe(text, 0); }
+public static void echoMeSmall(string text) { echoMe(text, 1); }
 public void sMe(string i_scriptName) {
 scriptName = i_scriptName;
 Me.CustomName = $"[{sN}] ПрБ {scriptName}";
@@ -74,24 +74,27 @@ IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
 public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CB(bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { load(); } }
-public class CBB<T> where T : class, IMyTerminalBlock {
-public CBB(bool loadOnlySameGrid = true) { m_blocks = new List<T>(); m_loadOnlySameGrid = loadOnlySameGrid; }
+public CB(bool lSG = true) : base(lSG) { load(); } }
+public class CBB<T> where T : class, IMyEntity {
+public CBB(bool lSG = true) { m_blocks = new List<T>(); m_lSG = lSG; }
 public bool empty() { return count() == 0; }
 public int count() { return m_blocks.Count; }
 public List<T> blocks() { return m_blocks; }
 protected void clear() { m_blocks.Clear(); }
 public void removeBlock(T b) { m_blocks.Remove(b); }
 public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
-public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
-public CBO o(T b) { return new CBO(b); }
-public bool iA<U>() where U : class, IMyTerminalBlock {
+public T first() { return m_blocks[0]; }
+public bool iA<U>() where U : class, IMyEntity {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
+public IEnumerator GetEnumerator() {
+foreach(T i in m_blocks) {
+yield return i; } }
 protected virtual void load() { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => checkBlock(x)); }
-protected virtual bool checkBlock(T b) { return m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true; }
+protected virtual bool checkBlock(T b) {
+return m_lSG ? _.Me.IsSameConstructAs(b as IMyTerminalBlock) : true; }
 protected List<T> m_blocks;
-protected bool m_loadOnlySameGrid; }
+protected bool m_lSG; }
 public static string TrimAllSpaces(string value) {
 var newString = new StringBuilder();
 bool pIW = false;
@@ -108,13 +111,13 @@ public class CBSD : CD {
 public CBSD() : base() {}
 private string gFBS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 if(!group.iA<IMyFunctionalBlock>()) { return ""; }
-string r = "";
+string r = "[Функциональные] ";
 int pOn = 0;
 int fOn = 0;
 int wOn = 0;
 float powerConsumed = 0f;
 float powerMaxConsumed = 0f;
-foreach(IMyFunctionalBlock block in group.blocks()) {
+foreach(IMyFunctionalBlock block in group) {
 if(block.Enabled) {
 pOn++;
 CBPI pInfo = new CBPI(block);
@@ -128,10 +131,10 @@ r += $"Consuming (now,max): {tHR(powerConsumed, EHRU.Power)}:{tHR(powerMaxConsum
 return r; }
 private string gRS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 if(!group.iA<IMyMotorStator>()) { return ""; }
-string r = "";
+string r = "[Роторы] ";
 List<string> rpm = new List<string>();
 List<string> angle = new List<string>();
-foreach(IMyMotorStator block in group.blocks()) {
+foreach(IMyMotorStator block in group) {
 float angleGrad = block.Angle * 180 / (float)Math.PI;
 rpm.Add($"{block.TargetVelocityRPM:f2}");
 angle.Add($"{angleGrad:f2}°"); }
@@ -140,10 +143,10 @@ r += $"Angle: {string.Join(":", angle)} "
 return r; }
 private string gGTS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 if(!group.iA<IMyGasTank>()) { return ""; }
-string r = "";
+string r = "[Баки] ";
 float capacity = 0;
 double filledRatio = 0;
-foreach(IMyGasTank block in group.blocks()) {
+foreach(IMyGasTank block in group) {
 capacity += block.Capacity;
 filledRatio += block.FilledRatio; }
 r += $"Capacity: {tHR(capacity, EHRU.Volume)} "
@@ -151,10 +154,10 @@ r += $"Capacity: {tHR(capacity, EHRU.Volume)} "
 return r; }
 private string gBS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 if(!group.iA<IMyBatteryBlock>()) { return ""; }
-string r = "";
+string r = "[Батареи] ";
 float currentStored = 0;
 float maxStored = 0;
-foreach(IMyBatteryBlock block in group.blocks()) {
+foreach(IMyBatteryBlock block in group) {
 currentStored += block.CurrentStoredPower;
 maxStored += block.MaxStoredPower; }
 currentStored *= 1000000;
@@ -167,7 +170,7 @@ long volumeMax = 0;
 int mass = 0;
 int items = 0;
 int inventoryes = 0;
-foreach(IMyTerminalBlock block in group.blocks()) {
+foreach(IMyTerminalBlock block in group) {
 if(block.HasInventory) {
 IMyInventory inventory;
 inventoryes = block.InventoryCount;
@@ -179,18 +182,18 @@ mass += inventory.CurrentMass.ToIntSafe();
 items += inventory.ItemCount; } } }
 if(inventoryes > 0) {
 mass *= 1000;
-return $"VMI: ({tHR(volume, EHRU.Volume)}:{tHR(volumeMax, EHRU.Volume)}):{tHR(mass, EHRU.Mass)}:{tHR(items)} from {inventoryes} "; }
+return $"[Контейнеры] VMI: ({tHR(volume, EHRU.Volume)}:{tHR(volumeMax, EHRU.Volume)}):{tHR(mass, EHRU.Mass)}:{tHR(items)} from {inventoryes} "; }
 return ""; }
 private string gPsS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 if(!group.iA<IMyPistonBase>()) { return ""; }
-string r = "";
+string r = "[Поршни] ";
 List<string> positions = new List<string>();
 int statusStopped = 0;
 int statusExtending = 0;
 int statusExtended = 0;
 int statusRetracting = 0;
 int statusRetracted = 0;
-foreach(IMyPistonBase block in group.blocks()) {
+foreach(IMyPistonBase block in group) {
 switch(block.Status) {
 case PistonStatus.Stopped: statusStopped++; break;
 case PistonStatus.Extending: statusExtending++; break;
@@ -203,11 +206,11 @@ r += $"SeErR: {statusStopped}:{statusExtending}:{statusExtended}:{statusRetracti
 return r; }
 private string gGS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 if(!group.iA<IMyGyro>()) { return ""; }
-string r = "";
+string r = "[Гироскопы] ";
 float yaw = 0;
 float pitch = 0;
 float roll = 0;
-foreach(IMyGyro block in group.blocks()) {
+foreach(IMyGyro block in group) {
 yaw += Math.Abs(block.Yaw);
 pitch += Math.Abs(block.Pitch);
 roll += Math.Abs(block.Roll); }
@@ -215,19 +218,19 @@ r += $"YPR: {yaw/group.count():f4}:{pitch/group.count():f4}:{roll/group.count():
 return r; }
 private string gMS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 if(!group.iA<IMyShipMergeBlock>()) { return ""; }
-string r = "";
+string r = "[Соединители] ";
 int connected = 0;
-foreach(IMyShipMergeBlock block in group.blocks()) {
+foreach(IMyShipMergeBlock block in group) {
 if(block.IsConnected) { connected++; } }
 r += $"Connected: {connected} ";
 return r; }
 private string gCS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 if(!group.iA<IMyShipConnector>()) { return ""; }
-string r = "";
+string r = "[Коннекторы] ";
 int statusUnconnected = 0;
 int statusConnectable = 0;
 int statusConnected = 0;
-foreach(IMyShipConnector block in group.blocks()) {
+foreach(IMyShipConnector block in group) {
 switch(block.Status) {
 case MyShipConnectorStatus.Unconnected: statusUnconnected++; break;
 case MyShipConnectorStatus.Connectable: statusConnectable++; break;
@@ -236,12 +239,12 @@ r += $"UcC: {statusUnconnected}:{statusConnectable}:{statusConnected} ";
 return r; }
 private string gPS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 if(!group.iA<IMyProjector>()) { return ""; }
-string r = "";
+string r = "[Проекторы] ";
 int projecting = 0;
 List<string> blocksTotal = new List<string>();
 List<string> blocksRemaining = new List<string>();
 List<string> blocksBuildable = new List<string>();
-foreach(IMyProjector block in group.blocks()) {
+foreach(IMyProjector block in group) {
 if(block.IsProjecting) { projecting++; }
 blocksTotal.Add($"{block.TotalBlocks}");
 blocksRemaining.Add($"{block.RemainingBlocks}");
@@ -254,19 +257,18 @@ r += $"Pr: {projecting} "
 return r; }
 private string gPPS<T>(CBB<T> group) where T : class, IMyTerminalBlock {
 if(!group.iA<IMyPowerProducer>()) { return ""; }
-string r = "";
+string r = "[Генераторы] ";
 float currentOutput = 0f;
 float maxOutput = 0f;
-foreach(IMyPowerProducer block in group.blocks()) {
+foreach(IMyPowerProducer block in group) {
 CBPI pInfo = new CBPI(block);
 currentOutput += pInfo.currentProduce();
 maxOutput += pInfo.maxProduce(); }
 r += $"Ген. энергии (now:max): {tHR(currentOutput, EHRU.Power)}:{tHR(maxOutput, EHRU.Power)} ";
 return r; }
 public void sS<T>(CBB<T> group, int position) where T : class, IMyTerminalBlock {
-string r = $"[{group.subtypeName()}] ";
 if(!group.empty()) {
-r += $"({group.count()}) "
+string r = $"[{group.count()}] "
 + gPsS<T>(group)
 + gCS<T>(group)
 + gMS<T>(group)
@@ -278,10 +280,8 @@ r += $"({group.count()}) "
 + gPPS<T>(group)
 + gIS<T>(group)
 + gFBS<T>(group)
-; }
-else {
-r += "Таких блоков нет"; }
-echo_at(r, position); } }
+;
+echo_at(r, position); } } }
 public class CD : CTS {
 public CD() : base()
 {}
@@ -292,13 +292,14 @@ case "LargeLCDPanelWide" : s(0.602f, 28, 87, 0.35f); break;
 case "LargeLCDPanel" : s(0.602f, 28, 44, 0.35f); break;
 case "TransparentLCDLarge": s(0.602f, 28, 44, 0.35f); break;
 case "TransparentLCDSmall": s(0.602f, 26, 40, 4f); break;
+case "SmallTextPanel" : s(0.602f, 48, 48, 0.35f); break;
 default: s(1f, 1, 1, 1f); break; } }
 public void aDs(string name) {
 CBNamed<IMyTextPanel> displays = new CBNamed<IMyTextPanel>(name);
 if(displays.empty()) { throw new System.ArgumentException("Не найдены дисплеи", name); }
 mineDimensions(displays.blocks()[0]);
-foreach(IMyTextPanel display in displays.blocks()) {
-CBO o = displays.o(display);
+foreach(IMyTextPanel display in displays) {
+CBO o = new CBO(display);
 int x = o.g("display", "x", -1);
 int y = o.g("display", "y", -1);
 if(x<0 || y<0) { throw new System.ArgumentException("Не указаны координаты дисплея", display.CustomName); }
@@ -401,9 +402,9 @@ foreach(KeyValuePair<int, T> j in i.Value) {
 yield return j.Value; } } }
 private Dictionary<int, Dictionary<int, T>> m_data; }
 public class CBNamed<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CBNamed(string name, bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { m_name = name; load(); }
+public CBNamed(string name, bool lSG = true) : base(lSG) { m_name = name; load(); }
 protected override bool checkBlock(T b) {
-return (m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
+return (m_lSG ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
 public string name() { return m_name; }
 private string m_name; }
 class CBU {
@@ -426,15 +427,15 @@ public bool canProduce() { return m_block is IMyPowerProducer; }
 public bool canConsume() {
 return m_blockSinkComponent != null && m_blockSinkComponent.IsPoweredByType(Electricity); }
 public float currentProduce() {
-if(canProduce()) { return (m_block as IMyPowerProducer).CurrentOutput*1000000; }
+if(canProduce()) { return (m_block as IMyPowerProducer).CurrentOutput*1000000f; }
 return 0f; }
 public float maxProduce() {
-if(canProduce()) { return (m_block as IMyPowerProducer).MaxOutput*1000000; }
+if(canProduce()) { return (m_block as IMyPowerProducer).MaxOutput*1000000f; }
 return 0f; }
 public float currentConsume() {
 if(canConsume()) {
 float r = m_blockSinkComponent.CurrentInputByType(Electricity);
-return r * 1000000; }
+return r * 1000000f; }
 return 0f; }
 public float maxConsume() {
 if(canConsume()) {
@@ -442,7 +443,7 @@ float r = m_blockSinkComponent.MaxRequiredInputByType(Electricity);
 if(m_block is IMyAssembler || m_block is IMyRefinery) {
 CBU upgrades = new CBU(m_block as IMyUpgradableBlock);
 upgrades.calcPowerUse(r); }
-return r * 1000000; }
+return r * 1000000f; }
 return 0f; }
 MyResourceSinkComponent m_blockSinkComponent;
 IMyTerminalBlock m_block;
@@ -492,14 +493,14 @@ applyGyroOverride(yaw,
 public bool enabled() { return m_gyroscopes.blocks()[0].GyroOverride; }
 public void disable() {
 if(!enabled()) { return; }
-foreach(IMyGyro gyroscope in m_gyroscopes.blocks()) {
+foreach(IMyGyro gyroscope in m_gyroscopes) {
 gyroscope.Yaw = 0;
 gyroscope.Roll = 0;
 gyroscope.Pitch = 0;
 gyroscope.GyroOverride = false; } }
 public void enable() {
 if(enabled() || !inGravity()) { return; }
-foreach(IMyGyro gyroscope in m_gyroscopes.blocks()) {
+foreach(IMyGyro gyroscope in m_gyroscopes) {
 gyroscope.Yaw = 0;
 gyroscope.Roll = 0;
 gyroscope.Pitch = 0;
@@ -507,7 +508,7 @@ gyroscope.GyroOverride = true; } }
 private void applyGyroOverride(double yaw, double roll, double pitch) {
 Vector3D relRotVector = Vector3D.TransformNormal(new Vector3D(-pitch, yaw, roll),
 m_controller.WorldMatrix);
-foreach(IMyGyro gyroscope in m_gyroscopes.blocks()) {
+foreach(IMyGyro gyroscope in m_gyroscopes) {
 Vector3D transRotVector = Vector3D.TransformNormal(relRotVector, Matrix.Transpose(gyroscope.WorldMatrix));
 gyroscope.Yaw = (float)transRotVector.Y;
 gyroscope.Roll = (float)transRotVector.Z;

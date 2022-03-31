@@ -56,11 +56,10 @@ public string program()
   welderPistonsStep = wallHeight / welderSteps;
 
   logLcd = new CDisplay();
-  logLcd.addDisplay($"[{structureName}] Дисплей Лог 1", 0, 0);
-  logLcd.addDisplay($"[{structureName}] Дисплей Лог 0", 1, 0);
+  logLcd.addDisplays("Лог");
 
   statusLcd = new CDisplay();
-  statusLcd.addDisplay($"[{structureName}] Дисплей Статус 0", 0, 0);
+  statusLcd.addDisplays("Статус");
 
   drillRotors0      = new CRotor    (new CBlocksNamed<IMyMotorStator   >("Инструмент (0)"));
   drillRotors45     = new CRotor    (new CBlocksNamed<IMyMotorStator   >("Инструмент (45)"));
@@ -168,7 +167,7 @@ public float getRotors45Angle()
   return r45 >= 360f ? r45-360f : r45;
 }
 
-public float maxGradPerRun() { return drillRotorsRPM * 6f * (float)Runtime.TimeSinceLastRun.TotalSeconds * lastAngleFactor + ((lastAngleFactor-1) * 0.8f); }
+public float maxGradPerRun() { return drillRotorsRPM * 6f * (float)Runtime.TimeSinceLastRun.TotalSeconds * lastAngleFactor + ((lastAngleFactor-1) * 1.2f); }
 public float getRotorsAngle() { return (drillRotors0.angle() + getRotors45Angle())/2; }
 
 public void showStatus()
@@ -230,7 +229,7 @@ public bool startDrillRotors(object data)
 {
   drillRotors0.rotate(drillRotorsRPM);
   drillRotors45.rotate(drillRotorsRPM);
-  drillRotors45.reverse();
+  if(!drillRotors45.reversed()) { drillRotors45.reverse(); }
   return true;
 }
 

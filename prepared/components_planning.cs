@@ -6,9 +6,9 @@ static CBO prbOptions;
 public void applyDefaultMeDisplayTexsts() {
 Me.GetSurface(0).WriteText(scriptName.Replace(" ", "\n"));
 Me.GetSurface(1).WriteText(sN); }
-public void echoMe(string text, int surface) { Me.GetSurface(surface).WriteText(text, false); }
-public void echoMeBig(string text) { echoMe(text, 0); }
-public void echoMeSmall(string text) { echoMe(text, 1); }
+public static void echoMe(string text, int surface) { _.Me.GetSurface(surface).WriteText(text, false); }
+public static void echoMeBig(string text) { echoMe(text, 0); }
+public static void echoMeSmall(string text) { echoMe(text, 1); }
 public void sMe(string i_scriptName) {
 scriptName = i_scriptName;
 Me.CustomName = $"[{sN}] ПрБ {scriptName}";
@@ -109,8 +109,15 @@ case "MyObjectBuilder_SolarPanel/LargeBlockSolarPanel" : return SolarPanel(a);
 case "MyObjectBuilder_Thrust/LargeBlockLargeAtmosphericThrust": return AtmosphericThrust(a);
 case "MyObjectBuilder_ShipWelder/LargeShipWelder" : return LargeWelder(a);
 case "MyObjectBuilder_ShipGrinder/LargeShipGrinder" : return LargeGrinder(a);
-case "MyObjectBuilder_Drill/LargeBlockDrill" : return LargeDrill(a); }
+case "MyObjectBuilder_Drill/LargeBlockDrill" : return LargeDrill(a);
+case "MyObjectBuilder_Thrust/LargeBlockLargeThrust" : return IonThrust(a);
+case "MyObjectBuilder_Thrust/LargeBlockLargeHydrogenThrust" : return HydrogenThrust(a);
+case "MyObjectBuilder_OreDetector/LargeOreDetector" : return LargeOreDetector(a); }
 throw new System.ArgumentException("Не знаю такой строки", itemString); }
+static public cR SingleItem(CCI item, int a = 1) {
+cR R = new cR(item.asBlueprintDefinition());
+R.addItem(item);
+return R; }
 static public cR LargePistonBase(int a = 1) {
 cR R = new cR("MyObjectBuilder_ExtendedPistonBase/LargePistonBase");
 R.addItem(FCI.Computer(2 * a));
@@ -277,6 +284,20 @@ R.addItem(FCI.LargeTube(50 * a));
 R.addItem(FCI.Construction(60 * a));
 R.addItem(FCI.SteelPlate(230 * a));
 return R; }
+static public cR IonThrust(int a = 1) {
+cR R = new cR("MyObjectBuilder_Thrust/LargeBlockLargeThrust");
+R.addItem(FCI.Thrust(960 * a));
+R.addItem(FCI.LargeTube(40 * a));
+R.addItem(FCI.Construction(100 * a));
+R.addItem(FCI.SteelPlate(150 * a));
+return R; }
+static public cR HydrogenThrust(int a = 1) {
+cR R = new cR("MyObjectBuilder_Thrust/LargeBlockLargeHydrogenThrust");
+R.addItem(FCI.LargeTube(40 * a));
+R.addItem(FCI.MetalGrid(250 * a));
+R.addItem(FCI.Construction(180 * a));
+R.addItem(FCI.SteelPlate(150 * a));
+return R; }
 static public cR LargeWelder(int a = 1) {
 cR R = new cR("MyObjectBuilder_ShipWelder/LargeShipWelder");
 R.addItem(FCI.Computer(2 * a));
@@ -300,10 +321,19 @@ R.addItem(FCI.Motor(5 * a));
 R.addItem(FCI.LargeTube(12 * a));
 R.addItem(FCI.Construction(40 * a));
 R.addItem(FCI.SteelPlate(300 * a));
+return R; }
+static public cR LargeOreDetector(int a = 1) {
+cR R = new cR("MyObjectBuilder_OreDetector/LargeOreDetector");
+R.addItem(FCI.Detector(20 * a));
+R.addItem(FCI.Computer(25 * a));
+R.addItem(FCI.Motor(5 * a));
+R.addItem(FCI.Construction(40 * a));
+R.addItem(FCI.SteelPlate(50 * a));
 return R; } }
 public class cRs {
 public cRs() { m_Rs = new List<cR>(); }
 public void add(cR R) { m_Rs.Add(R); }
+public void add(CCI item) { m_Rs.Add(FR.SingleItem(item)); }
 public List<cR> Rs() { return m_Rs; }
 public List<CCI> sourceItems() {
 Dictionary<EIT, CCI> tmpDict = new Dictionary<EIT, CCI>();
@@ -337,7 +367,22 @@ SolarCell,
 SteelPlate,
 Superconductor,
 Thrust,
-ZoneChip }
+ZoneChip,
+NATO_5p56x45mm,
+LargeCalibreAmmo,
+MediumCalibreAmmo,
+AutocannonClip,
+NATO_25x184mm,
+LargeRailgunAmmo,
+Missile200mm,
+AutomaticRifleGun_Mag_20rd,
+UltimateAutomaticRifleGun_Mag_30rd,
+RapidFireAutomaticRifleGun_Mag_50rd,
+PreciseAutomaticRifleGun_Mag_5rd,
+SemiAutoPistolMagazine,
+ElitePistolMagazine,
+FullAutoPistolMagazine,
+SmallRailgunAmmo }
 public class CCI {
 public CCI(string itemType, int a = 0) { m_itemType = fromString(itemType); m_a = a; }
 public CCI(EIT itemType, int a = 0) { m_itemType = itemType ; m_a = a; }
@@ -365,37 +410,68 @@ else if(itemType.Contains("SteelPlate")) { return EIT.SteelPlate; }
 else if(itemType.Contains("Superconductor")) { return EIT.Superconductor; }
 else if(itemType.Contains("Thrust")) { return EIT.Thrust; }
 else if(itemType.Contains("ZoneChip")) { return EIT.ZoneChip; }
+else if(itemType.Contains("NATO_5p56x45mm")) { return EIT.NATO_5p56x45mm; }
+else if(itemType.Contains("LargeCalibreAmmo")) { return EIT.LargeCalibreAmmo; }
+else if(itemType.Contains("MediumCalibreAmmo")) { return EIT.MediumCalibreAmmo; }
+else if(itemType.Contains("AutocannonClip")) { return EIT.AutocannonClip; }
+else if(itemType.Contains("NATO_25x184mm")) { return EIT.NATO_25x184mm; }
+else if(itemType.Contains("LargeRailgunAmmo")) { return EIT.LargeRailgunAmmo; }
+else if(itemType.Contains("Missile200mm")) { return EIT.Missile200mm; }
+else if(itemType.Contains("AutomaticRifleGun_Mag_20rd")) { return EIT.AutomaticRifleGun_Mag_20rd; }
+else if(itemType.Contains("UltimateAutomaticRifleGun_Mag_30rd")) { return EIT.UltimateAutomaticRifleGun_Mag_30rd; }
+else if(itemType.Contains("RapidFireAutomaticRifleGun_Mag_50rd")) { return EIT.RapidFireAutomaticRifleGun_Mag_50rd; }
+else if(itemType.Contains("PreciseAutomaticRifleGun_Mag_5rd")) { return EIT.PreciseAutomaticRifleGun_Mag_5rd; }
+else if(itemType.Contains("SemiAutoPistolMagazine")) { return EIT.SemiAutoPistolMagazine; }
+else if(itemType.Contains("ElitePistolMagazine")) { return EIT.ElitePistolMagazine; }
+else if(itemType.Contains("FullAutoPistolMagazine")) { return EIT.FullAutoPistolMagazine; }
+else if(itemType.Contains("SmallRailgunAmmo")) { return EIT.SmallRailgunAmmo; }
 throw new System.ArgumentException("Не знаю такой строки", itemType); }
 public int a() { return m_a; }
 public void appendAmount(int aDelta) { m_a += aDelta; }
 public EIT itemType() { return m_itemType; }
 public string asComponent() {
 string name = "";
+string iSType = "";
 switch(m_itemType) {
-case EIT.BulletproofGlass: name = "BulletproofGlass"; break;
-case EIT.Canvas: name = "Canvas"; break;
-case EIT.Computer: name = "Computer"; break;
-case EIT.Construction: name = "Construction"; break;
-case EIT.Detector: name = "Detector"; break;
-case EIT.Display: name = "Display"; break;
-case EIT.Explosives: name = "Explosives"; break;
-case EIT.Girder: name = "Girder"; break;
-case EIT.GravityGenerator: name = "GravityGenerator"; break;
-case EIT.InteriorPlate: name = "InteriorPlate"; break;
-case EIT.LargeTube: name = "LargeTube"; break;
-case EIT.Medical: name = "Medical"; break;
-case EIT.MetalGrid: name = "MetalGrid"; break;
-case EIT.Motor: name = "Motor"; break;
-case EIT.PowerCell: name = "PowerCell"; break;
-case EIT.RadioCommunication: name = "RadioCommunication"; break;
-case EIT.Reactor: name = "Reactor"; break;
-case EIT.SmallTube: name = "SmallTube"; break;
-case EIT.SolarCell: name = "SolarCell"; break;
-case EIT.SteelPlate: name = "SteelPlate"; break;
-case EIT.Superconductor: name = "Superconductor"; break;
-case EIT.Thrust: name = "Thrust"; break;
-case EIT.ZoneChip: name = "ZoneChip"; break; }
-return $"MyObjectBuilder_Component/{name}"; }
+case EIT.BulletproofGlass: { iSType = "Component"; name = "BulletproofGlass"; } break;
+case EIT.Canvas: { iSType = "Component"; name = "Canvas"; } break;
+case EIT.Computer: { iSType = "Component"; name = "Computer"; } break;
+case EIT.Construction: { iSType = "Component"; name = "Construction"; } break;
+case EIT.Detector: { iSType = "Component"; name = "Detector"; } break;
+case EIT.Display: { iSType = "Component"; name = "Display"; } break;
+case EIT.Explosives: { iSType = "Component"; name = "Explosives"; } break;
+case EIT.Girder: { iSType = "Component"; name = "Girder"; } break;
+case EIT.GravityGenerator: { iSType = "Component"; name = "GravityGenerator"; } break;
+case EIT.InteriorPlate: { iSType = "Component"; name = "InteriorPlate"; } break;
+case EIT.LargeTube: { iSType = "Component"; name = "LargeTube"; } break;
+case EIT.Medical: { iSType = "Component"; name = "Medical"; } break;
+case EIT.MetalGrid: { iSType = "Component"; name = "MetalGrid"; } break;
+case EIT.Motor: { iSType = "Component"; name = "Motor"; } break;
+case EIT.PowerCell: { iSType = "Component"; name = "PowerCell"; } break;
+case EIT.RadioCommunication: { iSType = "Component"; name = "RadioCommunication"; } break;
+case EIT.Reactor: { iSType = "Component"; name = "Reactor"; } break;
+case EIT.SmallTube: { iSType = "Component"; name = "SmallTube"; } break;
+case EIT.SolarCell: { iSType = "Component"; name = "SolarCell"; } break;
+case EIT.SteelPlate: { iSType = "Component"; name = "SteelPlate"; } break;
+case EIT.Superconductor: { iSType = "Component"; name = "Superconductor"; } break;
+case EIT.Thrust: { iSType = "Component"; name = "Thrust"; } break;
+case EIT.ZoneChip: { iSType = "Component"; name = "ZoneChip"; } break;
+case EIT.NATO_5p56x45mm: { iSType = "AmmoMagazine"; name = "NATO_5p56x45mm"; } break;
+case EIT.LargeCalibreAmmo: { iSType = "AmmoMagazine"; name = "LargeCalibreAmmo"; } break;
+case EIT.MediumCalibreAmmo: { iSType = "AmmoMagazine"; name = "MediumCalibreAmmo"; } break;
+case EIT.AutocannonClip: { iSType = "AmmoMagazine"; name = "AutocannonClip"; } break;
+case EIT.NATO_25x184mm: { iSType = "AmmoMagazine"; name = "NATO_25x184mm"; } break;
+case EIT.LargeRailgunAmmo: { iSType = "AmmoMagazine"; name = "LargeRailgunAmmo"; } break;
+case EIT.Missile200mm: { iSType = "AmmoMagazine"; name = "Missile200mm"; } break;
+case EIT.AutomaticRifleGun_Mag_20rd: { iSType = "AmmoMagazine"; name = "AutomaticRifleGun_Mag_20rd"; } break;
+case EIT.UltimateAutomaticRifleGun_Mag_30rd: { iSType = "AmmoMagazine"; name = "UltimateAutomaticRifleGun_Mag_30rd"; } break;
+case EIT.RapidFireAutomaticRifleGun_Mag_50rd: { iSType = "AmmoMagazine"; name = "RapidFireAutomaticRifleGun_Mag_50rd"; } break;
+case EIT.PreciseAutomaticRifleGun_Mag_5rd: { iSType = "AmmoMagazine"; name = "PreciseAutomaticRifleGun_Mag_5rd"; } break;
+case EIT.SemiAutoPistolMagazine: { iSType = "AmmoMagazine"; name = "SemiAutoPistolMagazine"; } break;
+case EIT.ElitePistolMagazine: { iSType = "AmmoMagazine"; name = "ElitePistolMagazine"; } break;
+case EIT.FullAutoPistolMagazine: { iSType = "AmmoMagazine"; name = "FullAutoPistolMagazine"; } break;
+case EIT.SmallRailgunAmmo: { iSType = "AmmoMagazine"; name = "SmallRailgunAmmo"; } break; }
+return $"MyObjectBuilder_{iSType}/{name}"; }
 public string asBlueprintDefinition() {
 string name = "";
 switch(m_itemType) {
@@ -421,7 +497,22 @@ case EIT.SolarCell: name = "SolarCell"; break;
 case EIT.SteelPlate: name = "SteelPlate"; break;
 case EIT.Superconductor: name = "Superconductor"; break;
 case EIT.Thrust: name = "ThrustComponent"; break;
-case EIT.ZoneChip: name = "ZoneChip"; break; }
+case EIT.ZoneChip: name = "ZoneChip"; break;
+case EIT.NATO_5p56x45mm: name = "NATO_5p56x45mmMagazine"; break;
+case EIT.LargeCalibreAmmo: name = "LargeCalibreAmmo"; break;
+case EIT.MediumCalibreAmmo: name = "MediumCalibreAmmo"; break;
+case EIT.AutocannonClip: name = "AutocannonClip"; break;
+case EIT.NATO_25x184mm: name = "NATO_25x184mmMagazine"; break;
+case EIT.LargeRailgunAmmo: name = "LargeRailgunAmmo"; break;
+case EIT.Missile200mm: name = "Missile200mm"; break;
+case EIT.AutomaticRifleGun_Mag_20rd: name = "AutomaticRifleGun_Mag_20rd"; break;
+case EIT.UltimateAutomaticRifleGun_Mag_30rd: name = "UltimateAutomaticRifleGun_Mag_30rd"; break;
+case EIT.RapidFireAutomaticRifleGun_Mag_50rd: name = "RapidFireAutomaticRifleGun_Mag_50rd"; break;
+case EIT.PreciseAutomaticRifleGun_Mag_5rd: name = "PreciseAutomaticRifleGun_Mag_5rd"; break;
+case EIT.SemiAutoPistolMagazine: name = "SemiAutoPistolMagazine"; break;
+case EIT.ElitePistolMagazine: name = "ElitePistolMagazine"; break;
+case EIT.FullAutoPistolMagazine: name = "FullAutoPistolMagazine"; break;
+case EIT.SmallRailgunAmmo: name = "SmallRailgunAmmo"; break; }
 return $"MyObjectBuilder_BlueprintDefinition/{name}"; }
 public MyItemType asMyItemType() { return MyItemType.Parse(asComponent()); }
 private EIT m_itemType;
@@ -449,7 +540,22 @@ static public CCI SolarCell(int a = 0) { return new CCI(EIT.SolarCell, a); }
 static public CCI SteelPlate(int a = 0) { return new CCI(EIT.SteelPlate, a); }
 static public CCI Superconductor(int a = 0) { return new CCI(EIT.Superconductor, a); }
 static public CCI Thrust(int a = 0) { return new CCI(EIT.Thrust, a); }
-static public CCI ZoneChip(int a = 0) { return new CCI(EIT.ZoneChip, a); } }
+static public CCI ZoneChip(int a = 0) { return new CCI(EIT.ZoneChip, a); }
+static public CCI NATO_5p56x45mm(int a = 0) { return new CCI(EIT.NATO_5p56x45mm, a); }
+static public CCI LargeCalibreAmmo(int a = 0) { return new CCI(EIT.LargeCalibreAmmo, a); }
+static public CCI MediumCalibreAmmo(int a = 0) { return new CCI(EIT.MediumCalibreAmmo, a); }
+static public CCI AutocannonClip(int a = 0) { return new CCI(EIT.AutocannonClip, a); }
+static public CCI NATO_25x184mm(int a = 0) { return new CCI(EIT.NATO_25x184mm, a); }
+static public CCI LargeRailgunAmmo(int a = 0) { return new CCI(EIT.LargeRailgunAmmo, a); }
+static public CCI Missile200mm(int a = 0) { return new CCI(EIT.Missile200mm, a); }
+static public CCI AutomaticRifleGun_Mag_20rd(int a = 0) { return new CCI(EIT.AutomaticRifleGun_Mag_20rd, a); }
+static public CCI UltimateAutomaticRifleGun_Mag_30rd(int a = 0) { return new CCI(EIT.UltimateAutomaticRifleGun_Mag_30rd, a); }
+static public CCI RapidFireAutomaticRifleGun_Mag_50rd(int a = 0) { return new CCI(EIT.RapidFireAutomaticRifleGun_Mag_50rd, a); }
+static public CCI PreciseAutomaticRifleGun_Mag_5rd(int a = 0) { return new CCI(EIT.PreciseAutomaticRifleGun_Mag_5rd, a); }
+static public CCI SemiAutoPistolMagazine(int a = 0) { return new CCI(EIT.SemiAutoPistolMagazine, a); }
+static public CCI ElitePistolMagazine(int a = 0) { return new CCI(EIT.ElitePistolMagazine, a); }
+static public CCI FullAutoPistolMagazine(int a = 0) { return new CCI(EIT.FullAutoPistolMagazine, a); }
+static public CCI SmallRailgunAmmo(int a = 0) { return new CCI(EIT.SmallRailgunAmmo, a); } }
 public class CD : CTS {
 public CD() : base()
 {}
@@ -460,13 +566,14 @@ case "LargeLCDPanelWide" : s(0.602f, 28, 87, 0.35f); break;
 case "LargeLCDPanel" : s(0.602f, 28, 44, 0.35f); break;
 case "TransparentLCDLarge": s(0.602f, 28, 44, 0.35f); break;
 case "TransparentLCDSmall": s(0.602f, 26, 40, 4f); break;
+case "SmallTextPanel" : s(0.602f, 48, 48, 0.35f); break;
 default: s(1f, 1, 1, 1f); break; } }
 public void aDs(string name) {
 CBNamed<IMyTextPanel> displays = new CBNamed<IMyTextPanel>(name);
 if(displays.empty()) { throw new System.ArgumentException("Не найдены дисплеи", name); }
 mineDimensions(displays.blocks()[0]);
-foreach(IMyTextPanel display in displays.blocks()) {
-CBO o = displays.o(display);
+foreach(IMyTextPanel display in displays) {
+CBO o = new CBO(display);
 int x = o.g("display", "x", -1);
 int y = o.g("display", "y", -1);
 if(x<0 || y<0) { throw new System.ArgumentException("Не указаны координаты дисплея", display.CustomName); }
@@ -569,28 +676,31 @@ foreach(KeyValuePair<int, T> j in i.Value) {
 yield return j.Value; } } }
 private Dictionary<int, Dictionary<int, T>> m_data; }
 public class CBNamed<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CBNamed(string name, bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { m_name = name; load(); }
+public CBNamed(string name, bool lSG = true) : base(lSG) { m_name = name; load(); }
 protected override bool checkBlock(T b) {
-return (m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
+return (m_lSG ? b.IsSameConstructAs(_.Me) : true) && b.CustomName.Contains(m_name); }
 public string name() { return m_name; }
 private string m_name; }
-public class CBB<T> where T : class, IMyTerminalBlock {
-public CBB(bool loadOnlySameGrid = true) { m_blocks = new List<T>(); m_loadOnlySameGrid = loadOnlySameGrid; }
+public class CBB<T> where T : class, IMyEntity {
+public CBB(bool lSG = true) { m_blocks = new List<T>(); m_lSG = lSG; }
 public bool empty() { return count() == 0; }
 public int count() { return m_blocks.Count; }
 public List<T> blocks() { return m_blocks; }
 protected void clear() { m_blocks.Clear(); }
 public void removeBlock(T b) { m_blocks.Remove(b); }
 public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
-public string subtypeName() { return empty() ? "N/A" : m_blocks[0].DefinitionDisplayNameText; }
-public CBO o(T b) { return new CBO(b); }
-public bool iA<U>() where U : class, IMyTerminalBlock {
+public T first() { return m_blocks[0]; }
+public bool iA<U>() where U : class, IMyEntity {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
+public IEnumerator GetEnumerator() {
+foreach(T i in m_blocks) {
+yield return i; } }
 protected virtual void load() { _.GridTerminalSystem.GetBlocksOfType<T>(m_blocks, x => checkBlock(x)); }
-protected virtual bool checkBlock(T b) { return m_loadOnlySameGrid ? b.IsSameConstructAs(_.Me) : true; }
+protected virtual bool checkBlock(T b) {
+return m_lSG ? _.Me.IsSameConstructAs(b as IMyTerminalBlock) : true; }
 protected List<T> m_blocks;
-protected bool m_loadOnlySameGrid; }
+protected bool m_lSG; }
 public static string TrimAllSpaces(string value) {
 var newString = new StringBuilder();
 bool pIW = false;
@@ -606,70 +716,83 @@ return newString.ToString(); }
 public class CAssembler : CF<IMyAssembler> {
 public CAssembler(CBB<IMyAssembler> blocks) : base(blocks) {
 m_master = null;
-foreach(IMyAssembler b in m_blocks.blocks()) {
+foreach(IMyAssembler b in m_blocks) {
 if(b.CustomName.Contains("Master")) { m_master = b; } }
 if(m_master != null) { m_blocks.removeBlock(m_master); } }
 public bool producing() {
-if(m_master != null && m_master.IsProducing) { return true; }
-foreach(IMyAssembler b in m_blocks.blocks()) { if(b.IsProducing) { return true; } }
+foreach(IMyAssembler b in m_blocks) { if(b.IsProducing || !b.IsQueueEmpty) { return true; } }
 return false; }
 public void produce(string bpDefinition, int a) {
 if(m_master != null) { m_master.AddQueueItem(MyDefinitionId.Parse(bpDefinition), (double)a); }
 else {
 int realAmount = (int)Math.Ceiling((double)a/m_blocks.count());
-foreach(IMyAssembler b in m_blocks.blocks()) { b.AddQueueItem(MyDefinitionId.Parse(bpDefinition), (double)realAmount); } } }
+foreach(IMyAssembler b in m_blocks) { b.AddQueueItem(MyDefinitionId.Parse(bpDefinition), (double)realAmount); } } }
 public void clear() {
 if(m_master != null) { m_master.ClearQueue(); }
-foreach(IMyAssembler b in m_blocks.blocks()) { b.ClearQueue(); } }
+foreach(IMyAssembler b in m_blocks) { b.ClearQueue(); } }
 private IMyAssembler m_master; }
-public class CF<T> : CT<T> where T : class, IMyTerminalBlock {
+public class CF<T> : CT<T> where T : class, IMyFunctionalBlock {
 public CF(CBB<T> blocks) : base(blocks) {}
 public bool enable(bool target = true) {
-foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+foreach(IMyFunctionalBlock b in m_blocks) {
 if(b.Enabled != target) { b.Enabled = target; } }
 return enabled() == target; }
 public bool disable() { return enable(false); }
 public bool enabled() {
 bool r = true;
-foreach(IMyFunctionalBlock b in m_blocks.blocks()) {
+foreach(IMyFunctionalBlock b in m_blocks) {
 r = r && b.Enabled; }
 return r; } }
-public class CT<T> where T : class, IMyTerminalBlock {
-public CT(CBB<T> blocks) { m_blocks = blocks; }
+public class CT<T> : CCube<T> where T : class, IMyTerminalBlock {
+public CT(CBB<T> blocks) : base(blocks) {}
 public void listProperties(CTS lcd) {
-if(m_blocks.count() == 0) { return; }
+if(empty()) { return; }
 List<ITerminalProperty> properties = new List<ITerminalProperty>();
-m_blocks.blocks()[0].GetProperties(properties);
+first().GetProperties(properties);
 foreach(var property in properties) {
 lcd.echo($"id: {property.Id}, type: {property.TypeName}"); } }
 public void listActions(CTS lcd) {
-if(m_blocks.count() == 0) { return; }
+if(empty()) { return; }
 List<ITerminalAction> actions = new List<ITerminalAction>();
-m_blocks.blocks()[0].GetActions(actions);
+first().GetActions(actions);
 foreach(var action in actions) {
 lcd.echo($"id: {action.Id}, name: {action.Name}"); } }
-void showInTerminal(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
+void showInTerminal(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
 void hideInTerminal() { showInTerminal(false); }
-void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
+void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
 void hideInToolbarConfig() { showInToolbarConfig(false); }
-void showInInventory(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
+void showInInventory(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
 void hideInInventory() { showInInventory(false); }
-void showOnHUD(bool show = true) { foreach(T b in m_blocks.blocks()) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
-void hideOnHUD() { showOnHUD(false); }
+void showOnHUD(bool show = true) { foreach(T b in m_blocks) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
+void hideOnHUD() { showOnHUD(false); } }
+public class CCube<T> : CEntity<T> where T : class, IMyCubeBlock {
+public CCube(CBB<T> blocks) : base(blocks) {} }
+public class CEntity<T> where T : class, IMyEntity {
+public CEntity(CBB<T> blocks) { m_blocks = blocks; }
 public bool empty() { return m_blocks.empty(); }
 public int count() { return m_blocks.count(); }
+public T first() { return m_blocks.first(); }
+public IEnumerator GetEnumerator() {
+foreach(T i in m_blocks) {
+yield return i; } }
+public List<IMyInventory> invertoryes() {
+List<IMyInventory> r = new List<IMyInventory>();
+foreach(T i in m_blocks) {
+for(int j = 0; j < i.InventoryCount; j++) {
+r.Add(i.GetInventory(j)); } }
+return r; }
 protected CBB<T> m_blocks; }
 public class CContainer : CT<IMyCargoContainer> {
 public CContainer(CBB<IMyCargoContainer> blocks) : base(blocks) { }
 public int items(EIT itemType) {
 CCI r = new CCI(itemType);
 MyItemType miType = r.asMyItemType();
-foreach(IMyCargoContainer b in m_blocks.blocks()) {
+foreach(IMyCargoContainer b in m_blocks) {
 r.appendAmount(b.GetInventory().GetItemAmount(miType).ToIntSafe()); }
 return r.a(); }
 public Dictionary<MyItemType, float> items() {
 Dictionary<MyItemType, float> r = new Dictionary<MyItemType, float>();
-foreach(IMyCargoContainer b in m_blocks.blocks()) {
+foreach(IMyCargoContainer b in m_blocks) {
 List<MyInventoryItem> ci = new List<MyInventoryItem>();
 b.GetInventory().GetItems(ci, x => true);
 foreach(MyInventoryItem i in ci) {
@@ -678,21 +801,21 @@ else { r[i.Type] += (float)i.Amount; } } }
 return r; }
 public float maxVolume() {
 float r = 0;
-foreach(IMyCargoContainer b in m_blocks.blocks()) {
+foreach(IMyCargoContainer b in m_blocks) {
 r += (float)b.GetInventory().MaxVolume; }
 return r; }
 public float volume() {
 float r = 0;
-foreach(IMyCargoContainer b in m_blocks.blocks()) {
+foreach(IMyCargoContainer b in m_blocks) {
 r += (float)b.GetInventory().CurrentVolume; }
 return r; }
 public float mass() {
 float r = 0;
-foreach(IMyCargoContainer b in m_blocks.blocks()) {
+foreach(IMyCargoContainer b in m_blocks) {
 r += (float)b.GetInventory().CurrentMass; }
 return r; } }
 public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
-public CB(bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { load(); } }
+public CB(bool lSG = true) : base(lSG) { load(); } }
 cRs Rs;
 CD lcdAssembling;
 CContainer storage;
@@ -703,7 +826,7 @@ lcdAssembling.aDs("Производство");
 assembler = new CAssembler(new CB<IMyAssembler>());
 storage = new CContainer(new CBNamed<IMyCargoContainer>("Компоненты"));
 Rs = new cRs();
-Rs.add(FR.LargeArmorBlock(4*32+32*32));
+Rs.add(FR.LargeArmorBlock(4*32+32*32*4));
 Rs.add(FR.Window3x3Flat(8));
 Rs.add(FR.ArmorSide(32));
 Rs.add(FR.ArmorCenter(32));
@@ -724,23 +847,37 @@ Rs.add(FR.LargeConveyor(32));
 Rs.add(FR.Wheel5x5(4));
 Rs.add(FR.Suspension5x5(4));
 Rs.add(FR.AtmosphericThrust(8));
+Rs.add(FR.HydrogenThrust(8));
 Rs.add(FR.LargeWelder(16));
 Rs.add(FR.LargeGrinder(16));
 Rs.add(FR.LargeDrill(16));
+Rs.add(FR.LargeOreDetector(4));
 Rs.add(FR.MedicalRoom(2));
+Rs.add(FCI.NATO_25x184mm(1000));
+Rs.add(FCI.AutomaticRifleGun_Mag_20rd(200));
+Rs.add(FCI.UltimateAutomaticRifleGun_Mag_30rd(200));
+Rs.add(FCI.RapidFireAutomaticRifleGun_Mag_50rd(200));
+Rs.add(FCI.PreciseAutomaticRifleGun_Mag_5rd(200));
+Rs.add(FCI.SemiAutoPistolMagazine(200));
+Rs.add(FCI.ElitePistolMagazine(200));
+Rs.add(FCI.FullAutoPistolMagazine(200));
 return "Планирование производства"; }
 public void main(string argument, UpdateType updateSource) {
-if(argument == "start") { process(); } }
+if(argument == "start") { process(); }
+else if(argument == "clear") { clear(); } }
 public void process() {
 int i = 0;
 bool assemblerProducing = assembler.producing();
 string state = assemblerProducing ? "Producing" : "Stopped";
 lcdAssembling.echo_at($"Assemblesr state: {state}", i++);
 lcdAssembling.echo_at("---", i++);
-foreach(CCI component in Rs.sourceItems()) {
-int inStorageAmount = storage.items(component.itemType());
-int needAmount = component.a();
+foreach(CCI c in Rs.sourceItems()) {
+debug(c.asBlueprintDefinition());
+int inStorageAmount = storage.items(c.itemType());
+int needAmount = c.a();
 int a = needAmount - inStorageAmount;
-lcdAssembling.echo_at($"{component.itemType().ToString()}: {inStorageAmount} of {needAmount} - {inStorageAmount/(needAmount/100f):f2}%", i++);
+lcdAssembling.echo_at($"{c.itemType().ToString()}: {inStorageAmount} of {needAmount} - {inStorageAmount/(needAmount/100f):f2}%", i++);
 if(a > 0 && !assemblerProducing) {
-assembler.produce(component.asBlueprintDefinition(), a); } } }
+assembler.produce(c.asBlueprintDefinition(), a); } } }
+public void clear() {
+assembler.clear(); }

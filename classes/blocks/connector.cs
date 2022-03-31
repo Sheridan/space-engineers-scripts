@@ -6,7 +6,7 @@ public class CConnector : CFunctional<IMyShipConnector>
 
   public bool connect(bool target = true)
   {
-    foreach (IMyShipConnector b in m_blocks.blocks())
+    foreach (IMyShipConnector b in m_blocks)
     {
       if(target) { b.Connect(); } else { b.Disconnect(); }
     }
@@ -18,7 +18,7 @@ public class CConnector : CFunctional<IMyShipConnector>
   private bool checkConnected(bool target)
   {
     bool result = true;
-    foreach (IMyShipConnector b in m_blocks.blocks())
+    foreach (IMyShipConnector b in m_blocks)
     {
       result = result &&
               (
@@ -32,7 +32,7 @@ public class CConnector : CFunctional<IMyShipConnector>
   public bool connectable()
   {
     bool result = true;
-    foreach (IMyShipConnector b in m_blocks.blocks())
+    foreach (IMyShipConnector b in m_blocks)
     {
       result = result && b.Status == MyShipConnectorStatus.Connectable;
     }
