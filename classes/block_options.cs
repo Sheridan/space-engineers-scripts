@@ -24,7 +24,7 @@ public class CBlockOptions
 
   public string getValue(string section, string name, string defaultValue = "")
   {
-    if (exists(section, name)) { return m_ini.Get(section, name).ToString(); }
+    if (exists(section, name)) { return m_ini.Get(section, name).ToString().Trim(); }
     return defaultValue;
   }
 

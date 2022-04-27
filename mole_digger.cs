@@ -94,7 +94,7 @@ public string program()
   states.addState("Остановка буров", stopDrill);
   states.addState("Остановка вращения буров", stopDrillRotors);
   states.addState("Поднятие поршней буров", retractDrillPiston);
-  states.addState("Установка буров в начальную позицию", toZero);
+  // states.addState("Установка буров в начальную позицию", toZero);
 
   states.addState("Запуск сварщиков", startWelder);
   states.addState("Запуск проектора стен", tunnelProjectorOn);

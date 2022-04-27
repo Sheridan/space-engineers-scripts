@@ -12,6 +12,8 @@ public class CBlocksBase<T> where T : class, IMyEntity
   public    void          removeBlockAt(int i) { m_blocks.RemoveAt(i);  }
   public    T             first        (     ) { return m_blocks[0];    }
 
+  public T this[int i] { get { return m_blocks[i]; } }
+
   public bool isAssignable<U>() where U : class, IMyEntity
   {
     if (empty()) { return false; }

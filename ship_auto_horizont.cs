@@ -1,11 +1,11 @@
 // #include classes/main.cs
 // #include classes/blocks/base/blocks.cs
 // #include classes/blockstatus_display.cs
-// #include classes/ship_controller.cs
+// #include classes/ag_ship_controller.cs
 // #include classes/textsurface.cs
 // #include helpers/bool.cs
 
-CShipController controller;
+CAGShipController controller;
 CBlocks<IMyGyro> gyroscopes;
 CTextSurface lcd;
 IMyCockpit cockpit;
@@ -24,7 +24,7 @@ public string program()
   if(cockpitSurface >= 0) { lcd.setSurface(cockpit.GetSurface(cockpitSurface), 2f, 7, 30); }
   else                    { lcd.setSurface(Me.GetSurface(0), 2f, 7, 14);  }
   gyroscopes = new CBlocks<IMyGyro>();
-  controller = new CShipController(self.GridTerminalSystem.GetBlockWithName(prbOptions.getValue("script", "controllerName", cockpitName)) as IMyShipController, gyroscopes);
+  controller = new CAGShipController(self.GridTerminalSystem.GetBlockWithName(prbOptions.getValue("script", "controllerName", cockpitName)) as IMyShipController, gyroscopes);
   return "Атоматический горизонт";
 }
 

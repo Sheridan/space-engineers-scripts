@@ -54,7 +54,7 @@ if(!m_available) { debug(r.ToString()); } } }
 private void write() { m_block.CustomData = m_ini.ToString(); }
 private bool exists(string section, string name) { return m_available && m_ini.ContainsKey(section, name); }
 public string g(string section, string name, string defaultValue = "") {
-if(exists(section, name)) { return m_ini.Get(section, name).ToString(); }
+if(exists(section, name)) { return m_ini.Get(section, name).ToString().Trim(); }
 return defaultValue; }
 public bool g(string section, string name, bool defaultValue = true) {
 if(exists(section, name)) { return m_ini.Get(section, name).ToBoolean(); }
@@ -88,6 +88,7 @@ protected void clear() { m_blocks.Clear(); }
 public void removeBlock(T b) { m_blocks.Remove(b); }
 public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
 public T first() { return m_blocks[0]; }
+public T this[int i] { get { return m_blocks[i]; } }
 public bool iA<U>() where U : class, IMyEntity {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
@@ -501,10 +502,14 @@ if(x<0 || y<0) { throw new System.ArgumentException("Не указаны коо�
 addSurface(display as IMyTextSurface, x, y); }
 clear(); } }
 public enum EBoolToString {
-btsOnOff }
+btsOnOff,
+btsOpenClose,
+btsYesNo }
 public string boolToString(bool val, EBoolToString bsType = EBoolToString.btsOnOff) {
 switch(bsType) {
-case EBoolToString.btsOnOff: return val ? "Вкл." : "Выкл."; }
+case EBoolToString.btsOnOff : return val ? "Вкл." : "Выкл.";
+case EBoolToString.btsOpenClose: return val ? "Откр." : "Закр.";
+case EBoolToString.btsYesNo : return val ? "Да" : "Нет"; }
 return val.ToString(); }
 float drillRotorsRPM = 0.5f;
 float wallHeight = 4f * 2.5f;
@@ -576,7 +581,6 @@ states.addState($"Ожидание поворота роторов (шаг {i})"
 states.addState("Остановка буров", stopDrill);
 states.addState("Остановка вращения буров", stopDrillRotors);
 states.addState("Поднятие поршней буров", retractDrillPiston);
-states.addState("Установка буров в начальную позицию", toZero);
 states.addState("Запуск сварщиков", startWelder);
 states.addState("Запуск проектора стен", tunnelProjectorOn);
 for(int i = 1; i<=welderSteps; i++) {

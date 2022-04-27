@@ -24,15 +24,16 @@ public static string toHumanReadable(float value, EHRUnit unit = EHRUnit.None)
   string suffix = hrSuffix(unit);
   if(unit == EHRUnit.Mass)
   {
-    if(value >= 1000)
+    value *= 1000;
+    if(value >= 1000000)
     {
       suffix = "Т.";
-      value = value/1000;
+      value = value/1000000;
     }
   }
-  if(value < divider) { return $"{value}{suffix}"; }
+  if(value < divider) { return $"{value:f2}{suffix}"; }
   int exp = (int)(Math.Log(value) / Math.Log(divider));
-  return $"{value / Math.Pow(divider, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; // "kMGTPE" "кМГТПЭ"
+  return $"{value / (float)Math.Pow(divider, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; // "kMGTPE" "кМГТПЭ"
 }
 
 // public static string toHumanReadable(int value, string suffix = "")

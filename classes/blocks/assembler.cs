@@ -1,4 +1,5 @@
 // #include classes/blocks/base/functional.cs
+// #include classes/blocks/inventory.cs
 
 public class CAssembler : CFunctional<IMyAssembler>
 {
@@ -36,4 +37,5 @@ public class CAssembler : CFunctional<IMyAssembler>
   }
 
   private IMyAssembler m_master;
+
 }

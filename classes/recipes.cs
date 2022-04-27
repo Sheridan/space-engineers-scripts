@@ -16,7 +16,8 @@ public class FRecipe
   {
     switch (itemString)
     {
-      case "MyObjectBuilder_CubeBlock/LargeBlockArmorBlock"         : return LargeArmorBlock            (amount);
+      case "MyObjectBuilder_CubeBlock/LargeBlockArmorBlock"         : return ArmorBlock                 (amount);
+      case "MyObjectBuilder_CubeBlock/LargeHeavyBlockArmorBlock"    : return HeavyArmorBlock            (amount);
       case "MyObjectBuilder_InteriorLight/SmallLight"               : return SmallLight                 (amount);
       case "MyObjectBuilder_ConveyorConnector/ConveyorTube"         : return ConveyorTube               (amount);
       case "MyObjectBuilder_MergeBlock/LargeShipMergeBlock"         : return LargeShipMergeBlock        (amount);
@@ -46,6 +47,17 @@ public class FRecipe
       case "MyObjectBuilder_Thrust/LargeBlockLargeThrust"           : return IonThrust                  (amount);
       case "MyObjectBuilder_Thrust/LargeBlockLargeHydrogenThrust"   : return HydrogenThrust             (amount);
       case "MyObjectBuilder_OreDetector/LargeOreDetector"           : return LargeOreDetector           (amount);
+      case "MyObjectBuilder_Thrust/LargeBlockSmallModularThruster"  : return IonThrustModule            (amount);
+      case "MyObjectBuilder_Reactor/LargeBlockLargeGenerator"       : return LargeReactor               (amount);
+      case "MyObjectBuilder_Reactor/LargeBlockSmallGenerator"       : return SmallReactor               (amount);
+      // case "MyObjectBuilder_GravityGeneratorSphere/"                : return GravGenSphere              (amount);
+      case "MyObjectBuilder_GravityGenerator/"                      : return GravGen                    (amount);
+      case "MyObjectBuilder_UpgradeModule/LargeEnergyModule"        : return PowerEfficiencyModule      (amount);
+      case "MyObjectBuilder_UpgradeModule/LargeProductivityModule"  : return SpeedModule                (amount);
+      case "MyObjectBuilder_UpgradeModule/LargeEffectivenessModule" : return YieldModule                (amount);
+      case "MyObjectBuilder_Assembler/LargeAssembler"               : return Assembler                  (amount);
+      case "MyObjectBuilder_Refinery/LargeRefinery"                 : return Refinery                   (amount);
+      case "MyObjectBuilder_OxygenFarm/LargeBlockOxygenFarm"        : return OxygenFarm                 (amount);
     }
     throw new System.ArgumentException("Не знаю такой строки", itemString);
   }
@@ -156,6 +168,19 @@ public class FRecipe
     recipe.addItem(FComponentItem.InteriorPlate(40 * amount));
     return recipe;
   }
+  static public CRecipe HeavyArmorBlock(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/LargeHeavyBlockArmorBlock");
+    recipe.addItem(FComponentItem.MetalGrid(50 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(150 * amount));
+    return recipe;
+  }
+  static public CRecipe ArmorBlock(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/LargeBlockArmorBlock");
+    recipe.addItem(FComponentItem.SteelPlate(25 * amount));
+    return recipe;
+  }
   static public CRecipe ArmorCorner(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/ArmorCorner");
@@ -178,12 +203,6 @@ public class FRecipe
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/ArmorCenter");
     recipe.addItem(FComponentItem.SteelPlate(140 * amount));
-    return recipe;
-  }
-  static public CRecipe LargeArmorBlock(int amount = 1)
-  {
-    CRecipe recipe = new CRecipe("MyObjectBuilder_CubeBlock/LargeBlockArmorBlock");
-    recipe.addItem(FComponentItem.SteelPlate(25 * amount));
     return recipe;
   }
   static public CRecipe LargeArmorRoundCorner(int amount = 1)
@@ -279,6 +298,15 @@ public class FRecipe
     recipe.addItem(FComponentItem.SteelPlate(150 * amount));
     return recipe;
   }
+  static public CRecipe IonThrustModule(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Thrust/LargeBlockSmallModularThruster");
+    recipe.addItem(FComponentItem.Thrust(80 * amount));
+    recipe.addItem(FComponentItem.LargeTube(8 * amount));
+    recipe.addItem(FComponentItem.Construction(60 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(25 * amount));
+    return recipe;
+  }
   static public CRecipe HydrogenThrust(int amount = 1)
   {
     CRecipe recipe = new CRecipe("MyObjectBuilder_Thrust/LargeBlockLargeHydrogenThrust");
@@ -326,6 +354,117 @@ public class FRecipe
     recipe.addItem(FComponentItem.Motor(5 * amount));
     recipe.addItem(FComponentItem.Construction(40 * amount));
     recipe.addItem(FComponentItem.SteelPlate(50 * amount));
+    return recipe;
+  }
+  static public CRecipe LargeReactor(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Reactor/LargeBlockLargeGenerator");
+    recipe.addItem(FComponentItem.Computer(75 * amount));
+    recipe.addItem(FComponentItem.Motor(20 * amount));
+    recipe.addItem(FComponentItem.Reactor(2000 * amount));
+    recipe.addItem(FComponentItem.Superconductor(100 * amount));
+    recipe.addItem(FComponentItem.LargeTube(40 * amount));
+    recipe.addItem(FComponentItem.MetalGrid(40 * amount));
+    recipe.addItem(FComponentItem.Construction(70 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(1000 * amount));
+    return recipe;
+  }
+  static public CRecipe SmallReactor(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Reactor/LargeBlockSmallGenerator");
+    recipe.addItem(FComponentItem.Computer(25 * amount));
+    recipe.addItem(FComponentItem.Motor(6 * amount));
+    recipe.addItem(FComponentItem.Reactor(100 * amount));
+    recipe.addItem(FComponentItem.Superconductor(100 * amount));
+    recipe.addItem(FComponentItem.LargeTube(8 * amount));
+    recipe.addItem(FComponentItem.MetalGrid(4 * amount));
+    recipe.addItem(FComponentItem.Construction(40 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(80 * amount));
+    return recipe;
+  }
+  static public CRecipe OxygenFarm(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_OxygenFarm/LargeBlockOxygenFarm");
+    recipe.addItem(FComponentItem.Computer(20 * amount));
+    recipe.addItem(FComponentItem.Construction(20 * amount));
+    recipe.addItem(FComponentItem.SmallTube(10 * amount));
+    recipe.addItem(FComponentItem.LargeTube(20 * amount));
+    recipe.addItem(FComponentItem.BulletproofGlass(100 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(40 * amount));
+    return recipe;
+  }
+  // static public CRecipe GravGenSphere(int amount = 1)
+  // {
+  //   CRecipe recipe = new CRecipe("MyObjectBuilder_GravityGeneratorSphere/");
+  //   recipe.addItem(FComponentItem.Computer(40 * amount));
+  //   recipe.addItem(FComponentItem.Motor(6 * amount));
+  //   recipe.addItem(FComponentItem.LargeTube(4 * amount));
+  //   recipe.addItem(FComponentItem.Construction(60 * amount));
+  //   recipe.addItem(FComponentItem.GravityGenerator(6 * amount));
+  //   recipe.addItem(FComponentItem.SteelPlate(150 * amount));
+  //   return recipe;
+  // }
+  static public CRecipe GravGen(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_GravityGenerator/");
+    recipe.addItem(FComponentItem.Computer(40 * amount));
+    recipe.addItem(FComponentItem.Motor(6 * amount));
+    recipe.addItem(FComponentItem.LargeTube(4 * amount));
+    recipe.addItem(FComponentItem.Construction(60 * amount));
+    recipe.addItem(FComponentItem.GravityGenerator(6 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(150 * amount));
+    return recipe;
+  }
+  static public CRecipe PowerEfficiencyModule(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_UpgradeModule/LargeEnergyModule");
+    recipe.addItem(FComponentItem.Motor(4 * amount));
+    recipe.addItem(FComponentItem.PowerCell(20 * amount));
+    recipe.addItem(FComponentItem.SmallTube(20 * amount));
+    recipe.addItem(FComponentItem.Construction(40 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(100 * amount));
+    return recipe;
+  }
+  static public CRecipe SpeedModule(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_UpgradeModule/LargeProductivityModule");
+    recipe.addItem(FComponentItem.Motor(4 * amount));
+    recipe.addItem(FComponentItem.Computer(60 * amount));
+    recipe.addItem(FComponentItem.SmallTube(20 * amount));
+    recipe.addItem(FComponentItem.Construction(40 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(100 * amount));
+    return recipe;
+  }
+  static public CRecipe YieldModule(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_UpgradeModule/LargeEffectivenessModule");
+    recipe.addItem(FComponentItem.Motor(4 * amount));
+    recipe.addItem(FComponentItem.Superconductor(20 * amount));
+    recipe.addItem(FComponentItem.SmallTube(20 * amount));
+    recipe.addItem(FComponentItem.Construction(50 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(100 * amount));
+    return recipe;
+  }
+  static public CRecipe Assembler(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Assembler/LargeAssembler");
+    recipe.addItem(FComponentItem.Computer(160 * amount));
+    recipe.addItem(FComponentItem.MetalGrid(10 * amount));
+    recipe.addItem(FComponentItem.Display(10 * amount));
+    recipe.addItem(FComponentItem.Motor(20 * amount));
+    recipe.addItem(FComponentItem.Construction(80 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(140 * amount));
+    return recipe;
+  }
+  static public CRecipe Refinery(int amount = 1)
+  {
+    CRecipe recipe = new CRecipe("MyObjectBuilder_Refinery/LargeRefinery");
+    recipe.addItem(FComponentItem.Computer(20 * amount));
+    recipe.addItem(FComponentItem.MetalGrid(20 * amount));
+    recipe.addItem(FComponentItem.Motor(16 * amount));
+    recipe.addItem(FComponentItem.LargeTube(20 * amount));
+    recipe.addItem(FComponentItem.Construction(40 * amount));
+    recipe.addItem(FComponentItem.SteelPlate(1200 * amount));
     return recipe;
   }
 }

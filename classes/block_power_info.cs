@@ -35,7 +35,7 @@ class CBlockUpgrades
 
 public class CBlockPowerInfo
 {
-  public CBlockPowerInfo(IMyTerminalBlock block)
+  public CBlockPowerInfo(IMyCubeBlock block)
   {
     m_block = block;
     m_blockSinkComponent = m_block.Components.Get<MyResourceSinkComponent>();
@@ -90,6 +90,6 @@ public class CBlockPowerInfo
   }
 
   MyResourceSinkComponent m_blockSinkComponent;
-  IMyTerminalBlock m_block;
+  IMyCubeBlock m_block;
   private static readonly MyDefinitionId Electricity = MyDefinitionId.Parse("MyObjectBuilder_GasProperties/Electricity");
 }

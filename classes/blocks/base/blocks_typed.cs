@@ -6,7 +6,7 @@ public class CBlocksTyped<T> : CBlocksBase<T> where T : class, IMyTerminalBlock
 
   protected override bool checkBlock(T b)
   {
-    return (m_loadOnlySameGrid ? b.IsSameConstructAs(self.Me) : true) && b.BlockDefinition.ToString().Contains(m_subTypeName);
+    return (m_loadOnlySameGrid ? self.Me.IsSameConstructAs(b) : true) && b.BlockDefinition.ToString().Contains(m_subTypeName);
   }
 
   public string subTypeName() { return m_subTypeName; }

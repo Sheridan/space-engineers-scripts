@@ -1,6 +1,6 @@
 // #include classes/display.cs
 // #include helpers/human.cs
-// #include classes/blocks/base/terminal.cs
+// #include classes/blocks/base/cube.cs
 // #include classes/blocks/base/blocks.cs
 // #include classes/block_power_info.cs
 // #include classes/min_current_max.cs
@@ -9,7 +9,7 @@ public class CPowerInfo
 {
   public CPowerInfo(string lcdNameProducing, string lcdNameConsuming)
   {
-    m_blocks = new CTerminal<IMyTerminalBlock>(new CBlocks<IMyTerminalBlock>());
+    m_blocks = new CCube<IMyCubeBlock>(new CBlocks<IMyCubeBlock>());
     m_lcdProducers = new CDisplay();
     m_lcdProducers.addDisplays(lcdNameProducing);
     m_lcdConsumers = new CDisplay();
@@ -19,7 +19,7 @@ public class CPowerInfo
   private void updateBlocksInfo()
   {
     reset();
-    foreach(IMyTerminalBlock b in m_blocks)
+    foreach(IMyCubeBlock b in m_blocks)
     {
       string name = b.DefinitionDisplayNameText;
       CBlockPowerInfo pi = new CBlockPowerInfo(b);
@@ -40,11 +40,15 @@ public class CPowerInfo
   private void drawInfo(CDisplay to, Dictionary<string, SMinCurrentMax<float>> from, string title)
   {
     int j = 0;
+    float curr = 0f; float maxx = 0f;
     to.echo_at(title, j++);
     foreach(KeyValuePair<string, SMinCurrentMax<float>> i in from)
     {
       to.echo_at($"[{i.Key}:{i.Value.count}] {toHumanReadable(i.Value.current, EHRUnit.Power)} of {toHumanReadable(i.Value.max, EHRUnit.Power)}", j++);
+      curr += i.Value.current;
+      maxx += i.Value.max;
     }
+    to.echo_at($"Total: {toHumanReadable(curr, EHRUnit.Power)} of {toHumanReadable(maxx, EHRUnit.Power)}", j++);
   }
 
   private void addPowerBlock(Dictionary<string, SMinCurrentMax<float>> to, string name, float cr, float mx)
@@ -65,7 +69,7 @@ public class CPowerInfo
     m_consumers = new Dictionary<string, SMinCurrentMax<float>>();
   }
 
-  private CTerminal<IMyTerminalBlock> m_blocks;
+  private CCube<IMyCubeBlock> m_blocks;
 
   private Dictionary<string, SMinCurrentMax<float>> m_producers;
   private Dictionary<string, SMinCurrentMax<float>> m_consumers;

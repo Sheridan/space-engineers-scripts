@@ -73,7 +73,7 @@ return defaultValue; }
 IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
-public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
+public class CB<T> : CBB<T> where T : class, IMyEntity {
 public CB(bool lSG = true) : base(lSG) { load(); } }
 public class CBB<T> where T : class, IMyEntity {
 public CBB(bool lSG = true) { m_blocks = new List<T>(); m_lSG = lSG; }

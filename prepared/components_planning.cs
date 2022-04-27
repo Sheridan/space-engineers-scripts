@@ -54,7 +54,7 @@ if(!m_available) { debug(r.ToString()); } } }
 private void write() { m_block.CustomData = m_ini.ToString(); }
 private bool exists(string section, string name) { return m_available && m_ini.ContainsKey(section, name); }
 public string g(string section, string name, string defaultValue = "") {
-if(exists(section, name)) { return m_ini.Get(section, name).ToString(); }
+if(exists(section, name)) { return m_ini.Get(section, name).ToString().Trim(); }
 return defaultValue; }
 public bool g(string section, string name, bool defaultValue = true) {
 if(exists(section, name)) { return m_ini.Get(section, name).ToBoolean(); }
@@ -83,7 +83,8 @@ private List<CCI> m_sourceItems; }
 public class FR {
 static public cR fromString(string itemString, int a = 1) {
 switch(itemString) {
-case "MyObjectBuilder_CubeBlock/LargeBlockArmorBlock" : return LargeArmorBlock(a);
+case "MyObjectBuilder_CubeBlock/LargeBlockArmorBlock" : return ArmorBlock(a);
+case "MyObjectBuilder_CubeBlock/LargeHeavyBlockArmorBlock" : return HeavyArmorBlock(a);
 case "MyObjectBuilder_InteriorLight/SmallLight" : return SmallLight(a);
 case "MyObjectBuilder_ConveyorConnector/ConveyorTube" : return ConveyorTube(a);
 case "MyObjectBuilder_MergeBlock/LargeShipMergeBlock" : return LargeShipMergeBlock(a);
@@ -112,7 +113,17 @@ case "MyObjectBuilder_ShipGrinder/LargeShipGrinder" : return LargeGrinder(a);
 case "MyObjectBuilder_Drill/LargeBlockDrill" : return LargeDrill(a);
 case "MyObjectBuilder_Thrust/LargeBlockLargeThrust" : return IonThrust(a);
 case "MyObjectBuilder_Thrust/LargeBlockLargeHydrogenThrust" : return HydrogenThrust(a);
-case "MyObjectBuilder_OreDetector/LargeOreDetector" : return LargeOreDetector(a); }
+case "MyObjectBuilder_OreDetector/LargeOreDetector" : return LargeOreDetector(a);
+case "MyObjectBuilder_Thrust/LargeBlockSmallModularThruster" : return IonThrustModule(a);
+case "MyObjectBuilder_Reactor/LargeBlockLargeGenerator" : return LargeReactor(a);
+case "MyObjectBuilder_Reactor/LargeBlockSmallGenerator" : return SmallReactor(a);
+case "MyObjectBuilder_GravityGenerator/" : return GravGen(a);
+case "MyObjectBuilder_UpgradeModule/LargeEnergyModule" : return PowerEfficiencyModule(a);
+case "MyObjectBuilder_UpgradeModule/LargeProductivityModule" : return SpeedModule(a);
+case "MyObjectBuilder_UpgradeModule/LargeEffectivenessModule" : return YieldModule(a);
+case "MyObjectBuilder_Assembler/LargeAssembler" : return Assembler(a);
+case "MyObjectBuilder_Refinery/LargeRefinery" : return Refinery(a);
+case "MyObjectBuilder_OxygenFarm/LargeBlockOxygenFarm" : return OxygenFarm(a); }
 throw new System.ArgumentException("Не знаю такой строки", itemString); }
 static public cR SingleItem(CCI item, int a = 1) {
 cR R = new cR(item.asBlueprintDefinition());
@@ -198,6 +209,15 @@ R.addItem(FCI.MetalGrid(4 * a));
 R.addItem(FCI.Construction(40 * a));
 R.addItem(FCI.InteriorPlate(40 * a));
 return R; }
+static public cR HeavyArmorBlock(int a = 1) {
+cR R = new cR("MyObjectBuilder_CubeBlock/LargeHeavyBlockArmorBlock");
+R.addItem(FCI.MetalGrid(50 * a));
+R.addItem(FCI.SteelPlate(150 * a));
+return R; }
+static public cR ArmorBlock(int a = 1) {
+cR R = new cR("MyObjectBuilder_CubeBlock/LargeBlockArmorBlock");
+R.addItem(FCI.SteelPlate(25 * a));
+return R; }
 static public cR ArmorCorner(int a = 1) {
 cR R = new cR("MyObjectBuilder_CubeBlock/ArmorCorner");
 R.addItem(FCI.SteelPlate(135 * a));
@@ -213,10 +233,6 @@ return R; }
 static public cR ArmorCenter(int a = 1) {
 cR R = new cR("MyObjectBuilder_CubeBlock/ArmorCenter");
 R.addItem(FCI.SteelPlate(140 * a));
-return R; }
-static public cR LargeArmorBlock(int a = 1) {
-cR R = new cR("MyObjectBuilder_CubeBlock/LargeBlockArmorBlock");
-R.addItem(FCI.SteelPlate(25 * a));
 return R; }
 static public cR LargeArmorRoundCorner(int a = 1) {
 cR R = new cR("MyObjectBuilder_CubeBlock/LargeBlockArmorRoundCorner");
@@ -291,6 +307,13 @@ R.addItem(FCI.LargeTube(40 * a));
 R.addItem(FCI.Construction(100 * a));
 R.addItem(FCI.SteelPlate(150 * a));
 return R; }
+static public cR IonThrustModule(int a = 1) {
+cR R = new cR("MyObjectBuilder_Thrust/LargeBlockSmallModularThruster");
+R.addItem(FCI.Thrust(80 * a));
+R.addItem(FCI.LargeTube(8 * a));
+R.addItem(FCI.Construction(60 * a));
+R.addItem(FCI.SteelPlate(25 * a));
+return R; }
 static public cR HydrogenThrust(int a = 1) {
 cR R = new cR("MyObjectBuilder_Thrust/LargeBlockLargeHydrogenThrust");
 R.addItem(FCI.LargeTube(40 * a));
@@ -329,6 +352,88 @@ R.addItem(FCI.Computer(25 * a));
 R.addItem(FCI.Motor(5 * a));
 R.addItem(FCI.Construction(40 * a));
 R.addItem(FCI.SteelPlate(50 * a));
+return R; }
+static public cR LargeReactor(int a = 1) {
+cR R = new cR("MyObjectBuilder_Reactor/LargeBlockLargeGenerator");
+R.addItem(FCI.Computer(75 * a));
+R.addItem(FCI.Motor(20 * a));
+R.addItem(FCI.Reactor(2000 * a));
+R.addItem(FCI.Superconductor(100 * a));
+R.addItem(FCI.LargeTube(40 * a));
+R.addItem(FCI.MetalGrid(40 * a));
+R.addItem(FCI.Construction(70 * a));
+R.addItem(FCI.SteelPlate(1000 * a));
+return R; }
+static public cR SmallReactor(int a = 1) {
+cR R = new cR("MyObjectBuilder_Reactor/LargeBlockSmallGenerator");
+R.addItem(FCI.Computer(25 * a));
+R.addItem(FCI.Motor(6 * a));
+R.addItem(FCI.Reactor(100 * a));
+R.addItem(FCI.Superconductor(100 * a));
+R.addItem(FCI.LargeTube(8 * a));
+R.addItem(FCI.MetalGrid(4 * a));
+R.addItem(FCI.Construction(40 * a));
+R.addItem(FCI.SteelPlate(80 * a));
+return R; }
+static public cR OxygenFarm(int a = 1) {
+cR R = new cR("MyObjectBuilder_OxygenFarm/LargeBlockOxygenFarm");
+R.addItem(FCI.Computer(20 * a));
+R.addItem(FCI.Construction(20 * a));
+R.addItem(FCI.SmallTube(10 * a));
+R.addItem(FCI.LargeTube(20 * a));
+R.addItem(FCI.BulletproofGlass(100 * a));
+R.addItem(FCI.SteelPlate(40 * a));
+return R; }
+static public cR GravGen(int a = 1) {
+cR R = new cR("MyObjectBuilder_GravityGenerator/");
+R.addItem(FCI.Computer(40 * a));
+R.addItem(FCI.Motor(6 * a));
+R.addItem(FCI.LargeTube(4 * a));
+R.addItem(FCI.Construction(60 * a));
+R.addItem(FCI.GravityGenerator(6 * a));
+R.addItem(FCI.SteelPlate(150 * a));
+return R; }
+static public cR PowerEfficiencyModule(int a = 1) {
+cR R = new cR("MyObjectBuilder_UpgradeModule/LargeEnergyModule");
+R.addItem(FCI.Motor(4 * a));
+R.addItem(FCI.PowerCell(20 * a));
+R.addItem(FCI.SmallTube(20 * a));
+R.addItem(FCI.Construction(40 * a));
+R.addItem(FCI.SteelPlate(100 * a));
+return R; }
+static public cR SpeedModule(int a = 1) {
+cR R = new cR("MyObjectBuilder_UpgradeModule/LargeProductivityModule");
+R.addItem(FCI.Motor(4 * a));
+R.addItem(FCI.Computer(60 * a));
+R.addItem(FCI.SmallTube(20 * a));
+R.addItem(FCI.Construction(40 * a));
+R.addItem(FCI.SteelPlate(100 * a));
+return R; }
+static public cR YieldModule(int a = 1) {
+cR R = new cR("MyObjectBuilder_UpgradeModule/LargeEffectivenessModule");
+R.addItem(FCI.Motor(4 * a));
+R.addItem(FCI.Superconductor(20 * a));
+R.addItem(FCI.SmallTube(20 * a));
+R.addItem(FCI.Construction(50 * a));
+R.addItem(FCI.SteelPlate(100 * a));
+return R; }
+static public cR Assembler(int a = 1) {
+cR R = new cR("MyObjectBuilder_Assembler/LargeAssembler");
+R.addItem(FCI.Computer(160 * a));
+R.addItem(FCI.MetalGrid(10 * a));
+R.addItem(FCI.Display(10 * a));
+R.addItem(FCI.Motor(20 * a));
+R.addItem(FCI.Construction(80 * a));
+R.addItem(FCI.SteelPlate(140 * a));
+return R; }
+static public cR Refinery(int a = 1) {
+cR R = new cR("MyObjectBuilder_Refinery/LargeRefinery");
+R.addItem(FCI.Computer(20 * a));
+R.addItem(FCI.MetalGrid(20 * a));
+R.addItem(FCI.Motor(16 * a));
+R.addItem(FCI.LargeTube(20 * a));
+R.addItem(FCI.Construction(40 * a));
+R.addItem(FCI.SteelPlate(1200 * a));
 return R; } }
 public class cRs {
 public cRs() { m_Rs = new List<cR>(); }
@@ -690,6 +795,7 @@ protected void clear() { m_blocks.Clear(); }
 public void removeBlock(T b) { m_blocks.Remove(b); }
 public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
 public T first() { return m_blocks[0]; }
+public T this[int i] { get { return m_blocks[i]; } }
 public bool iA<U>() where U : class, IMyEntity {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
@@ -814,7 +920,7 @@ float r = 0;
 foreach(IMyCargoContainer b in m_blocks) {
 r += (float)b.GetInventory().CurrentMass; }
 return r; } }
-public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
+public class CB<T> : CBB<T> where T : class, IMyEntity {
 public CB(bool lSG = true) : base(lSG) { load(); } }
 cRs Rs;
 CD lcdAssembling;
@@ -826,7 +932,8 @@ lcdAssembling.aDs("Производство");
 assembler = new CAssembler(new CB<IMyAssembler>());
 storage = new CContainer(new CBNamed<IMyCargoContainer>("Компоненты"));
 Rs = new cRs();
-Rs.add(FR.LargeArmorBlock(4*32+32*32*4));
+Rs.add(FR.HeavyArmorBlock(32));
+Rs.add(FR.ArmorBlock(4*32+32*32*4));
 Rs.add(FR.Window3x3Flat(8));
 Rs.add(FR.ArmorSide(32));
 Rs.add(FR.ArmorCenter(32));
@@ -836,9 +943,11 @@ Rs.add(FR.SmallLight(64));
 Rs.add(FR.LargeShipMergeBlock(16));
 Rs.add(FR.LargePistonBase(16));
 Rs.add(FR.LargeGyro(16));
+Rs.add(FR.OxygenFarm(16*2*4));
 Rs.add(FR.LargeWindTurbine(32));
-Rs.add(FR.LargeBattery(32));
-Rs.add(FR.SolarPanel(32));
+Rs.add(FR.LargeBattery(32*8+16*4));
+Rs.add(FR.SolarPanel(32*8+72*4));
+Rs.add(FR.LargeReactor(4));
 Rs.add(FR.LargeSmallContainer(16));
 Rs.add(FR.LargeLargeContainer(16));
 Rs.add(FR.Connector(8));
@@ -853,6 +962,12 @@ Rs.add(FR.LargeGrinder(16));
 Rs.add(FR.LargeDrill(16));
 Rs.add(FR.LargeOreDetector(4));
 Rs.add(FR.MedicalRoom(2));
+int refineryes = ((7+7+2)*2)*4;
+Rs.add(FR.Assembler(4));
+Rs.add(FR.Refinery(refineryes));
+Rs.add(FR.PowerEfficiencyModule(16));
+Rs.add(FR.SpeedModule(16));
+Rs.add(FR.YieldModule(refineryes*4));
 Rs.add(FCI.NATO_25x184mm(1000));
 Rs.add(FCI.AutomaticRifleGun_Mag_20rd(200));
 Rs.add(FCI.UltimateAutomaticRifleGun_Mag_30rd(200));
@@ -872,7 +987,6 @@ string state = assemblerProducing ? "Producing" : "Stopped";
 lcdAssembling.echo_at($"Assemblesr state: {state}", i++);
 lcdAssembling.echo_at("---", i++);
 foreach(CCI c in Rs.sourceItems()) {
-debug(c.asBlueprintDefinition());
 int inStorageAmount = storage.items(c.itemType());
 int needAmount = c.a();
 int a = needAmount - inStorageAmount;

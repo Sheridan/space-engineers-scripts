@@ -1,6 +1,6 @@
 // #include classes/blocks/base/blocks.cs
 
-public class CBlockGroup<T> : CBlocks<T> where T : class, IMyTerminalBlock
+public class CBlockGroup<T> : CBlocks<T> where T : class, IMyEntity
 {
   public CBlockGroup(string groupName, bool loadOnlySameGrid = true) : base(loadOnlySameGrid) { m_groupName = groupName; load(); }
 

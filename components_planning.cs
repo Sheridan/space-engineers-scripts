@@ -21,7 +21,8 @@ public string program()
   // Runtime.UpdateFrequency = UpdateFrequency.Update100;
 
   recipes = new CRecipes();
-  recipes.add(FRecipe.LargeArmorBlock(4*32+32*32*4));
+  recipes.add(FRecipe.HeavyArmorBlock(32));
+  recipes.add(FRecipe.ArmorBlock(4*32+32*32*4));
   recipes.add(FRecipe.Window3x3Flat(8));
   recipes.add(FRecipe.ArmorSide(32));
   recipes.add(FRecipe.ArmorCenter(32));
@@ -32,10 +33,13 @@ public string program()
   recipes.add(FRecipe.LargeShipMergeBlock(16));
   recipes.add(FRecipe.LargePistonBase(16));
   recipes.add(FRecipe.LargeGyro(16));
+  recipes.add(FRecipe.OxygenFarm(16*2*4));
 
   recipes.add(FRecipe.LargeWindTurbine(32));
-  recipes.add(FRecipe.LargeBattery(32));
-  recipes.add(FRecipe.SolarPanel(32));
+  recipes.add(FRecipe.LargeBattery(32*8+16*4));
+  recipes.add(FRecipe.SolarPanel(32*8+72*4));
+  recipes.add(FRecipe.LargeReactor(4));
+  // recipes.add(FRecipe.SmallReactor(16));
 
   recipes.add(FRecipe.LargeSmallContainer(16));
   recipes.add(FRecipe.LargeLargeContainer(16));
@@ -48,6 +52,7 @@ public string program()
   recipes.add(FRecipe.AtmosphericThrust(8));
   recipes.add(FRecipe.HydrogenThrust(8));
   // recipes.add(FRecipe.IonThrust(8));
+  // recipes.add(FRecipe.IonThrustModule(32));
 
   recipes.add(FRecipe.LargeWelder(16));
   recipes.add(FRecipe.LargeGrinder(16));
@@ -55,6 +60,15 @@ public string program()
   recipes.add(FRecipe.LargeOreDetector(4));
 
   recipes.add(FRecipe.MedicalRoom(2));
+  // recipes.add(FRecipe.GravGen(8));
+
+  int refineryes = ((7+7+2)*2)*4;
+
+  recipes.add(FRecipe.Assembler(4));
+  recipes.add(FRecipe.Refinery(refineryes));
+  recipes.add(FRecipe.PowerEfficiencyModule(16));
+  recipes.add(FRecipe.SpeedModule(16));
+  recipes.add(FRecipe.YieldModule(refineryes*4));
 
   recipes.add(FComponentItem.NATO_25x184mm(1000));
   // recipes.add(FComponentItem.NATO_5p56x45mm(200));
@@ -85,7 +99,7 @@ public void process()
   lcdAssembling.echo_at("---", i++);
   foreach(CComponentItem c in recipes.sourceItems())
   {
-    debug(c.asBlueprintDefinition());
+    // debug(c.asBlueprintDefinition());
     int inStorageAmount = storage.items(c.itemType());
     int needAmount = c.amount();
     int amount = needAmount - inStorageAmount;

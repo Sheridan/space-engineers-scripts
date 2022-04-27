@@ -1,9 +1,9 @@
 // #include classes/blocks/base/blocks_base.cs
 // #include classes/auto_horizont.cs
 
-public class CShipController
+public class CAGShipController
 {
-  public CShipController(IMyShipController controller, CBlocksBase<IMyGyro> gyroscopes)
+  public CAGShipController(IMyShipController controller, CBlocksBase<IMyGyro> gyroscopes)
   {
     m_controller = controller;
     m_autoHorizont = new CAutoHorizont(m_controller, gyroscopes);

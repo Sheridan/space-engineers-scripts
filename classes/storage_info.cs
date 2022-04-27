@@ -26,8 +26,8 @@ public class StorageInfo
     foreach (KeyValuePair<MyItemType, float> i in data)
     {
       MyItemInfo inf = i.Key.GetItemInfo();
-      string cnt = inf.UsesFractions ? toHumanReadable(i.Value, EHRUnit.Mass) : $"{i.Value:f0} шт.";
-      m_lcd.echo_at($"{MyDefinitionId.Parse(i.Key.ToString()).SubtypeName}: {cnt}", idx++);
+      string cnt = inf.UsesFractions ? $"Mass: {toHumanReadable(i.Value, EHRUnit.Mass)}" : $"{i.Value:f0} шт., Mass: {toHumanReadable(i.Value*inf.Mass, EHRUnit.Mass)}";
+      m_lcd.echo_at($"{MyDefinitionId.Parse(i.Key.ToString()).SubtypeName}: {cnt}, Volume: {toHumanReadable(inf.Volume*i.Value, EHRUnit.Volume)}", idx++);
     }
   }
 

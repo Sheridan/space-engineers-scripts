@@ -90,8 +90,8 @@ m_lcd.echo_at($"Использовано {tHR(volume, EHRU.Volume)} из {tHR(ma
 m_lcd.echo_at($"Общая масса: {tHR(m_storage.mass(), EHRU.Mass)}", idx++);
 foreach(KeyValuePair<MyItemType, float> i in data) {
 MyItemInfo inf = i.Key.GetItemInfo();
-string cnt = inf.UsesFractions ? tHR(i.Value, EHRU.Mass) : $"{i.Value:f0} шт.";
-m_lcd.echo_at($"{MyDefinitionId.Parse(i.Key.ToString()).SubtypeName}: {cnt}", idx++); } }
+string cnt = inf.UsesFractions ? $"Mass: {tHR(i.Value, EHRU.Mass)}" : $"{i.Value:f0} шт., Mass: {tHR(i.Value*inf.Mass, EHRU.Mass)}";
+m_lcd.echo_at($"{MyDefinitionId.Parse(i.Key.ToString()).SubtypeName}: {cnt}, Volume: {tHR(inf.Volume*i.Value, EHRU.Volume)}", idx++); } }
 private CD m_lcd;
 private CContainer m_storage;
 private int m_lastItemsTypes; }
@@ -317,7 +317,22 @@ SolarCell,
 SteelPlate,
 Superconductor,
 Thrust,
-ZoneChip }
+ZoneChip,
+NATO_5p56x45mm,
+LargeCalibreAmmo,
+MediumCalibreAmmo,
+AutocannonClip,
+NATO_25x184mm,
+LargeRailgunAmmo,
+Missile200mm,
+AutomaticRifleGun_Mag_20rd,
+UltimateAutomaticRifleGun_Mag_30rd,
+RapidFireAutomaticRifleGun_Mag_50rd,
+PreciseAutomaticRifleGun_Mag_5rd,
+SemiAutoPistolMagazine,
+ElitePistolMagazine,
+FullAutoPistolMagazine,
+SmallRailgunAmmo }
 public class CCI {
 public CCI(string itemType, int a = 0) { m_itemType = fromString(itemType); m_a = a; }
 public CCI(EIT itemType, int a = 0) { m_itemType = itemType ; m_a = a; }
@@ -345,37 +360,68 @@ else if(itemType.Contains("SteelPlate")) { return EIT.SteelPlate; }
 else if(itemType.Contains("Superconductor")) { return EIT.Superconductor; }
 else if(itemType.Contains("Thrust")) { return EIT.Thrust; }
 else if(itemType.Contains("ZoneChip")) { return EIT.ZoneChip; }
+else if(itemType.Contains("NATO_5p56x45mm")) { return EIT.NATO_5p56x45mm; }
+else if(itemType.Contains("LargeCalibreAmmo")) { return EIT.LargeCalibreAmmo; }
+else if(itemType.Contains("MediumCalibreAmmo")) { return EIT.MediumCalibreAmmo; }
+else if(itemType.Contains("AutocannonClip")) { return EIT.AutocannonClip; }
+else if(itemType.Contains("NATO_25x184mm")) { return EIT.NATO_25x184mm; }
+else if(itemType.Contains("LargeRailgunAmmo")) { return EIT.LargeRailgunAmmo; }
+else if(itemType.Contains("Missile200mm")) { return EIT.Missile200mm; }
+else if(itemType.Contains("AutomaticRifleGun_Mag_20rd")) { return EIT.AutomaticRifleGun_Mag_20rd; }
+else if(itemType.Contains("UltimateAutomaticRifleGun_Mag_30rd")) { return EIT.UltimateAutomaticRifleGun_Mag_30rd; }
+else if(itemType.Contains("RapidFireAutomaticRifleGun_Mag_50rd")) { return EIT.RapidFireAutomaticRifleGun_Mag_50rd; }
+else if(itemType.Contains("PreciseAutomaticRifleGun_Mag_5rd")) { return EIT.PreciseAutomaticRifleGun_Mag_5rd; }
+else if(itemType.Contains("SemiAutoPistolMagazine")) { return EIT.SemiAutoPistolMagazine; }
+else if(itemType.Contains("ElitePistolMagazine")) { return EIT.ElitePistolMagazine; }
+else if(itemType.Contains("FullAutoPistolMagazine")) { return EIT.FullAutoPistolMagazine; }
+else if(itemType.Contains("SmallRailgunAmmo")) { return EIT.SmallRailgunAmmo; }
 throw new System.ArgumentException("Не знаю такой строки", itemType); }
 public int a() { return m_a; }
 public void appendAmount(int aDelta) { m_a += aDelta; }
 public EIT itemType() { return m_itemType; }
 public string asComponent() {
 string name = "";
+string iSType = "";
 switch(m_itemType) {
-case EIT.BulletproofGlass: name = "BulletproofGlass"; break;
-case EIT.Canvas: name = "Canvas"; break;
-case EIT.Computer: name = "Computer"; break;
-case EIT.Construction: name = "Construction"; break;
-case EIT.Detector: name = "Detector"; break;
-case EIT.Display: name = "Display"; break;
-case EIT.Explosives: name = "Explosives"; break;
-case EIT.Girder: name = "Girder"; break;
-case EIT.GravityGenerator: name = "GravityGenerator"; break;
-case EIT.InteriorPlate: name = "InteriorPlate"; break;
-case EIT.LargeTube: name = "LargeTube"; break;
-case EIT.Medical: name = "Medical"; break;
-case EIT.MetalGrid: name = "MetalGrid"; break;
-case EIT.Motor: name = "Motor"; break;
-case EIT.PowerCell: name = "PowerCell"; break;
-case EIT.RadioCommunication: name = "RadioCommunication"; break;
-case EIT.Reactor: name = "Reactor"; break;
-case EIT.SmallTube: name = "SmallTube"; break;
-case EIT.SolarCell: name = "SolarCell"; break;
-case EIT.SteelPlate: name = "SteelPlate"; break;
-case EIT.Superconductor: name = "Superconductor"; break;
-case EIT.Thrust: name = "Thrust"; break;
-case EIT.ZoneChip: name = "ZoneChip"; break; }
-return $"MyObjectBuilder_Component/{name}"; }
+case EIT.BulletproofGlass: { iSType = "Component"; name = "BulletproofGlass"; } break;
+case EIT.Canvas: { iSType = "Component"; name = "Canvas"; } break;
+case EIT.Computer: { iSType = "Component"; name = "Computer"; } break;
+case EIT.Construction: { iSType = "Component"; name = "Construction"; } break;
+case EIT.Detector: { iSType = "Component"; name = "Detector"; } break;
+case EIT.Display: { iSType = "Component"; name = "Display"; } break;
+case EIT.Explosives: { iSType = "Component"; name = "Explosives"; } break;
+case EIT.Girder: { iSType = "Component"; name = "Girder"; } break;
+case EIT.GravityGenerator: { iSType = "Component"; name = "GravityGenerator"; } break;
+case EIT.InteriorPlate: { iSType = "Component"; name = "InteriorPlate"; } break;
+case EIT.LargeTube: { iSType = "Component"; name = "LargeTube"; } break;
+case EIT.Medical: { iSType = "Component"; name = "Medical"; } break;
+case EIT.MetalGrid: { iSType = "Component"; name = "MetalGrid"; } break;
+case EIT.Motor: { iSType = "Component"; name = "Motor"; } break;
+case EIT.PowerCell: { iSType = "Component"; name = "PowerCell"; } break;
+case EIT.RadioCommunication: { iSType = "Component"; name = "RadioCommunication"; } break;
+case EIT.Reactor: { iSType = "Component"; name = "Reactor"; } break;
+case EIT.SmallTube: { iSType = "Component"; name = "SmallTube"; } break;
+case EIT.SolarCell: { iSType = "Component"; name = "SolarCell"; } break;
+case EIT.SteelPlate: { iSType = "Component"; name = "SteelPlate"; } break;
+case EIT.Superconductor: { iSType = "Component"; name = "Superconductor"; } break;
+case EIT.Thrust: { iSType = "Component"; name = "Thrust"; } break;
+case EIT.ZoneChip: { iSType = "Component"; name = "ZoneChip"; } break;
+case EIT.NATO_5p56x45mm: { iSType = "AmmoMagazine"; name = "NATO_5p56x45mm"; } break;
+case EIT.LargeCalibreAmmo: { iSType = "AmmoMagazine"; name = "LargeCalibreAmmo"; } break;
+case EIT.MediumCalibreAmmo: { iSType = "AmmoMagazine"; name = "MediumCalibreAmmo"; } break;
+case EIT.AutocannonClip: { iSType = "AmmoMagazine"; name = "AutocannonClip"; } break;
+case EIT.NATO_25x184mm: { iSType = "AmmoMagazine"; name = "NATO_25x184mm"; } break;
+case EIT.LargeRailgunAmmo: { iSType = "AmmoMagazine"; name = "LargeRailgunAmmo"; } break;
+case EIT.Missile200mm: { iSType = "AmmoMagazine"; name = "Missile200mm"; } break;
+case EIT.AutomaticRifleGun_Mag_20rd: { iSType = "AmmoMagazine"; name = "AutomaticRifleGun_Mag_20rd"; } break;
+case EIT.UltimateAutomaticRifleGun_Mag_30rd: { iSType = "AmmoMagazine"; name = "UltimateAutomaticRifleGun_Mag_30rd"; } break;
+case EIT.RapidFireAutomaticRifleGun_Mag_50rd: { iSType = "AmmoMagazine"; name = "RapidFireAutomaticRifleGun_Mag_50rd"; } break;
+case EIT.PreciseAutomaticRifleGun_Mag_5rd: { iSType = "AmmoMagazine"; name = "PreciseAutomaticRifleGun_Mag_5rd"; } break;
+case EIT.SemiAutoPistolMagazine: { iSType = "AmmoMagazine"; name = "SemiAutoPistolMagazine"; } break;
+case EIT.ElitePistolMagazine: { iSType = "AmmoMagazine"; name = "ElitePistolMagazine"; } break;
+case EIT.FullAutoPistolMagazine: { iSType = "AmmoMagazine"; name = "FullAutoPistolMagazine"; } break;
+case EIT.SmallRailgunAmmo: { iSType = "AmmoMagazine"; name = "SmallRailgunAmmo"; } break; }
+return $"MyObjectBuilder_{iSType}/{name}"; }
 public string asBlueprintDefinition() {
 string name = "";
 switch(m_itemType) {
@@ -401,7 +447,22 @@ case EIT.SolarCell: name = "SolarCell"; break;
 case EIT.SteelPlate: name = "SteelPlate"; break;
 case EIT.Superconductor: name = "Superconductor"; break;
 case EIT.Thrust: name = "ThrustComponent"; break;
-case EIT.ZoneChip: name = "ZoneChip"; break; }
+case EIT.ZoneChip: name = "ZoneChip"; break;
+case EIT.NATO_5p56x45mm: name = "NATO_5p56x45mmMagazine"; break;
+case EIT.LargeCalibreAmmo: name = "LargeCalibreAmmo"; break;
+case EIT.MediumCalibreAmmo: name = "MediumCalibreAmmo"; break;
+case EIT.AutocannonClip: name = "AutocannonClip"; break;
+case EIT.NATO_25x184mm: name = "NATO_25x184mmMagazine"; break;
+case EIT.LargeRailgunAmmo: name = "LargeRailgunAmmo"; break;
+case EIT.Missile200mm: name = "Missile200mm"; break;
+case EIT.AutomaticRifleGun_Mag_20rd: name = "AutomaticRifleGun_Mag_20rd"; break;
+case EIT.UltimateAutomaticRifleGun_Mag_30rd: name = "UltimateAutomaticRifleGun_Mag_30rd"; break;
+case EIT.RapidFireAutomaticRifleGun_Mag_50rd: name = "RapidFireAutomaticRifleGun_Mag_50rd"; break;
+case EIT.PreciseAutomaticRifleGun_Mag_5rd: name = "PreciseAutomaticRifleGun_Mag_5rd"; break;
+case EIT.SemiAutoPistolMagazine: name = "SemiAutoPistolMagazine"; break;
+case EIT.ElitePistolMagazine: name = "ElitePistolMagazine"; break;
+case EIT.FullAutoPistolMagazine: name = "FullAutoPistolMagazine"; break;
+case EIT.SmallRailgunAmmo: name = "SmallRailgunAmmo"; break; }
 return $"MyObjectBuilder_BlueprintDefinition/{name}"; }
 public MyItemType asMyItemType() { return MyItemType.Parse(asComponent()); }
 private EIT m_itemType;
@@ -429,7 +490,22 @@ static public CCI SolarCell(int a = 0) { return new CCI(EIT.SolarCell, a); }
 static public CCI SteelPlate(int a = 0) { return new CCI(EIT.SteelPlate, a); }
 static public CCI Superconductor(int a = 0) { return new CCI(EIT.Superconductor, a); }
 static public CCI Thrust(int a = 0) { return new CCI(EIT.Thrust, a); }
-static public CCI ZoneChip(int a = 0) { return new CCI(EIT.ZoneChip, a); } }
+static public CCI ZoneChip(int a = 0) { return new CCI(EIT.ZoneChip, a); }
+static public CCI NATO_5p56x45mm(int a = 0) { return new CCI(EIT.NATO_5p56x45mm, a); }
+static public CCI LargeCalibreAmmo(int a = 0) { return new CCI(EIT.LargeCalibreAmmo, a); }
+static public CCI MediumCalibreAmmo(int a = 0) { return new CCI(EIT.MediumCalibreAmmo, a); }
+static public CCI AutocannonClip(int a = 0) { return new CCI(EIT.AutocannonClip, a); }
+static public CCI NATO_25x184mm(int a = 0) { return new CCI(EIT.NATO_25x184mm, a); }
+static public CCI LargeRailgunAmmo(int a = 0) { return new CCI(EIT.LargeRailgunAmmo, a); }
+static public CCI Missile200mm(int a = 0) { return new CCI(EIT.Missile200mm, a); }
+static public CCI AutomaticRifleGun_Mag_20rd(int a = 0) { return new CCI(EIT.AutomaticRifleGun_Mag_20rd, a); }
+static public CCI UltimateAutomaticRifleGun_Mag_30rd(int a = 0) { return new CCI(EIT.UltimateAutomaticRifleGun_Mag_30rd, a); }
+static public CCI RapidFireAutomaticRifleGun_Mag_50rd(int a = 0) { return new CCI(EIT.RapidFireAutomaticRifleGun_Mag_50rd, a); }
+static public CCI PreciseAutomaticRifleGun_Mag_5rd(int a = 0) { return new CCI(EIT.PreciseAutomaticRifleGun_Mag_5rd, a); }
+static public CCI SemiAutoPistolMagazine(int a = 0) { return new CCI(EIT.SemiAutoPistolMagazine, a); }
+static public CCI ElitePistolMagazine(int a = 0) { return new CCI(EIT.ElitePistolMagazine, a); }
+static public CCI FullAutoPistolMagazine(int a = 0) { return new CCI(EIT.FullAutoPistolMagazine, a); }
+static public CCI SmallRailgunAmmo(int a = 0) { return new CCI(EIT.SmallRailgunAmmo, a); } }
 public class CBNamed<T> : CBB<T> where T : class, IMyTerminalBlock {
 public CBNamed(string name, bool lSG = true) : base(lSG) { m_name = name; load(); }
 protected override bool checkBlock(T b) {
@@ -477,12 +553,13 @@ public static string tHR(float value, EHRU unit = EHRU.None) {
 int divider = unit == EHRU.Volume ? 1000000000 : 1000;
 string suffix = hrSuffix(unit);
 if(unit == EHRU.Mass) {
-if(value >= 1000) {
+value *= 1000;
+if(value >= 1000000) {
 suffix = "Т.";
-value = value/1000; } }
-if(value < divider) { return $"{value}{suffix}"; }
+value = value/1000000; } }
+if(value < divider) { return $"{value:f2}{suffix}"; }
 int exp = (int)(Math.Log(value) / Math.Log(divider));
-return $"{value / Math.Pow(divider, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; }
+return $"{value / (float)Math.Pow(divider, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; }
 StorageInfo storage;
 public string program() {
 Runtime.UpdateFrequency = UpdateFrequency.Update100;

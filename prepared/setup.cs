@@ -54,7 +54,7 @@ if(!m_available) { debug(r.ToString()); } } }
 private void write() { m_block.CustomData = m_ini.ToString(); }
 private bool exists(string section, string name) { return m_available && m_ini.ContainsKey(section, name); }
 public string g(string section, string name, string defaultValue = "") {
-if(exists(section, name)) { return m_ini.Get(section, name).ToString(); }
+if(exists(section, name)) { return m_ini.Get(section, name).ToString().Trim(); }
 return defaultValue; }
 public bool g(string section, string name, bool defaultValue = true) {
 if(exists(section, name)) { return m_ini.Get(section, name).ToBoolean(); }
@@ -74,15 +74,22 @@ IMyTerminalBlock m_block;
 private bool m_available;
 private MyIni m_ini; }
 public class CS<T> : CT<T> where T : class, IMyTerminalBlock {
-public CS(CBB<T> blocks) : base(blocks) {
+public CS(CBB<T> blocks,
+string name,
+bool visibleInTerminal,
+bool visibleInInventory,
+bool visibleInToolBar) : base(blocks) {
+m_name = name;
+m_visibleInTerminal = visibleInTerminal;
+m_visibleInInventory = visibleInInventory;
+m_visibleInToolBar = visibleInToolBar;
 m_zeros = new string('0', count().ToString().Length);
-m_counetrs = new Dictionary<string, int>(); }
-public void s(string name,
-bool visibleInTerminal = false,
-bool visibleInInventory = false,
-bool visibleInToolBar = false) {
-echoMeBig(String.Join(Environment.NewLine, name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)));
-foreach(T b in m_blocks) {
+m_counetrs = new Dictionary<string, int>();
+echoMeBig(String.Join(Environment.NewLine, m_name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)) + $"\n{count()}"); }
+public bool s(int index) {
+if(index >= count()) { return true; }
+echoMeSmall(index.ToString());
+T b = m_blocks[index];
 string suffix = "";
 CBO o = new CBO(b);
 if(m_blocks.iA<IMyShipConnector >()) { suffix = s(o, b as IMyShipConnector); }
@@ -91,21 +98,24 @@ else if(m_blocks.iA<IMyConveyorSorter >()) { suffix = s(o, b as IMyConveyorSorte
 else if(m_blocks.iA<IMyLargeTurretBase>()) { suffix = s(o, b as IMyLargeTurretBase); }
 else if(m_blocks.iA<IMyAssembler >()) { suffix = s(o, b as IMyAssembler); }
 else if(m_blocks.iA<IMyReflectorLight >()) { suffix = s(o, b as IMyReflectorLight); }
-b.CustomName = generateName(name, suffix, loadPurpose(o));
+b.CustomName = generateName(suffix, o);
 sBlocksVisibility(b,
-o.g("generic", "visibleInTerminal", visibleInTerminal),
-o.g("generic", "visibleInInventory", visibleInInventory),
-o.g("generic", "visibleInToolBar", visibleInToolBar)); } }
-private string generateName(string name, string suffix, string purpose) {
-string baseName = TrimAllSpaces($"{name} {purpose} {suffix}");
+o.g("generic", "visibleInTerminal", m_visibleInTerminal),
+o.g("generic", "visibleInInventory", m_visibleInInventory),
+o.g("generic", "visibleInToolBar", m_visibleInToolBar));
+return false; }
+private string generateName(string suffix, CBO o) {
+string purpose = loadPurpose(o);
+string module = loadModuleName(o);
+string baseName = TrimAllSpaces($"{module} {m_name} {purpose} {suffix}");
 if(count() > 0) {
 if(!m_counetrs.ContainsKey(baseName)) { m_counetrs.Add(baseName, 0); }
-string order = m_counetrs[baseName].ToString(m_zeros).Trim();
+string order = m_counetrs[baseName].ToString(m_zeros);
 m_counetrs[baseName]++;
 return $"[{sN}] {baseName} {order}"; }
 return $"[{sN}] {baseName}"; }
 private string s(CBO o, IMyShipConnector b) {
-b.PullStrength = 1f;
+b.PullStrength = o.g("connector", "strength", 0.5f);;
 b.CollectAll = o.g("connector", "collectAll", false);
 b.ThrowOut = o.g("connector", "throwOut", false);
 return string.Empty; }
@@ -134,17 +144,23 @@ if(o.g("assembler", "is_slave", false)) {
 b.CooperativeMode = true;
 return "Slave"; }
 return "Master"; }
-private string loadPurpose(CBO o) { return o.g("generic", "purpose", "").Trim(); }
+private string loadPurpose(CBO o) { return o.g("generic", "purpose", ""); }
+private string loadModuleName(CBO o) {
+string r = o.g("generic", "module", "");
+return string.IsNullOrEmpty(r) ? "" : $"<{r}>"; }
 private void sBlocksVisibility(T b,
 bool vTerminal,
 bool vInventory,
 bool vToolBar) {
-IMySlimBlock sB = b.CubeGrid.GetCubeBlock(b.Position);
-b.ShowInTerminal = vTerminal && sB.IsFullIntegrity && sB.BuildIntegrity < 1f;
+b.ShowInTerminal = vTerminal;
 b.ShowInToolbarConfig = vToolBar;
 if(b.HasInventory) { b.ShowInInventory = vInventory; } }
 private string m_zeros;
-private Dictionary<string, int> m_counetrs; }
+private Dictionary<string, int> m_counetrs;
+string m_name;
+bool m_visibleInTerminal;
+bool m_visibleInInventory;
+bool m_visibleInToolBar; }
 public class CT<T> : CCube<T> where T : class, IMyTerminalBlock {
 public CT(CBB<T> blocks) : base(blocks) {}
 public void listProperties(CTS lcd) {
@@ -289,6 +305,7 @@ protected void clear() { m_blocks.Clear(); }
 public void removeBlock(T b) { m_blocks.Remove(b); }
 public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
 public T first() { return m_blocks[0]; }
+public T this[int i] { get { return m_blocks[i]; } }
 public bool iA<U>() where U : class, IMyEntity {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
@@ -312,102 +329,130 @@ else {
 pIW = false; }
 newString.Append(value[i]); }
 return newString.ToString(); }
-public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
+public class CB<T> : CBB<T> where T : class, IMyEntity {
 public CB(bool lSG = true) : base(lSG) { load(); } }
 public class CBT<T> : CBB<T> where T : class, IMyTerminalBlock {
 public CBT(string subTypeName, bool lSG = true) : base(lSG) { m_subTypeName = subTypeName; load(); }
 protected override bool checkBlock(T b) {
-return (m_lSG ? b.IsSameConstructAs(_.Me) : true) && b.BlockDefinition.ToString().Contains(m_subTypeName); }
+return (m_lSG ? _.Me.IsSameConstructAs(b) : true) && b.BlockDefinition.ToString().Contains(m_subTypeName); }
 public string subTypeName() { return m_subTypeName; }
 private string m_subTypeName; }
 public string program() { buildActions(); return "Настройка структуры"; }
 private int gIndex;
 private List<Action> actions;
 public void main(string argument, UpdateType updateSource) {
-if(argument.Length == 0) { step(gIndex++); }
-else if(argument == "start") { gIndex = 0; Runtime.UpdateFrequency = UpdateFrequency.Update10; }
-else if(argument == "start slow") { gIndex = 0; Runtime.UpdateFrequency = UpdateFrequency.Update100; }
+if(argument.Length == 0) { step(gIndex); }
+else if(argument == "start") { gIndex = 0; Runtime.UpdateFrequency = UpdateFrequency.Update1; }
+else if(argument == "start slow") { gIndex = 0; Runtime.UpdateFrequency = UpdateFrequency.Update10; }
+else if(argument == "start very slow") { gIndex = 0; Runtime.UpdateFrequency = UpdateFrequency.Update100; }
 else if(argument == "stop") { stop(); } }
+private object c_s = null;
+private int bIndex;
 private void buildActions() {
 actions = new List<Action>();
-actions.Add(() => { (new CS<IMyRemoteControl> (new CB <IMyRemoteControl> ())).s("ДУ", true, false, true) ; });
-actions.Add(() => { (new CS<IMyMedicalRoom> (new CB <IMyMedicalRoom> ())).s("Медпост") ; });
-actions.Add(() => { (new CS<IMyAirVent> (new CB <IMyAirVent> ())).s("Вентиляция", false, false, true) ; });
-actions.Add(() => { (new CS<IMyCameraBlock> (new CB <IMyCameraBlock> ())).s("Камера", false, false, true) ; });
-actions.Add(() => { (new CS<IMyProjector> (new CB <IMyProjector> ())).s("Проектор", false, false, true) ; });
-actions.Add(() => { (new CS<IMyCryoChamber> (new CB <IMyCryoChamber> ())).s("Криокамера") ; });
-actions.Add(() => { (new CS<IMyGyro> (new CB <IMyGyro> ())).s("Гироскоп") ; });
-actions.Add(() => { (new CS<IMyControlPanel> (new CB <IMyControlPanel> ())).s("Панель упр.") ; });
-actions.Add(() => { (new CS<IMySoundBlock> (new CB <IMySoundBlock> ())).s("Динамик") ; });
-actions.Add(() => { (new CS<IMyButtonPanel> (new CB <IMyButtonPanel> ())).s("Кнопки") ; });
-actions.Add(() => { (new CS<IMyTextPanel> (new CB <IMyTextPanel> ())).s("Дисплей") ; });
-actions.Add(() => { (new CS<IMyTimerBlock> (new CB <IMyTimerBlock> ())).s("Таймер", true, false, true) ; });
-actions.Add(() => { (new CS<IMySensorBlock> (new CB <IMySensorBlock> ())).s("Сенсор") ; });
-actions.Add(() => { (new CS<IMyLandingGear> (new CB <IMyLandingGear> ())).s("Шасси") ; });
-actions.Add(() => { (new CS<IMyShipConnector> (new CB <IMyShipConnector> ())).s("Коннектор", false, false, true) ; });
-actions.Add(() => { (new CS<IMyShipMergeBlock> (new CB <IMyShipMergeBlock> ())).s("Соединитель") ; });
-actions.Add(() => { (new CS<IMyPistonBase> (new CB <IMyPistonBase> ())).s("Поршень") ; });
-actions.Add(() => { (new CS<IMyMotorStator> (new CB <IMyMotorStator> ())).s("Ротор") ; });
-actions.Add(() => { (new CS<IMyMotorAdvancedStator>(new CB <IMyMotorAdvancedStator>())).s("Ул. Ротор") ; });
-actions.Add(() => { (new CS<IMyShipDrill> (new CB <IMyShipDrill> ())).s("Бур") ; });
-actions.Add(() => { (new CS<IMyShipGrinder> (new CB <IMyShipGrinder> ())).s("Резак") ; });
-actions.Add(() => { (new CS<IMyShipWelder> (new CB <IMyShipWelder> ())).s("Сварщик") ; });
-actions.Add(() => { (new CS<IMyCollector> (new CB <IMyCollector> ())).s("Коллектор") ; });
-actions.Add(() => { (new CS<IMyOreDetector> (new CB <IMyOreDetector> ())).s("Детектор руды") ; });
-actions.Add(() => { (new CS<IMyRadioAntenna> (new CB <IMyRadioAntenna> ())).s("Антенна") ; });
-actions.Add(() => { (new CS<IMyLaserAntenna> (new CB <IMyLaserAntenna> ())).s("Л.Антенна") ; });
-actions.Add(() => { (new CS<IMyCockpit> (new CBT<IMyCockpit> ("LargeBlockCouch"))).s("Диван") ; });
-actions.Add(() => { (new CS<IMyCockpit> (new CBT<IMyCockpit> ("LargeBlockCouchCorner"))).s("Угл. Диван") ; });
-actions.Add(() => { (new CS<IMyRefinery> (new CB <IMyRefinery> ())).s("Очистительный завод") ; });
-actions.Add(() => { (new CS<IMyAssembler> (new CBT<IMyAssembler> ("LargeAssembler"))).s("Сборщик") ; });
-actions.Add(() => { (new CS<IMyGasGenerator> (new CB <IMyGasGenerator> ())).s("H2:O2 Генератор") ; });
-actions.Add(() => { (new CS<IMyOxygenFarm> (new CB <IMyOxygenFarm> ())).s("Ферма O2") ; });
-actions.Add(() => { (new CS<IMySmallGatlingGun> (new CB <IMySmallGatlingGun> ())).s("М.Пушка") ; });
-actions.Add(() => { (new CS<IMyLargeGatlingTurret> (new CB <IMyLargeGatlingTurret> ())).s("Б.Пушка") ; });
-actions.Add(() => { (new CS<IMyLargeMissileTurret> (new CB <IMyLargeMissileTurret> ())).s("Б.Ракетница") ; });
-actions.Add(() => { (new CS<IMyPowerProducer> (new CBT<IMyPowerProducer> ("HydrogenEngine"))).s("H2 Электрогенератор") ; });
-actions.Add(() => { (new CS<IMyPowerProducer> (new CBT<IMyPowerProducer> ("WindTurbine"))).s("Ветрогенератор") ; });
-actions.Add(() => { (new CS<IMyBatteryBlock> (new CB <IMyBatteryBlock> ())).s("Батарея") ; });
-actions.Add(() => { (new CS<IMySolarPanel> (new CB <IMySolarPanel> ())).s("С.Батарея") ; });
-actions.Add(() => { (new CS<IMyUpgradeModule> (new CBT<IMyUpgradeModule> ("ProductivityModule"))).s("М.Продуктивности") ; });
-actions.Add(() => { (new CS<IMyUpgradeModule> (new CBT<IMyUpgradeModule> ("EffectivenessModule"))).s("М.Эффективности") ; });
-actions.Add(() => { (new CS<IMyUpgradeModule> (new CBT<IMyUpgradeModule> ("EnergyModule"))).s("М.Энергоэффективности") ; });
-actions.Add(() => { (new CS<IMyConveyorSorter> (new CB <IMyConveyorSorter> ())).s("Сортировщик", false, false, true); });
-actions.Add(() => { (new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("SmallContainer"))).s("МК", false, true) ; });
-actions.Add(() => { (new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("MediumContainer"))).s("СК", false, true) ; });
-actions.Add(() => { (new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("LargeContainer"))).s("БК", false, true) ; });
-actions.Add(() => { (new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("LargeIndustrialContainer"))).s("БК", false, true) ; });
-actions.Add(() => { (new CS<IMyGasTank> (new CBT<IMyGasTank> ("OxygenTankSmall"))).s("Бак O2") ; });
-actions.Add(() => { (new CS<IMyGasTank> (new CBT<IMyGasTank> ("OxygenTank/"))).s("Б.Бак O2") ; });
-actions.Add(() => { (new CS<IMyGasTank> (new CBT<IMyGasTank> ("/LargeHydrogenTank"))).s("ОБ.Бак H2") ; });
-actions.Add(() => { (new CS<IMyGasTank> (new CBT<IMyGasTank> ("/LargeHydrogenTankSmall"))).s("Б.Бак H2") ; });
-actions.Add(() => { (new CS<IMyGasTank> (new CBT<IMyGasTank> ("/SmallHydrogenTank"))).s("Бак H2") ; });
-actions.Add(() => { (new CS<IMyGasTank> (new CBT<IMyGasTank> ("/SmallHydrogenTankSmall"))).s("Бак H2") ; });
-actions.Add(() => { (new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("SmallLight"))).s("Лампа") ; });
-actions.Add(() => { (new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("Light_1corner"))).s("Угл. Лампа") ; });
-actions.Add(() => { (new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("Light_2corner"))).s("2хУгл. Лампа") ; });
-actions.Add(() => { (new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("LightPanel"))).s("Светопанель") ; });
-actions.Add(() => { (new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("OffsetLight"))).s("Диодная фара") ; });
-actions.Add(() => { (new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("PassageSciFiLight"))).s("SciFi свет") ; });
-actions.Add(() => { (new CS<IMyReflectorLight> (new CBT<IMyReflectorLight> ("FrontLight"))).s("Прожектор") ; });
-actions.Add(() => { (new CS<IMyReflectorLight> (new CBT<IMyReflectorLight> ("RotatingLight"))).s("Вр. прожектор") ; });
-actions.Add(() => { (new CS<IMyReflectorLight> (new CBT<IMyReflectorLight> ("Spotlight"))).s("Фара") ; });
-actions.Add(() => { (new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension1x1"))).s("Колесо 1x1 правое") ; });
-actions.Add(() => { (new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension3x3"))).s("Колесо 3x3 правое") ; });
-actions.Add(() => { (new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension5x5"))).s("Колесо 5x5 правое") ; });
-actions.Add(() => { (new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension1x1mirrored"))).s("Колесо 1x1 левое") ; });
-actions.Add(() => { (new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension3x3mirrored"))).s("Колесо 3x3 левое") ; });
-actions.Add(() => { (new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension5x5mirrored"))).s("Колесо 5x5 левое") ; });
-actions.Add(() => { (new CS<IMyThrust> (new CBT<IMyThrust> ("LargeAtmosphericThrust"))).s("БАУ") ; });
-actions.Add(() => { (new CS<IMyThrust> (new CBT<IMyThrust> ("SmallAtmosphericThrust"))).s("АУ") ; });
-actions.Add(() => { (new CS<IMyThrust> (new CBT<IMyThrust> ("LargeHydrogenThrust"))).s("БВУ") ; });
-actions.Add(() => { (new CS<IMyThrust> (new CBT<IMyThrust> ("SmallHydrogenThrust"))).s("ВУ") ; });
-actions.Add(() => { (new CS<IMyThrust> (new CBT<IMyThrust> ("LargeThrust"))).s("БИУ") ; });
-actions.Add(() => { (new CS<IMyThrust> (new CBT<IMyThrust> ("SmallThrust"))).s("ИУ") ; });
-actions.Add(() => { (new CS<IMyAirtightHangarDoor> (new CB <IMyAirtightHangarDoor> ())).s("Ангарслайд") ; });
-actions.Add(() => { (new CS<IMyDoor> (new CB <IMyDoor> ())).s("Дверь") ; }); }
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("SmallLight"), "Лампа", false, false, false); bIndex = 0; } if(((CS<IMyInteriorLight>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("Light_1corner"), "Угл. Лампа", false, false, false); bIndex = 0; } if(((CS<IMyInteriorLight>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("Light_2corner"), "2хУгл. Лампа", false, false, false); bIndex = 0; } if(((CS<IMyInteriorLight>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("LightPanel"), "Светопанель", false, false, false); bIndex = 0; } if(((CS<IMyInteriorLight>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("OffsetLight"), "Диодная фара", false, false, false); bIndex = 0; } if(((CS<IMyInteriorLight>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyInteriorLight> (new CBT<IMyInteriorLight> ("PassageSciFiLight"), "SciFi свет", false, false, false); bIndex = 0; } if(((CS<IMyInteriorLight>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyReflectorLight> (new CBT<IMyReflectorLight> ("FrontLight"), "Прожектор", false, false, false); bIndex = 0; } if(((CS<IMyReflectorLight>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyReflectorLight> (new CBT<IMyReflectorLight> ("RotatingLight"), "Вр. прожектор", false, false, false); bIndex = 0; } if(((CS<IMyReflectorLight>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyReflectorLight> (new CBT<IMyReflectorLight> ("Spotlight"), "Фара", false, false, false); bIndex = 0; } if(((CS<IMyReflectorLight>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCryoChamber> (new CBT<IMyCryoChamber> ("Bed"), "Кровать", false, false, false); bIndex = 0; } if(((CS<IMyCryoChamber>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCryoChamber> (new CBT<IMyCryoChamber> ("Cryo"), "Криокамера", false, false, false); bIndex = 0; } if(((CS<IMyCryoChamber>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyControlPanel> (new CB <IMyControlPanel> (), "Панель упр.", false, false, false); bIndex = 0; } if(((CS<IMyControlPanel>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMySoundBlock> (new CB <IMySoundBlock> (), "Динамик", false, false, false); bIndex = 0; } if(((CS<IMySoundBlock>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyButtonPanel> (new CB <IMyButtonPanel> (), "Кнопки", false, false, false); bIndex = 0; } if(((CS<IMyButtonPanel>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyTimerBlock> (new CB <IMyTimerBlock> (), "Таймер", true, false, true); bIndex = 0; } if(((CS<IMyTimerBlock>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMySensorBlock> (new CB <IMySensorBlock> (), "Сенсор", false, false, false); bIndex = 0; } if(((CS<IMySensorBlock>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyTextPanel> (new CB <IMyTextPanel> (), "Дисплей", false, false, false); bIndex = 0; } if(((CS<IMyTextPanel>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyLandingGear> (new CBT<IMyLandingGear> ("LandingGear"), "Шасси", false, false, false); bIndex = 0; } if(((CS<IMyLandingGear>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyLandingGear> (new CBT<IMyLandingGear> ("MagneticPlate"), "Магнитоплита", false, false, false); bIndex = 0; } if(((CS<IMyLandingGear>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyLandingGear> (new CBT<IMyLandingGear> ("SmallMagneticPlate"), "Магнитоплита малая", false, false, false); bIndex = 0; } if(((CS<IMyLandingGear>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyShipConnector> (new CB <IMyShipConnector> (), "Коннектор", false, false, true); bIndex = 0; } if(((CS<IMyShipConnector>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyShipMergeBlock> (new CB <IMyShipMergeBlock> (), "Соединитель", false, false, false); bIndex = 0; } if(((CS<IMyShipMergeBlock>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyPistonBase> (new CB <IMyPistonBase> (), "Поршень", false, false, false); bIndex = 0; } if(((CS<IMyPistonBase>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyMotorStator> (new CB <IMyMotorStator> (), "Ротор", false, false, false); bIndex = 0; } if(((CS<IMyMotorStator>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyMotorAdvancedStator>(new CB <IMyMotorAdvancedStator> (), "Ул. Ротор", false, false, false); bIndex = 0; } if(((CS<IMyMotorAdvancedStator>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyShipDrill> (new CB <IMyShipDrill> (), "Бур", false, false, false); bIndex = 0; } if(((CS<IMyShipDrill>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyShipGrinder> (new CB <IMyShipGrinder> (), "Резак", false, false, false); bIndex = 0; } if(((CS<IMyShipGrinder>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyShipWelder> (new CB <IMyShipWelder> (), "Сварщик", false, false, false); bIndex = 0; } if(((CS<IMyShipWelder>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCollector> (new CB <IMyCollector> (), "Коллектор", false, false, false); bIndex = 0; } if(((CS<IMyCollector>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyOreDetector> (new CB <IMyOreDetector> (), "Детектор руды", false, false, false); bIndex = 0; } if(((CS<IMyOreDetector>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyRadioAntenna> (new CB <IMyRadioAntenna> (), "Антенна", false, false, false); bIndex = 0; } if(((CS<IMyRadioAntenna>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyLaserAntenna> (new CB <IMyLaserAntenna> (), "Л.Антенна", false, false, false); bIndex = 0; } if(((CS<IMyLaserAntenna>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("Couch"), "Диван", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("CouchCorner"), "Угл. диван", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("Bathroom"), "Ванная", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("BathroomOpen"), "Откр. ванная", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("Toilet"), "Туалет", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("Desk"), "Стол", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("ВeskCorner"), "Угл. стол", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("PassengerBench"), "Пасс. скамья", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("PassengerSeat"), "Пасс. сиденье", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("CockpitSeat"), "Сиденье", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("BuggyCockpit"), "Багги-руль", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("RoverCockpit"), "Ровер-руль", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("CockpitOpen"), "Кокпит", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("OpenCockpit"), "Кресло управления", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("BlockCockpit"), "Кокпит", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("FighterCockpit"), "Истр. кокпит", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("CockpitIndustrial"), "Подвес. кокпит", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCockpit> (new CBT<IMyCockpit> ("StandingCockpit"), "Штурвал", false, false, false); bIndex = 0; } if(((CS<IMyCockpit>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyRefinery> (new CB <IMyRefinery> (), "Очиститель", false, false, false); bIndex = 0; } if(((CS<IMyRefinery>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyAssembler> (new CBT<IMyAssembler> ("LargeAssembler"), "Сборщик", false, false, false); bIndex = 0; } if(((CS<IMyAssembler>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyGasGenerator> (new CB <IMyGasGenerator> (), "H2:O2 Генератор", false, false, false); bIndex = 0; } if(((CS<IMyGasGenerator>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyOxygenFarm> (new CB <IMyOxygenFarm> (), "Ферма O2", false, false, false); bIndex = 0; } if(((CS<IMyOxygenFarm>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMySmallGatlingGun> (new CB <IMySmallGatlingGun> (), "М.Пушка", false, false, false); bIndex = 0; } if(((CS<IMySmallGatlingGun>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyLargeGatlingTurret> (new CB <IMyLargeGatlingTurret> (), "Б.Пушка", false, false, false); bIndex = 0; } if(((CS<IMyLargeGatlingTurret>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyLargeMissileTurret> (new CB <IMyLargeMissileTurret> (), "Б.Ракетница", false, false, false); bIndex = 0; } if(((CS<IMyLargeMissileTurret>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyLargeInteriorTurret>(new CB <IMyLargeInteriorTurret> (), "Б.Инт.Пушка", false, false, false); bIndex = 0; } if(((CS<IMyLargeInteriorTurret>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyPowerProducer> (new CBT<IMyPowerProducer> ("HydrogenEngine"), "H2 Электрогенератор", false, false, false); bIndex = 0; } if(((CS<IMyPowerProducer>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyPowerProducer> (new CBT<IMyPowerProducer> ("WindTurbine"), "Ветрогенератор", false, false, false); bIndex = 0; } if(((CS<IMyPowerProducer>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyBatteryBlock> (new CB <IMyBatteryBlock> (), "Батарея", false, false, false); bIndex = 0; } if(((CS<IMyBatteryBlock>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMySolarPanel> (new CB <IMySolarPanel> (), "С.Батарея", false, false, false); bIndex = 0; } if(((CS<IMySolarPanel>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyUpgradeModule> (new CBT<IMyUpgradeModule> ("ProductivityModule"), "М.Продуктивности", false, false, false); bIndex = 0; } if(((CS<IMyUpgradeModule>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyUpgradeModule> (new CBT<IMyUpgradeModule> ("EffectivenessModule"), "М.Эффективности", false, false, false); bIndex = 0; } if(((CS<IMyUpgradeModule>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyUpgradeModule> (new CBT<IMyUpgradeModule> ("EnergyModule"), "М.Энергоэффективности", false, false, false); bIndex = 0; } if(((CS<IMyUpgradeModule>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyConveyorSorter> (new CB <IMyConveyorSorter> (), "Сортировщик", false, false, true); bIndex = 0; } if(((CS<IMyConveyorSorter>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("SmallContainer"), "МК", false, true, false); bIndex = 0; } if(((CS<IMyCargoContainer>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("MediumContainer"), "СК", false, true, false); bIndex = 0; } if(((CS<IMyCargoContainer>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("LargeContainer"), "БК", false, true, false); bIndex = 0; } if(((CS<IMyCargoContainer>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("LargeIndustrialContainer"), "БК", false, true, false); bIndex = 0; } if(((CS<IMyCargoContainer>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("LockerRoom"), "Кам. хранения", false, true, false); bIndex = 0; } if(((CS<IMyCargoContainer>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("Lockers"), "Шкафы", false, true, false); bIndex = 0; } if(((CS<IMyCargoContainer>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCargoContainer> (new CBT<IMyCargoContainer> ("WeaponRack"), "Оруж. шкаф", false, true, false); bIndex = 0; } if(((CS<IMyCargoContainer>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyGasTank> (new CBT<IMyGasTank> ("OxygenTankSmall"), "Бак O2", false, false, false); bIndex = 0; } if(((CS<IMyGasTank>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyGasTank> (new CBT<IMyGasTank> ("OxygenTank/"), "Б.Бак O2", false, false, false); bIndex = 0; } if(((CS<IMyGasTank>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyGasTank> (new CBT<IMyGasTank> ("/LargeHydrogenTank"), "ОБ.Бак H2", false, false, false); bIndex = 0; } if(((CS<IMyGasTank>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyGasTank> (new CBT<IMyGasTank> ("/LargeHydrogenTankSmall"), "Б.Бак H2", false, false, false); bIndex = 0; } if(((CS<IMyGasTank>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyGasTank> (new CBT<IMyGasTank> ("/SmallHydrogenTank"), "Бак H2", false, false, false); bIndex = 0; } if(((CS<IMyGasTank>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyGasTank> (new CBT<IMyGasTank> ("/SmallHydrogenTankSmall"), "Бак H2", false, false, false); bIndex = 0; } if(((CS<IMyGasTank>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension1x1"), "Колесо 1x1 правое", false, false, false); bIndex = 0; } if(((CS<IMyMotorSuspension>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension3x3"), "Колесо 3x3 правое", false, false, false); bIndex = 0; } if(((CS<IMyMotorSuspension>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension5x5"), "Колесо 5x5 правое", false, false, false); bIndex = 0; } if(((CS<IMyMotorSuspension>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension1x1mirrored"), "Колесо 1x1 левое", false, false, false); bIndex = 0; } if(((CS<IMyMotorSuspension>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension3x3mirrored"), "Колесо 3x3 левое", false, false, false); bIndex = 0; } if(((CS<IMyMotorSuspension>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyMotorSuspension> (new CBT<IMyMotorSuspension> ("Suspension5x5mirrored"), "Колесо 5x5 левое", false, false, false); bIndex = 0; } if(((CS<IMyMotorSuspension>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyThrust> (new CBT<IMyThrust> ("LargeAtmosphericThrust"), "БАУ", false, false, false); bIndex = 0; } if(((CS<IMyThrust>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyThrust> (new CBT<IMyThrust> ("SmallAtmosphericThrust"), "АУ", false, false, false); bIndex = 0; } if(((CS<IMyThrust>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyThrust> (new CBT<IMyThrust> ("LargeHydrogenThrust"), "БВУ", false, false, false); bIndex = 0; } if(((CS<IMyThrust>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyThrust> (new CBT<IMyThrust> ("SmallHydrogenThrust"), "ВУ", false, false, false); bIndex = 0; } if(((CS<IMyThrust>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyThrust> (new CBT<IMyThrust> ("LargeThrust"), "БИУ", false, false, false); bIndex = 0; } if(((CS<IMyThrust>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyThrust> (new CBT<IMyThrust> ("SmallThrust"), "ИУ", false, false, false); bIndex = 0; } if(((CS<IMyThrust>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyThrust> (new CBT<IMyThrust> ("LargeModularThruster"), "БМИУ", false, false, false); bIndex = 0; } if(((CS<IMyThrust>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyThrust> (new CBT<IMyThrust> ("SmallModularThruster"), "ММИУ", false, false, false); bIndex = 0; } if(((CS<IMyThrust>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyDoor> (new CB <IMyDoor> (), "Дверь", false, false, false); bIndex = 0; } if(((CS<IMyDoor>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyAirtightHangarDoor> (new CB <IMyAirtightHangarDoor> (), "Ангарслайд", false, false, false); bIndex = 0; } if(((CS<IMyAirtightHangarDoor>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyRemoteControl> (new CB <IMyRemoteControl> (), "ДУ", true, false, true); bIndex = 0; } if(((CS<IMyRemoteControl>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyMedicalRoom> (new CB <IMyMedicalRoom> (), "Медпост", false, false, false); bIndex = 0; } if(((CS<IMyMedicalRoom>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyFunctionalBlock> (new CBT<IMyFunctionalBlock> ("MedicalStation"), "Медстанция", false, false, false); bIndex = 0; } if(((CS<IMyFunctionalBlock>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyAirVent> (new CB <IMyAirVent> (), "Вентиляция", false, false, true); bIndex = 0; } if(((CS<IMyAirVent>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyCameraBlock> (new CB <IMyCameraBlock> (), "Камера", false, false, true); bIndex = 0; } if(((CS<IMyCameraBlock>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyProjector> (new CB <IMyProjector> (), "Проектор", false, false, true); bIndex = 0; } if(((CS<IMyProjector>)c_s).s(bIndex++)) { c_s = null; gIndex++; } });
+actions.Add(() => { if(c_s == null) { c_s = new CS<IMyGyro> (new CB <IMyGyro> (), "Гироскоп", false, false, false); bIndex = 0; } if(((CS<IMyGyro>)c_s).s(bIndex++)) { c_s = null; gIndex++; } }); }
 public void step(int index) {
-if(index >= actions.Count) { stop(); }
-echoMeSmall(index.ToString());
+if(index >= actions.Count) { stop(); return; }
 actions[index](); }
 public void stop() { Runtime.UpdateFrequency = UpdateFrequency.None; applyDefaultMeDisplayTexsts(); }

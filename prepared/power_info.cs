@@ -54,7 +54,7 @@ if(!m_available) { debug(r.ToString()); } } }
 private void write() { m_block.CustomData = m_ini.ToString(); }
 private bool exists(string section, string name) { return m_available && m_ini.ContainsKey(section, name); }
 public string g(string section, string name, string defaultValue = "") {
-if(exists(section, name)) { return m_ini.Get(section, name).ToString(); }
+if(exists(section, name)) { return m_ini.Get(section, name).ToString().Trim(); }
 return defaultValue; }
 public bool g(string section, string name, bool defaultValue = true) {
 if(exists(section, name)) { return m_ini.Get(section, name).ToBoolean(); }
@@ -75,14 +75,14 @@ private bool m_available;
 private MyIni m_ini; }
 public class CPowerInfo {
 public CPowerInfo(string lcdNameProducing, string lcdNameConsuming) {
-m_blocks = new CT<IMyTerminalBlock>(new CB<IMyTerminalBlock>());
+m_blocks = new CCube<IMyCubeBlock>(new CB<IMyCubeBlock>());
 m_lcdProducers = new CD();
 m_lcdProducers.aDs(lcdNameProducing);
 m_lcdConsumers = new CD();
 m_lcdConsumers.aDs(lcdNameConsuming); }
 private void updateBlocksInfo() {
 reset();
-foreach(IMyTerminalBlock b in m_blocks) {
+foreach(IMyCubeBlock b in m_blocks) {
 string name = b.DefinitionDisplayNameText;
 CBPI pi = new CBPI(b);
 if(pi.canProduce()) { addPowerBlock(m_producers, name, pi.currentProduce(), pi.maxProduce()); }
@@ -95,9 +95,13 @@ drawInfo(m_lcdProducers, m_producers, "Генерация");
 drawInfo(m_lcdConsumers, m_consumers, "Потребление"); }
 private void drawInfo(CD to, Dictionary<string, SMinCurrentMax<float>> from, string title) {
 int j = 0;
+float curr = 0f; float maxx = 0f;
 to.echo_at(title, j++);
 foreach(KeyValuePair<string, SMinCurrentMax<float>> i in from) {
-to.echo_at($"[{i.Key}:{i.Value.count}] {tHR(i.Value.current, EHRU.Power)} of {tHR(i.Value.max, EHRU.Power)}", j++); } }
+to.echo_at($"[{i.Key}:{i.Value.count}] {tHR(i.Value.current, EHRU.Power)} of {tHR(i.Value.max, EHRU.Power)}", j++);
+curr += i.Value.current;
+maxx += i.Value.max; }
+to.echo_at($"Total: {tHR(curr, EHRU.Power)} of {tHR(maxx, EHRU.Power)}", j++); }
 private void addPowerBlock(Dictionary<string, SMinCurrentMax<float>> to, string name, float cr, float mx) {
 if(!to.ContainsKey(name)) { to[name] = new SMinCurrentMax<float>(0f, cr, mx); to[name].count++; }
 else {
@@ -108,7 +112,7 @@ mcm.count ++; } }
 private void reset() {
 m_producers = new Dictionary<string, SMinCurrentMax<float>>();
 m_consumers = new Dictionary<string, SMinCurrentMax<float>>(); }
-private CT<IMyTerminalBlock> m_blocks;
+private CCube<IMyCubeBlock> m_blocks;
 private Dictionary<string, SMinCurrentMax<float>> m_producers;
 private Dictionary<string, SMinCurrentMax<float>> m_consumers;
 private CD m_lcdConsumers;
@@ -249,6 +253,7 @@ protected void clear() { m_blocks.Clear(); }
 public void removeBlock(T b) { m_blocks.Remove(b); }
 public void removeBlockAt(int i) { m_blocks.RemoveAt(i); }
 public T first() { return m_blocks[0]; }
+public T this[int i] { get { return m_blocks[i]; } }
 public bool iA<U>() where U : class, IMyEntity {
 if(empty()) { return false; }
 return m_blocks[0] is U; }
@@ -290,34 +295,13 @@ public static string tHR(float value, EHRU unit = EHRU.None) {
 int divider = unit == EHRU.Volume ? 1000000000 : 1000;
 string suffix = hrSuffix(unit);
 if(unit == EHRU.Mass) {
-if(value >= 1000) {
+value *= 1000;
+if(value >= 1000000) {
 suffix = "Т.";
-value = value/1000; } }
-if(value < divider) { return $"{value}{suffix}"; }
+value = value/1000000; } }
+if(value < divider) { return $"{value:f2}{suffix}"; }
 int exp = (int)(Math.Log(value) / Math.Log(divider));
-return $"{value / Math.Pow(divider, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; }
-public class CT<T> : CCube<T> where T : class, IMyTerminalBlock {
-public CT(CBB<T> blocks) : base(blocks) {}
-public void listProperties(CTS lcd) {
-if(empty()) { return; }
-List<ITerminalProperty> properties = new List<ITerminalProperty>();
-first().GetProperties(properties);
-foreach(var property in properties) {
-lcd.echo($"id: {property.Id}, type: {property.TypeName}"); } }
-public void listActions(CTS lcd) {
-if(empty()) { return; }
-List<ITerminalAction> actions = new List<ITerminalAction>();
-first().GetActions(actions);
-foreach(var action in actions) {
-lcd.echo($"id: {action.Id}, name: {action.Name}"); } }
-void showInTerminal(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInTerminal != show) { b.ShowInTerminal = show; }}}
-void hideInTerminal() { showInTerminal(false); }
-void showInToolbarConfig(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInToolbarConfig != show) { b.ShowInToolbarConfig = show; }}}
-void hideInToolbarConfig() { showInToolbarConfig(false); }
-void showInInventory(bool show = true) { foreach(T b in m_blocks) { if(b.ShowInInventory != show) { b.ShowInInventory = show; }}}
-void hideInInventory() { showInInventory(false); }
-void showOnHUD(bool show = true) { foreach(T b in m_blocks) { if(b.ShowOnHUD != show) { b.ShowOnHUD = show; }}}
-void hideOnHUD() { showOnHUD(false); } }
+return $"{value / (float)Math.Pow(divider, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; }
 public class CCube<T> : CEntity<T> where T : class, IMyCubeBlock {
 public CCube(CBB<T> blocks) : base(blocks) {} }
 public class CEntity<T> where T : class, IMyEntity {
@@ -335,7 +319,7 @@ for(int j = 0; j < i.InventoryCount; j++) {
 r.Add(i.GetInventory(j)); } }
 return r; }
 protected CBB<T> m_blocks; }
-public class CB<T> : CBB<T> where T : class, IMyTerminalBlock {
+public class CB<T> : CBB<T> where T : class, IMyEntity {
 public CB(bool lSG = true) : base(lSG) { load(); } }
 class CBU {
 public CBU(IMyUpgradableBlock upBlock) {
@@ -350,7 +334,7 @@ private float Effectiveness;
 private float Productivity;
 private float PowerEfficiency; }
 public class CBPI {
-public CBPI(IMyTerminalBlock block) {
+public CBPI(IMyCubeBlock block) {
 m_block = block;
 m_blockSinkComponent = m_block.Components.Get<MyResourceSinkComponent>(); }
 public bool canProduce() { return m_block is IMyPowerProducer; }
@@ -376,7 +360,7 @@ upgrades.calcPowerUse(r); }
 return r * 1000000f; }
 return 0f; }
 MyResourceSinkComponent m_blockSinkComponent;
-IMyTerminalBlock m_block;
+IMyCubeBlock m_block;
 private static readonly MyDefinitionId Electricity = MyDefinitionId.Parse("MyObjectBuilder_GasProperties/Electricity"); }
 public class SMinCurrentMax<T> {
 public SMinCurrentMax(T mn, T cr, T mx) { min = mn; current = cr; max = mx; count = 0; }

@@ -472,8 +472,8 @@ value = value/1000; } }
 if(value < divider) { return $"{value}{suffix}"; }
 int exp = (int)(Math.Log(value) / Math.Log(divider));
 return $"{value / Math.Pow(divider, exp):f2}{("кМГТПЭ")[exp - 1]}{suffix}"; }
-public class CShipController {
-public CShipController(IMyShipController controller, CBB<IMyGyro> gyroscopes) {
+public class CAGShipController {
+public CAGShipController(IMyShipController controller, CBB<IMyGyro> gyroscopes) {
 m_controller = controller;
 m_autoHorizont = new CAutoHorizont(m_controller, gyroscopes); }
 public CAutoHorizont autoHorizont() { return m_autoHorizont; }
@@ -533,7 +533,7 @@ public string boolToString(bool val, EBoolToString bsType = EBoolToString.btsOnO
 switch(bsType) {
 case EBoolToString.btsOnOff: return val ? "Вкл." : "Выкл."; }
 return val.ToString(); }
-CShipController controller;
+CAGShipController controller;
 CB<IMyGyro> gyroscopes;
 CTS lcd;
 IMyCockpit cockpit;
@@ -548,7 +548,7 @@ int cockpitSurface = prbOptions.g("script", "cockpitSurface", -1);
 if(cockpitSurface >= 0) { lcd.setSurface(cockpit.GetSurface(cockpitSurface), 2f, 7, 30); }
 else { lcd.setSurface(Me.GetSurface(0), 2f, 7, 14); }
 gyroscopes = new CB<IMyGyro>();
-controller = new CShipController(_.GridTerminalSystem.GetBlockWithName(prbOptions.g("script", "controllerName", cockpitName)) as IMyShipController, gyroscopes);
+controller = new CAGShipController(_.GridTerminalSystem.GetBlockWithName(prbOptions.g("script", "controllerName", cockpitName)) as IMyShipController, gyroscopes);
 return "Атоматический горизонт"; }
 public void main(string argument, UpdateType updateSource) {
 if(argument.Length == 0) {
