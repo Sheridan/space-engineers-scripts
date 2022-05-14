@@ -70,15 +70,15 @@ public string program()
   recipes.add(FRecipe.SpeedModule(16));
   recipes.add(FRecipe.YieldModule(refineryes*4));
 
-  recipes.add(FComponentItem.NATO_25x184mm(1000));
-  // recipes.add(FComponentItem.NATO_5p56x45mm(200));
-  recipes.add(FComponentItem.AutomaticRifleGun_Mag_20rd(200));
-  recipes.add(FComponentItem.UltimateAutomaticRifleGun_Mag_30rd(200));
-  recipes.add(FComponentItem.RapidFireAutomaticRifleGun_Mag_50rd(200));
-  recipes.add(FComponentItem.PreciseAutomaticRifleGun_Mag_5rd(200));
-  recipes.add(FComponentItem.SemiAutoPistolMagazine(200));
-  recipes.add(FComponentItem.ElitePistolMagazine(200));
-  recipes.add(FComponentItem.FullAutoPistolMagazine(200));
+  recipes.add(CComponentItem.NATO_25x184mm(1000));
+  // recipes.add(CComponentItem.NATO_5p56x45mm(200));
+  recipes.add(CComponentItem.AutomaticRifleGun_Mag_20rd(200));
+  recipes.add(CComponentItem.UltimateAutomaticRifleGun_Mag_30rd(200));
+  recipes.add(CComponentItem.RapidFireAutomaticRifleGun_Mag_50rd(200));
+  recipes.add(CComponentItem.PreciseAutomaticRifleGun_Mag_5rd(200));
+  recipes.add(CComponentItem.SemiAutoPistolMagazine(200));
+  recipes.add(CComponentItem.ElitePistolMagazine(200));
+  recipes.add(CComponentItem.FullAutoPistolMagazine(200));
 
 
   return "Планирование производства";
